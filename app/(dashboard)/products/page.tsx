@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -56,20 +56,15 @@ export default function ProductsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<Id<"products"> | null>(null);
   const [createStatus, setCreateStatus] = useState<ProductStatus>("active");
   const [editStatus, setEditStatus] = useState<ProductStatus>("active");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
-  const ensureUser = useMutation(api.users.ensureUser);
   const products = useQuery(api.products.list, {
     status: statusFilter !== "all" ? statusFilter : undefined,
   });
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
-
-  useEffect(() => {
-    ensureUser().catch(() => {
-      // Silently fail if user creation fails
-    });
-  }, [ensureUser]);
 
   const filteredProducts =
     products?.filter(
@@ -80,9 +75,21 @@ export default function ProductsPage() {
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Double-check with both state and ref to prevent any race conditions
+    if (isSubmitting || isSubmittingRef.current) {
+      console.log("Preventing double submission");
+      return;
+    }
+    
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    
     const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    
     try {
-      await createProduct({
+      const result = await createProduct({
         name: formData.get("name") as string,
         description: (formData.get("description") as string) || undefined,
         price: parseFloat(formData.get("price") as string),
@@ -90,12 +97,19 @@ export default function ProductsPage() {
         category: (formData.get("category") as string) || undefined,
         status: createStatus,
       });
+      
+      console.log("Product created:", result);
       toast.success("Product created successfully");
       setIsCreateOpen(false);
       setCreateStatus("active");
-      e.currentTarget.reset();
+      form.reset();
     } catch (error) {
-      toast.error("Failed to create product");
+      console.error("Create product error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create product";
+      toast.error(errorMessage);
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -115,7 +129,7 @@ export default function ProductsPage() {
       });
       toast.success("Product updated successfully");
       setEditingProduct(null);
-    } catch (error) {
+    } catch {
       toast.error("Failed to update product");
     }
   };
@@ -126,7 +140,7 @@ export default function ProductsPage() {
       await deleteProduct({ id: deleteConfirm });
       toast.success("Product deleted successfully");
       setDeleteConfirm(null);
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete product");
     }
   };
@@ -350,10 +364,12 @@ export default function ProductsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">Create Product</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Product"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

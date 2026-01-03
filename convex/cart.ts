@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getOrCreateUser } from "./helpers";
 
 export const get = query({
   handler: async (ctx) => {
@@ -43,19 +44,7 @@ export const add = mutation({
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     const product = await ctx.db.get(args.productId);
     if (!product) {
@@ -63,15 +52,15 @@ export const add = mutation({
     }
 
     if (product.sellerId === user._id) {
-      throw new Error("Cannot add your own product to cart");
+      throw new Error("You can't purchase your own products. This item belongs to you!");
     }
 
     if (product.status !== "active") {
-      throw new Error("Product is not available");
+      throw new Error("Sorry, this product is no longer available for purchase");
     }
 
     if (args.quantity > product.quantity) {
-      throw new Error("Insufficient stock");
+      throw new Error(`Only ${product.quantity} items available in stock`);
     }
 
     // Check if item already exists in cart
@@ -87,7 +76,7 @@ export const add = mutation({
     if (existingItem) {
       const newQuantity = existingItem.quantity + args.quantity;
       if (newQuantity > product.quantity) {
-        throw new Error("Insufficient stock");
+        throw new Error(`Only ${product.quantity} items available in stock`);
       }
       await ctx.db.patch(existingItem._id, {
         quantity: newQuantity,
@@ -113,19 +102,7 @@ export const update = mutation({
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     const cartItem = await ctx.db.get(args.id);
     if (!cartItem) {
@@ -147,7 +124,7 @@ export const update = mutation({
     }
 
     if (args.quantity > product.quantity) {
-      throw new Error("Insufficient stock");
+      throw new Error(`Only ${product.quantity} items available in stock`);
     }
 
     await ctx.db.patch(args.id, {
@@ -162,19 +139,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("cartItems") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     const cartItem = await ctx.db.get(args.id);
     if (!cartItem) {
@@ -191,19 +156,7 @@ export const remove = mutation({
 
 export const clear = mutation({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     const cartItems = await ctx.db
       .query("cartItems")
@@ -213,4 +166,3 @@ export const clear = mutation({
     await Promise.all(cartItems.map((item) => ctx.db.delete(item._id)));
   },
 });
-

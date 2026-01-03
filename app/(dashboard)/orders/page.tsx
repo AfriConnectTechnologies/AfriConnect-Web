@@ -93,8 +93,9 @@ export default function OrdersPage() {
       await deleteOrder({ id: deleteConfirm });
       toast.success("Order deleted successfully");
       setDeleteConfirm(null);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete order");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete order";
+      toast.error(errorMessage);
     }
   };
 
@@ -105,8 +106,9 @@ export default function OrdersPage() {
         status: newStatus,
       });
       toast.success("Order status updated");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update order");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update order";
+      toast.error(errorMessage);
     }
   };
 
@@ -354,7 +356,7 @@ export default function OrdersPage() {
       {/* Order Details Dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
         <DialogContent className="max-w-2xl">
-          {orderDetails && (
+          {orderDetails ? (
             <>
               <DialogHeader>
                 <DialogTitle>{orderDetails.title}</DialogTitle>
@@ -410,6 +412,16 @@ export default function OrdersPage() {
               <DialogFooter>
                 <Button onClick={() => setSelectedOrder(null)}>Close</Button>
               </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Loading Order...</DialogTitle>
+                <DialogDescription>Please wait while we fetch the order details.</DialogDescription>
+              </DialogHeader>
+              <div className="py-8 text-center text-muted-foreground">
+                Loading...
+              </div>
             </>
           )}
         </DialogContent>

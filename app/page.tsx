@@ -13,11 +13,14 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-6 w-6" />
             <span className="text-xl font-bold">OrderFlow</span>
-          </div>
+          </Link>
           <nav className="flex items-center gap-4">
+            <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Marketplace
+            </Link>
             <ThemeToggle />
             <SignedOut>
               <SignInButton mode="modal">
@@ -284,10 +287,10 @@ export default function LandingPage() {
       <footer className="border-t py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 cursor-pointer">
               <BarChart3 className="h-5 w-5" />
               <span className="font-semibold">OrderFlow</span>
-            </div>
+            </Link>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link href="#" className="hover:text-foreground">
                 Privacy

@@ -36,8 +36,9 @@ export default function CartPage() {
       } else {
         await updateCartItem({ id: itemId, quantity: newQuantity });
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update cart");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update cart";
+      toast.error(errorMessage);
     }
   };
 
@@ -45,7 +46,7 @@ export default function CartPage() {
     try {
       await removeCartItem({ id: itemId });
       toast.success("Item removed from cart");
-    } catch (error) {
+    } catch {
       toast.error("Failed to remove item");
     }
   };
@@ -61,8 +62,9 @@ export default function CartPage() {
       await checkout();
       toast.success("Order placed successfully!");
       router.push("/orders");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to checkout");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to checkout";
+      toast.error(errorMessage);
     } finally {
       setIsCheckingOut(false);
     }

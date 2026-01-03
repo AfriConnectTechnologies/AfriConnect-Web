@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getOrCreateUser } from "./helpers";
 
 export const list = query({
   args: {
@@ -114,19 +115,7 @@ export const create = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     const now = Date.now();
     const orderId = await ctx.db.insert("orders", {
@@ -180,7 +169,8 @@ export const update = mutation({
       throw new Error("Unauthorized");
     }
 
-    const { id, ...updates } = args;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, ...updates } = args;
     await ctx.db.patch(args.id, {
       ...updates,
       updatedAt: Date.now(),
@@ -324,19 +314,7 @@ export const sales = query({
 
 export const checkout = mutation({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     // Get cart items
     const cartItems = await ctx.db
@@ -403,7 +381,7 @@ export const checkout = mutation({
       const orderId = await ctx.db.insert("orders", {
         userId: user._id,
         buyerId: user._id,
-        sellerId: sellerId as any,
+        sellerId: sellerId,
         title: `Order from ${sellerName}`,
         customer: user.name || user.email,
         amount: totalAmount,

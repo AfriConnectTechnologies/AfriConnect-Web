@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getOrCreateUser } from "./helpers";
 
 export const list = query({
   args: {
@@ -66,19 +67,7 @@ export const create = mutation({
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
+    const user = await getOrCreateUser(ctx);
 
     const now = Date.now();
     const productId = await ctx.db.insert("products", {
@@ -127,7 +116,8 @@ export const update = mutation({
       throw new Error("Unauthorized");
     }
 
-    const { id, ...updates } = args;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, ...updates } = args;
     await ctx.db.patch(args.id, {
       ...updates,
       updatedAt: Date.now(),
@@ -195,6 +185,45 @@ export const marketplace = query({
     }
 
     return filtered.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// Public marketplace query - no authentication required
+export const publicMarketplace = query({
+  args: {
+    category: v.optional(v.string()),
+    search: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+
+    let filtered = products;
+
+    if (args.category) {
+      filtered = filtered.filter((p) => p.category === args.category);
+    }
+
+    if (args.search) {
+      const searchLower = args.search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.description?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
+    
+    // Apply limit if specified
+    if (args.limit && args.limit > 0) {
+      return sorted.slice(0, args.limit);
+    }
+
+    return sorted;
   },
 });
 

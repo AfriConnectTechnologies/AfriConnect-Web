@@ -39,7 +39,7 @@ export default function SettingsPage() {
     try {
       await updateProfile({ name: name || undefined });
       toast.success("Profile updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update profile");
     }
   };
