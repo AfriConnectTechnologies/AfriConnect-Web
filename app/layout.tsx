@@ -17,8 +17,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'OrderFlow - B2B Order Management',
-  description: 'Streamline your order management with OrderFlow',
+  title: 'AfriConnect - Africa\'s B2B Marketplace | Cross-Border Trade & Shipping',
+  description: 'Connect with verified suppliers across Africa. Source products, handle cross-border logistics, customs, and secure payments. Join 10,000+ businesses trading on AfriConnect.',
+  keywords: ['B2B marketplace', 'Africa trade', 'cross-border shipping', 'wholesale suppliers', 'African products', 'international trade'],
 }
 
 export default function RootLayout({
@@ -31,7 +32,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

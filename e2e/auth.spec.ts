@@ -31,8 +31,8 @@ test.describe("Landing Page", () => {
   test("should display landing page content", async ({ page }) => {
     await page.goto("/");
     
-    // Check page loads successfully - app title is "OrderFlow"
-    await expect(page).toHaveTitle(/OrderFlow/i);
+    // Check page loads successfully - app title is "AfriConnect"
+    await expect(page).toHaveTitle(/AfriConnect/i);
   });
 
   test("should have navigation links", async ({ page }) => {

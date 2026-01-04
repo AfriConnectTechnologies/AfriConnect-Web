@@ -95,7 +95,7 @@ function SidebarContent({
           className="flex items-center gap-2 cursor-pointer"
         >
           <BarChart3 className="h-6 w-6 shrink-0" />
-          {!isCollapsed && <span className="text-lg font-bold">OrderFlow</span>}
+          {!isCollapsed && <span className="text-lg font-bold">AfriConnect</span>}
         </Link>
       </div>
       

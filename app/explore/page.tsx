@@ -37,7 +37,7 @@ export default function ExplorePage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
             <BarChart3 className="h-6 w-6" />
-            <span className="text-xl font-bold">OrderFlow</span>
+            <span className="text-xl font-bold">AfriConnect</span>
           </Link>
           <nav className="flex items-center gap-4">
             <ThemeToggle />
@@ -208,7 +208,7 @@ export default function ExplorePage() {
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <Link href="/" className="flex items-center gap-2 cursor-pointer">
               <BarChart3 className="h-5 w-5" />
-              <span className="font-semibold">OrderFlow</span>
+              <span className="font-semibold">AfriConnect</span>
             </Link>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link href="#" className="hover:text-foreground">
@@ -223,7 +223,7 @@ export default function ExplorePage() {
             </div>
           </div>
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} OrderFlow. All rights reserved.
+            © {new Date().getFullYear()} AfriConnect. All rights reserved.
           </div>
         </div>
       </footer>

@@ -11,7 +11,7 @@ export function DashboardHeader() {
       <MobileSidebarTrigger />
       <Link href="/" className="flex items-center gap-2 md:hidden cursor-pointer">
         <BarChart3 className="h-5 w-5" />
-        <span className="font-semibold">OrderFlow</span>
+        <span className="font-semibold">AfriConnect</span>
       </Link>
       <div className="flex-1" />
       <ThemeToggle />
