@@ -3,25 +3,22 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, Package } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 
 export default function CartPage() {
-  const router = useRouter();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const cart = useQuery(api.cart.get);
   const updateCartItem = useMutation(api.cart.update);
   const removeCartItem = useMutation(api.cart.remove);
-  const checkout = useMutation(api.orders.checkout);
 
   useEffect(() => {
     ensureUser().catch(() => {
@@ -59,13 +56,42 @@ export default function CartPage() {
 
     setIsCheckingOut(true);
     try {
-      await checkout();
-      toast.success("Order placed successfully!");
-      router.push("/orders");
+      // Calculate total from cart (orders will be created after successful payment)
+      const totalAmount = cart.reduce((sum, item) => {
+        if (!item.product) return sum;
+        return sum + item.product.price * item.quantity;
+      }, 0);
+
+      if (totalAmount <= 0) {
+        throw new Error("Invalid cart total");
+      }
+
+      // Initialize Chapa payment (cart snapshot is saved in payment metadata)
+      const response = await fetch("/api/payments/initialize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: totalAmount,
+          currency: "ETB",
+          paymentType: "order",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to initialize payment");
+      }
+
+      // Redirect to Chapa checkout
+      toast.success("Redirecting to payment...");
+      window.location.href = data.checkoutUrl;
+
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to checkout";
       toast.error(errorMessage);
-    } finally {
       setIsCheckingOut(false);
     }
   };
@@ -222,11 +248,21 @@ export default function CartPage() {
                   </div>
                 </div>
                 <Button
-                  className="w-full"
+                  className="w-full gap-2"
                   onClick={handleCheckout}
                   disabled={isCheckingOut || cart.length === 0}
                 >
-                  {isCheckingOut ? "Processing..." : "Checkout"}
+                  {isCheckingOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Pay with Chapa
+                    </>
+                  )}
                 </Button>
                 <Link href="/marketplace">
                   <Button variant="outline" className="w-full">

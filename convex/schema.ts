@@ -75,5 +75,31 @@ export default defineSchema({
   })
     .index("by_order", ["orderId"])
     .index("by_product", ["productId"]),
+
+  payments: defineTable({
+    userId: v.string(),
+    orderId: v.optional(v.id("orders")),
+    chapaTransactionRef: v.string(), // tx_ref sent to Chapa
+    chapaTrxRef: v.optional(v.string()), // trx_ref returned by Chapa
+    amount: v.number(),
+    currency: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("success"),
+      v.literal("failed"),
+      v.literal("cancelled")
+    ),
+    paymentType: v.union(
+      v.literal("order"),
+      v.literal("subscription")
+    ),
+    metadata: v.optional(v.string()), // JSON string for additional data
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_order", ["orderId"])
+    .index("by_chapa_ref", ["chapaTransactionRef"])
+    .index("by_status", ["status"]),
 });
 
