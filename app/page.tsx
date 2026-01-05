@@ -116,14 +116,14 @@ export default function LandingPage() {
     <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Globe2 className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold tracking-tight">AfriConnect</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
             <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Marketplace
             </Link>
@@ -136,7 +136,7 @@ export default function LandingPage() {
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Features
             </Link>
-          </nav>
+          </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <SignedOut>
@@ -154,7 +154,7 @@ export default function LandingPage() {
               <UserButton />
             </SignedIn>
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Hero Section */}
