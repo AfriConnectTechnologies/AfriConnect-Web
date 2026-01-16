@@ -33,7 +33,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Pencil, Trash2, Package, ImageIcon } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, ImageIcon, Check, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ImageUploader } from "@/components/products";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 type ProductStatus = "active" | "inactive";
 
@@ -55,15 +56,17 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createStep, setCreateStep] = useState<1 | 2>(1);
+  const [createdProductId, setCreatedProductId] = useState<Id<"products"> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Id<"products"> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Id<"products"> | null>(null);
   const [createStatus, setCreateStatus] = useState<ProductStatus>("active");
   const [editStatus, setEditStatus] = useState<ProductStatus>("active");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newlyCreatedProduct, setNewlyCreatedProduct] = useState<Id<"products"> | null>(null);
   const [editTab, setEditTab] = useState("details");
   const [imagesKey, setImagesKey] = useState(0);
   const isSubmittingRef = useRef(false);
+  const createFormRef = useRef<HTMLFormElement>(null);
 
   const products = useQuery(api.products.list, {
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -72,25 +75,21 @@ export default function ProductsPage() {
   const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
 
-  // Get images for each product to show in table
+  // Get images for the product being created or edited
   const productImages = useQuery(
     api.productImages.getByProduct,
-    editingProduct ? { productId: editingProduct } : "skip"
+    (editingProduct || createdProductId) ? { productId: (editingProduct || createdProductId)! } : "skip"
   );
 
-  // Get primary images for all products in the list
-  const productsWithPrimaryImages = products?.map(product => {
-    return product;
-  }) ?? [];
-
   const filteredProducts =
-    productsWithPrimaryImages?.filter(
+    products?.filter(
       (product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description?.toLowerCase().includes(searchQuery.toLowerCase())
     ) ?? [];
 
-  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle Step 1: Create product
+  const handleCreateStep1 = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (isSubmitting || isSubmittingRef.current) {
@@ -101,7 +100,6 @@ export default function ProductsPage() {
     setIsSubmitting(true);
     
     const formData = new FormData(e.currentTarget);
-    const form = e.currentTarget;
     
     try {
       const result = await createProduct({
@@ -117,16 +115,10 @@ export default function ProductsPage() {
           : undefined,
       });
       
-      toast.success("Product created! Add images to complete your listing.");
-      setIsCreateOpen(false);
-      setCreateStatus("active");
-      form.reset();
-      
-      // Open edit dialog to add images
       if (result?._id) {
-        setNewlyCreatedProduct(result._id);
-        setEditingProduct(result._id);
-        setEditTab("images");
+        setCreatedProductId(result._id);
+        setCreateStep(2);
+        toast.success("Product created! Now add images to complete your listing.");
       }
     } catch (error) {
       console.error("Create product error:", error);
@@ -136,6 +128,25 @@ export default function ProductsPage() {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
+  };
+
+  // Handle completing the product creation (after images)
+  const handleCompleteCreate = () => {
+    const imageCount = productImages?.length ?? 0;
+    if (imageCount === 0) {
+      toast.warning("Consider adding at least one image to help your product stand out.");
+    }
+    resetCreateDialog();
+    toast.success("Product listing complete!");
+  };
+
+  // Reset create dialog state
+  const resetCreateDialog = () => {
+    setIsCreateOpen(false);
+    setCreateStep(1);
+    setCreatedProductId(null);
+    setCreateStatus("active");
+    createFormRef.current?.reset();
   };
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -158,7 +169,6 @@ export default function ProductsPage() {
       });
       toast.success("Product updated successfully");
       setEditingProduct(null);
-      setNewlyCreatedProduct(null);
     } catch {
       toast.error("Failed to update product");
     }
@@ -204,7 +214,6 @@ export default function ProductsPage() {
   useEffect(() => {
     if (!editingProduct) {
       setEditTab("details");
-      setNewlyCreatedProduct(null);
     }
   }, [editingProduct]);
 
@@ -303,113 +312,188 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-lg">
-          <form onSubmit={handleCreate}>
-            <DialogHeader>
-              <DialogTitle>Create New Product</DialogTitle>
-              <DialogDescription>
-                Add basic product details. You can add images after creation.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-              <div className="grid gap-2">
-                <Label htmlFor="create-name">Name *</Label>
-                <Input
-                  id="create-name"
-                  name="name"
-                  placeholder="Product name"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="create-description">Description</Label>
-                <Input
-                  id="create-description"
-                  name="description"
-                  placeholder="Product description"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="create-price">Price *</Label>
-                  <Input
-                    id="create-price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="create-quantity">Quantity *</Label>
-                  <Input
-                    id="create-quantity"
-                    name="quantity"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="create-category">Category</Label>
-                  <Input
-                    id="create-category"
-                    name="category"
-                    placeholder="e.g., Electronics"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="create-country">Origin Country</Label>
-                  <Input
-                    id="create-country"
-                    name="country"
-                    placeholder="e.g., Ethiopia"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="create-minOrderQuantity">Min Order Qty</Label>
-                  <Input
-                    id="create-minOrderQuantity"
-                    name="minOrderQuantity"
-                    type="number"
-                    min="1"
-                    placeholder="1"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="create-status">Status</Label>
-                  <Select
-                    value={createStatus}
-                    onValueChange={(v) => setCreateStatus(v as ProductStatus)}
-                  >
-                    <SelectTrigger id="create-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+      {/* Create Dialog with Stepper */}
+      <Dialog open={isCreateOpen} onOpenChange={(open) => !open && resetCreateDialog()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Add New Product</DialogTitle>
+            <DialogDescription>
+              {createStep === 1 
+                ? "Enter product details to get started."
+                : "Add images to make your product stand out."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Stepper Indicator */}
+          <div className="flex items-center justify-center gap-2 py-4">
+            <div className={cn(
+              "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors",
+              createStep >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              {createStep > 1 ? <Check className="h-4 w-4" /> : "1"}
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create & Add Images"}
-              </Button>
-            </DialogFooter>
-          </form>
+            <div className="flex items-center">
+              <div className={cn(
+                "w-12 h-0.5 transition-colors",
+                createStep > 1 ? "bg-primary" : "bg-muted"
+              )} />
+              <ChevronRight className={cn(
+                "h-4 w-4 -mx-1 transition-colors",
+                createStep > 1 ? "text-primary" : "text-muted-foreground"
+              )} />
+              <div className={cn(
+                "w-12 h-0.5 transition-colors",
+                createStep > 1 ? "bg-primary" : "bg-muted"
+              )} />
+            </div>
+            <div className={cn(
+              "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors",
+              createStep >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              2
+            </div>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground px-4 -mt-2 mb-2">
+            <span className={cn(createStep >= 1 && "text-foreground font-medium")}>Product Details</span>
+            <span className={cn(createStep >= 2 && "text-foreground font-medium")}>Add Images</span>
+          </div>
+
+          {/* Step 1: Product Details */}
+          {createStep === 1 && (
+            <form ref={createFormRef} onSubmit={handleCreateStep1} className="flex-1 overflow-y-auto">
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="create-name">Product Name *</Label>
+                  <Input
+                    id="create-name"
+                    name="name"
+                    placeholder="Enter product name"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="create-description">Description</Label>
+                  <Input
+                    id="create-description"
+                    name="description"
+                    placeholder="Describe your product"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-price">Price *</Label>
+                    <Input
+                      id="create-price"
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-quantity">Stock Quantity *</Label>
+                    <Input
+                      id="create-quantity"
+                      name="quantity"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-category">Category</Label>
+                    <Input
+                      id="create-category"
+                      name="category"
+                      placeholder="e.g., Electronics"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-country">Origin Country</Label>
+                    <Input
+                      id="create-country"
+                      name="country"
+                      placeholder="e.g., Ethiopia"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-minOrderQuantity">Min Order Qty</Label>
+                    <Input
+                      id="create-minOrderQuantity"
+                      name="minOrderQuantity"
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-status">Status</Label>
+                    <Select
+                      value={createStatus}
+                      onValueChange={(v) => setCreateStatus(v as ProductStatus)}
+                    >
+                      <SelectTrigger id="create-status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={resetCreateDialog} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Next: Add Images"}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+
+          {/* Step 2: Image Upload */}
+          {createStep === 2 && createdProductId && (
+            <div className="flex-1 overflow-y-auto flex flex-col">
+              <div className="flex-1 py-4">
+                <ImageUploader
+                  key={imagesKey}
+                  productId={createdProductId}
+                  existingImages={productImages?.map(img => ({
+                    _id: img._id,
+                    url: img.url,
+                    isPrimary: img.isPrimary,
+                    order: img.order,
+                    r2Key: img.r2Key,
+                  })) ?? []}
+                  onImagesChange={handleImagesChange}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleCompleteCreate}>
+                  Skip for Now
+                </Button>
+                <Button type="button" onClick={handleCompleteCreate}>
+                  <Check className="mr-2 h-4 w-4" />
+                  Complete Listing
+                  {productImages && productImages.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {productImages.length} image{productImages.length !== 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -419,13 +503,9 @@ export default function ProductsPage() {
           {productToEdit && (
             <>
               <DialogHeader>
-                <DialogTitle>
-                  {newlyCreatedProduct === editingProduct ? "Complete Your Listing" : "Edit Product"}
-                </DialogTitle>
+                <DialogTitle>Edit Product</DialogTitle>
                 <DialogDescription>
-                  {newlyCreatedProduct === editingProduct 
-                    ? "Add images to make your product stand out in the marketplace."
-                    : "Update product details and manage images."}
+                  Update product details and manage images.
                 </DialogDescription>
               </DialogHeader>
               
@@ -557,7 +637,7 @@ export default function ProductsPage() {
                   variant="outline"
                   onClick={() => setEditingProduct(null)}
                 >
-                  {newlyCreatedProduct === editingProduct ? "Done" : "Cancel"}
+                  Cancel
                 </Button>
                 {editTab === "details" && (
                   <Button type="submit" form="edit-form">Save Changes</Button>
@@ -663,7 +743,7 @@ function ProductRow({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
               <span className="sr-only">Open menu</span>
-              <span>⋯</span>
+              <span>...</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
