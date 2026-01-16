@@ -7,6 +7,8 @@ export default defineSchema({
     email: v.string(),
     name: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("buyer"), v.literal("seller"), v.literal("admin"))),
+    businessId: v.optional(v.id("businesses")),
     preferences: v.optional(
       v.object({
         theme: v.optional(v.string()),
@@ -14,7 +16,28 @@ export default defineSchema({
     ),
   })
     .index("by_clerk_id", ["clerkId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_role", ["role"]),
+
+  businesses: defineTable({
+    ownerId: v.id("users"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    country: v.string(),
+    city: v.optional(v.string()),
+    address: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    website: v.optional(v.string()),
+    logoUrl: v.optional(v.string()),
+    category: v.string(),
+    verificationStatus: v.union(v.literal("pending"), v.literal("verified"), v.literal("rejected")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_status", ["verificationStatus"])
+    .index("by_country", ["country"])
+    .index("by_category", ["category"]),
 
   orders: defineTable({
     userId: v.string(), // buyerId for marketplace orders

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
-import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
+import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,14 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-const navItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  showBadge?: boolean;
+};
+
+const baseNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/products", label: "My Products", icon: Package },
@@ -20,6 +27,19 @@ const navItems = [
   { href: "/orders", label: "Orders", icon: ShoppingBag },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/billing", label: "Billing", icon: CreditCard },
+];
+
+const sellerNavItems: NavItem[] = [
+  { href: "/business/profile", label: "My Business", icon: Building2 },
+];
+
+const buyerNavItems: NavItem[] = [
+  { href: "/business/register", label: "Register Business", icon: Building2 },
+];
+
+const adminNavItems: NavItem[] = [
+  { href: "/admin/users", label: "Manage Users", icon: Users },
+  { href: "/admin/businesses", label: "Manage Businesses", icon: Building },
 ];
 
 export function MobileSidebarTrigger() {
@@ -85,7 +105,32 @@ function SidebarContent({
   isMobile?: boolean;
 }) {
   const cart = useQuery(api.cart.get);
+  const currentUser = useQuery(api.users.getCurrentUser);
   const cartItemCount = cart?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+
+  // Build nav items based on user role
+  const navItems = useMemo(() => {
+    const items: NavItem[] = [...baseNavItems];
+    const role = currentUser?.role;
+    const hasBusiness = currentUser?.businessId !== undefined && currentUser?.businessId !== null;
+
+    // Add seller nav items if user is a seller with a business
+    if ((role === "seller" || role === "admin") && hasBusiness) {
+      items.push(...sellerNavItems);
+    }
+
+    // Add register business option for buyers without a business
+    if (role === "buyer" || (!hasBusiness && role !== "admin")) {
+      items.push(...buyerNavItems);
+    }
+
+    // Add admin nav items if user is an admin
+    if (role === "admin") {
+      items.push(...adminNavItems);
+    }
+
+    return items;
+  }, [currentUser?.role, currentUser?.businessId]);
 
   return (
     <div className="flex h-full flex-col">
@@ -115,7 +160,7 @@ function SidebarContent({
         </Button>
       )}
 
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -155,10 +200,29 @@ function SidebarContent({
             </Link>
           );
         })}
+
+        {/* Admin Section Separator */}
+        {currentUser?.role === "admin" && !isCollapsed && (
+          <div className="pt-4 mt-4 border-t">
+            <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <Shield className="h-3 w-3" />
+              <span>Admin</span>
+            </div>
+          </div>
+        )}
       </nav>
       <div className="border-t p-4">
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-          {!isCollapsed && <span className="text-sm text-muted-foreground">Account</span>}
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">Account</span>
+              {currentUser?.role && (
+                <Badge variant="outline" className="text-xs w-fit mt-1">
+                  {currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)}
+                </Badge>
+              )}
+            </div>
+          )}
           <UserButton />
         </div>
       </div>
