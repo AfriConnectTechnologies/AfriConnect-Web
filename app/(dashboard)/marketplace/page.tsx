@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, ShoppingCart, Package } from "lucide-react";
+import { Search, ShoppingCart, Package, ImageIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,7 +59,7 @@ export default function MarketplacePage() {
           <CardDescription>Search and filter products by category</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -98,44 +99,80 @@ export default function MarketplacePage() {
                 : "No products available in the marketplace yet."}
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {products.map((product) => (
-                <Card key={product._id} className="flex flex-col">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{product.name}</CardTitle>
+                <Link key={product._id} href={`/marketplace/${product._id}`}>
+                  <Card className="group h-full overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
+                    {/* Product Image */}
+                    <div className="relative aspect-square overflow-hidden bg-muted">
+                      {product.primaryImageUrl ? (
+                        <Image
+                          src={product.primaryImageUrl}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      
+                      {/* Category Badge - Overlay */}
                       {product.category && (
-                        <Badge variant="secondary">{product.category}</Badge>
+                        <Badge 
+                          variant="secondary" 
+                          className="absolute left-3 top-3 bg-background/80 backdrop-blur-sm"
+                        >
+                          {product.category}
+                        </Badge>
+                      )}
+
+                      {/* Out of Stock Overlay */}
+                      {product.quantity === 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                          <Badge variant="destructive" className="text-sm">
+                            Out of Stock
+                          </Badge>
+                        </div>
                       )}
                     </div>
-                    <CardDescription className="line-clamp-2">
-                      {product.description || "No description available"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-1 flex-col justify-between gap-4">
-                    <div>
-                      <div className="text-2xl font-bold">
-                        ${product.price.toLocaleString()}
+
+                    <CardHeader className="p-4 pb-2">
+                      <CardTitle className="line-clamp-1 text-base group-hover:text-primary transition-colors">
+                        {product.name}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 min-h-[2.5rem]">
+                        {product.description || "No description available"}
+                      </CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent className="p-4 pt-0">
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <div className="text-2xl font-bold">
+                            ${product.price.toLocaleString()}
+                          </div>
+                          {product.quantity > 0 && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                              <Package className="h-3 w-3" />
+                              {product.quantity} in stock
+                            </div>
+                          )}
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="secondary"
+                          className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                          disabled={product.quantity === 0}
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {product.quantity > 0 ? (
-                          <span className="flex items-center gap-1">
-                            <Package className="h-3 w-3" />
-                            {product.quantity} in stock
-                          </span>
-                        ) : (
-                          <span className="text-destructive">Out of stock</span>
-                        )}
-                      </div>
-                    </div>
-                    <Link href={`/marketplace/${product._id}`}>
-                      <Button className="w-full" disabled={product.quantity === 0}>
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        View Details
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}
@@ -144,4 +181,3 @@ export default function MarketplacePage() {
     </div>
   );
 }
-

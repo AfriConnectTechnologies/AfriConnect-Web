@@ -72,12 +72,28 @@ export default defineSchema({
     quantity: v.number(),
     category: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("inactive")),
+    country: v.optional(v.string()),
+    minOrderQuantity: v.optional(v.number()),
+    specifications: v.optional(v.string()), // JSON string for key-value specs
+    tags: v.optional(v.array(v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_seller", ["sellerId"])
     .index("by_status", ["status"])
-    .index("by_seller_status", ["sellerId", "status"]),
+    .index("by_seller_status", ["sellerId", "status"])
+    .index("by_category", ["category"]),
+
+  productImages: defineTable({
+    productId: v.id("products"),
+    r2Key: v.string(),
+    url: v.string(),
+    order: v.number(),
+    isPrimary: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_product", ["productId"])
+    .index("by_product_primary", ["productId", "isPrimary"]),
 
   cartItems: defineTable({
     userId: v.string(),

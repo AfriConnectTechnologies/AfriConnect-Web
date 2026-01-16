@@ -32,7 +32,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Search, Pencil, Trash2, Package } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, Search, Pencil, Trash2, Package, ImageIcon, Check, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -40,6 +41,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ImageUploader } from "@/components/products";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 type ProductStatus = "active" | "inactive";
 
@@ -52,12 +56,17 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createStep, setCreateStep] = useState<1 | 2>(1);
+  const [createdProductId, setCreatedProductId] = useState<Id<"products"> | null>(null);
   const [editingProduct, setEditingProduct] = useState<Id<"products"> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Id<"products"> | null>(null);
   const [createStatus, setCreateStatus] = useState<ProductStatus>("active");
   const [editStatus, setEditStatus] = useState<ProductStatus>("active");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editTab, setEditTab] = useState("details");
+  const [imagesKey, setImagesKey] = useState(0);
   const isSubmittingRef = useRef(false);
+  const createFormRef = useRef<HTMLFormElement>(null);
 
   const products = useQuery(api.products.list, {
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -66,6 +75,12 @@ export default function ProductsPage() {
   const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
 
+  // Get images for the product being created or edited
+  const productImages = useQuery(
+    api.productImages.getByProduct,
+    (editingProduct || createdProductId) ? { productId: (editingProduct || createdProductId)! } : "skip"
+  );
+
   const filteredProducts =
     products?.filter(
       (product) =>
@@ -73,12 +88,11 @@ export default function ProductsPage() {
         product.description?.toLowerCase().includes(searchQuery.toLowerCase())
     ) ?? [];
 
-  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle Step 1: Create product
+  const handleCreateStep1 = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Double-check with both state and ref to prevent any race conditions
     if (isSubmitting || isSubmittingRef.current) {
-      console.log("Preventing double submission");
       return;
     }
     
@@ -86,7 +100,6 @@ export default function ProductsPage() {
     setIsSubmitting(true);
     
     const formData = new FormData(e.currentTarget);
-    const form = e.currentTarget;
     
     try {
       const result = await createProduct({
@@ -96,13 +109,17 @@ export default function ProductsPage() {
         quantity: parseInt(formData.get("quantity") as string),
         category: (formData.get("category") as string) || undefined,
         status: createStatus,
+        country: (formData.get("country") as string) || undefined,
+        minOrderQuantity: formData.get("minOrderQuantity") 
+          ? parseInt(formData.get("minOrderQuantity") as string) 
+          : undefined,
       });
       
-      console.log("Product created:", result);
-      toast.success("Product created successfully");
-      setIsCreateOpen(false);
-      setCreateStatus("active");
-      form.reset();
+      if (result?._id) {
+        setCreatedProductId(result._id);
+        setCreateStep(2);
+        toast.success("Product created! Now add images to complete your listing.");
+      }
     } catch (error) {
       console.error("Create product error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to create product";
@@ -111,6 +128,25 @@ export default function ProductsPage() {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
+  };
+
+  // Handle completing the product creation (after images)
+  const handleCompleteCreate = () => {
+    const imageCount = productImages?.length ?? 0;
+    if (imageCount === 0) {
+      toast.warning("Consider adding at least one image to help your product stand out.");
+    }
+    resetCreateDialog();
+    toast.success("Product listing complete!");
+  };
+
+  // Reset create dialog state
+  const resetCreateDialog = () => {
+    setIsCreateOpen(false);
+    setCreateStep(1);
+    setCreatedProductId(null);
+    setCreateStatus("active");
+    createFormRef.current?.reset();
   };
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -126,6 +162,10 @@ export default function ProductsPage() {
         quantity: parseInt(formData.get("quantity") as string),
         category: (formData.get("category") as string) || undefined,
         status: editStatus,
+        country: (formData.get("country") as string) || undefined,
+        minOrderQuantity: formData.get("minOrderQuantity") 
+          ? parseInt(formData.get("minOrderQuantity") as string) 
+          : undefined,
       });
       toast.success("Product updated successfully");
       setEditingProduct(null);
@@ -137,7 +177,23 @@ export default function ProductsPage() {
   const handleDelete = async () => {
     if (!deleteConfirm) return;
     try {
-      await deleteProduct({ id: deleteConfirm });
+      const result = await deleteProduct({ id: deleteConfirm });
+      
+      // Delete images from R2
+      if (result?.r2Keys && result.r2Keys.length > 0) {
+        for (const key of result.r2Keys) {
+          try {
+            await fetch("/api/images/delete", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ key }),
+            });
+          } catch (e) {
+            console.error("Failed to delete image from R2:", e);
+          }
+        }
+      }
+      
       toast.success("Product deleted successfully");
       setDeleteConfirm(null);
     } catch {
@@ -154,6 +210,16 @@ export default function ProductsPage() {
       setEditStatus(productToEdit.status);
     }
   }, [productToEdit]);
+
+  useEffect(() => {
+    if (!editingProduct) {
+      setEditTab("details");
+    }
+  }, [editingProduct]);
+
+  const handleImagesChange = () => {
+    setImagesKey(prev => prev + 1);
+  };
 
   if (products === undefined) {
     return (
@@ -220,6 +286,7 @@ export default function ProductsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[60px]">Image</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
@@ -231,54 +298,12 @@ export default function ProductsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => (
-                    <TableRow key={product._id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>
-                        {product.category ? (
-                          <Badge variant="outline">{product.category}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>${product.price.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Package className="h-3 w-3 text-muted-foreground" />
-                          {product.quantity}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusColors[product.status]}>
-                          {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(product.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <span className="sr-only">Open menu</span>
-                              <span>⋯</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditingProduct(product._id)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setDeleteConfirm(product._id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                    <ProductRow 
+                      key={product._id} 
+                      product={product}
+                      onEdit={() => setEditingProduct(product._id)}
+                      onDelete={() => setDeleteConfirm(product._id)}
+                    />
                   ))}
                 </TableBody>
               </Table>
@@ -287,172 +312,326 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
 
-      {/* Create Dialog */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <form onSubmit={handleCreate}>
-            <DialogHeader>
-              <DialogTitle>Create New Product</DialogTitle>
-              <DialogDescription>
-                Add a new product to your marketplace listing.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="create-name">Name *</Label>
-                <Input
-                  id="create-name"
-                  name="name"
-                  placeholder="Product name"
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="create-description">Description</Label>
-                <Input
-                  id="create-description"
-                  name="description"
-                  placeholder="Product description"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="create-price">Price *</Label>
-                  <Input
-                    id="create-price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="create-quantity">Quantity *</Label>
-                  <Input
-                    id="create-quantity"
-                    name="quantity"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="create-category">Category</Label>
-                <Input
-                  id="create-category"
-                  name="category"
-                  placeholder="e.g., Electronics, Food, etc."
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="create-status">Status</Label>
-                <Select
-                  value={createStatus}
-                  onValueChange={(v) => setCreateStatus(v as ProductStatus)}
-                >
-                  <SelectTrigger id="create-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Create Dialog with Stepper */}
+      <Dialog open={isCreateOpen} onOpenChange={(open) => !open && resetCreateDialog()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Add New Product</DialogTitle>
+            <DialogDescription>
+              {createStep === 1 
+                ? "Enter product details to get started."
+                : "Add images to make your product stand out."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Stepper Indicator */}
+          <div className="flex items-center justify-center gap-2 py-4">
+            <div className={cn(
+              "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors",
+              createStep >= 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              {createStep > 1 ? <Check className="h-4 w-4" /> : "1"}
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Product"}
-              </Button>
-            </DialogFooter>
-          </form>
+            <div className="flex items-center">
+              <div className={cn(
+                "w-12 h-0.5 transition-colors",
+                createStep > 1 ? "bg-primary" : "bg-muted"
+              )} />
+              <ChevronRight className={cn(
+                "h-4 w-4 -mx-1 transition-colors",
+                createStep > 1 ? "text-primary" : "text-muted-foreground"
+              )} />
+              <div className={cn(
+                "w-12 h-0.5 transition-colors",
+                createStep > 1 ? "bg-primary" : "bg-muted"
+              )} />
+            </div>
+            <div className={cn(
+              "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors",
+              createStep >= 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            )}>
+              2
+            </div>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground px-4 -mt-2 mb-2">
+            <span className={cn(createStep >= 1 && "text-foreground font-medium")}>Product Details</span>
+            <span className={cn(createStep >= 2 && "text-foreground font-medium")}>Add Images</span>
+          </div>
+
+          {/* Step 1: Product Details */}
+          {createStep === 1 && (
+            <form ref={createFormRef} onSubmit={handleCreateStep1} className="flex-1 overflow-y-auto">
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="create-name">Product Name *</Label>
+                  <Input
+                    id="create-name"
+                    name="name"
+                    placeholder="Enter product name"
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="create-description">Description</Label>
+                  <Input
+                    id="create-description"
+                    name="description"
+                    placeholder="Describe your product"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-price">Price *</Label>
+                    <Input
+                      id="create-price"
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-quantity">Stock Quantity *</Label>
+                    <Input
+                      id="create-quantity"
+                      name="quantity"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-category">Category</Label>
+                    <Input
+                      id="create-category"
+                      name="category"
+                      placeholder="e.g., Electronics"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-country">Origin Country</Label>
+                    <Input
+                      id="create-country"
+                      name="country"
+                      placeholder="e.g., Ethiopia"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-minOrderQuantity">Min Order Qty</Label>
+                    <Input
+                      id="create-minOrderQuantity"
+                      name="minOrderQuantity"
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-status">Status</Label>
+                    <Select
+                      value={createStatus}
+                      onValueChange={(v) => setCreateStatus(v as ProductStatus)}
+                    >
+                      <SelectTrigger id="create-status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={resetCreateDialog} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Next: Add Images"}
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+
+          {/* Step 2: Image Upload */}
+          {createStep === 2 && createdProductId && (
+            <div className="flex-1 overflow-y-auto flex flex-col">
+              <div className="flex-1 py-4">
+                <ImageUploader
+                  key={imagesKey}
+                  productId={createdProductId}
+                  existingImages={productImages?.map(img => ({
+                    _id: img._id,
+                    url: img.url,
+                    isPrimary: img.isPrimary,
+                    order: img.order,
+                    r2Key: img.r2Key,
+                  })) ?? []}
+                  onImagesChange={handleImagesChange}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleCompleteCreate}>
+                  Skip for Now
+                </Button>
+                <Button type="button" onClick={handleCompleteCreate}>
+                  <Check className="mr-2 h-4 w-4" />
+                  Complete Listing
+                  {productImages && productImages.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {productImages.length} image{productImages.length !== 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           {productToEdit && (
-            <form onSubmit={handleUpdate}>
+            <>
               <DialogHeader>
                 <DialogTitle>Edit Product</DialogTitle>
                 <DialogDescription>
-                  Update the product details below.
+                  Update product details and manage images.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-name">Name *</Label>
-                  <Input
-                    id="edit-name"
-                    name="name"
-                    defaultValue={productToEdit.name}
-                    required
+              
+              <Tabs value={editTab} onValueChange={setEditTab} className="flex-1 overflow-hidden flex flex-col">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="images">
+                    Images
+                    {productImages && productImages.length > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {productImages.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details" className="flex-1 overflow-y-auto mt-4">
+                  <form onSubmit={handleUpdate} id="edit-form">
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-name">Name *</Label>
+                        <Input
+                          id="edit-name"
+                          name="name"
+                          defaultValue={productToEdit.name}
+                          required
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-description">Description</Label>
+                        <Input
+                          id="edit-description"
+                          name="description"
+                          defaultValue={productToEdit.description || ""}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-price">Price *</Label>
+                          <Input
+                            id="edit-price"
+                            name="price"
+                            type="number"
+                            step="0.01"
+                            defaultValue={productToEdit.price}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-quantity">Quantity *</Label>
+                          <Input
+                            id="edit-quantity"
+                            name="quantity"
+                            type="number"
+                            min="0"
+                            defaultValue={productToEdit.quantity}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-category">Category</Label>
+                          <Input
+                            id="edit-category"
+                            name="category"
+                            defaultValue={productToEdit.category || ""}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-country">Origin Country</Label>
+                          <Input
+                            id="edit-country"
+                            name="country"
+                            defaultValue={productToEdit.country || ""}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-minOrderQuantity">Min Order Qty</Label>
+                          <Input
+                            id="edit-minOrderQuantity"
+                            name="minOrderQuantity"
+                            type="number"
+                            min="1"
+                            defaultValue={productToEdit.minOrderQuantity || ""}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-status">Status</Label>
+                          <Select
+                            value={editStatus}
+                            onValueChange={(v) => setEditStatus(v as ProductStatus)}
+                          >
+                            <SelectTrigger id="edit-status">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="images" className="flex-1 overflow-y-auto mt-4">
+                  <ImageUploader
+                    key={imagesKey}
+                    productId={editingProduct!}
+                    existingImages={productImages?.map(img => ({
+                      _id: img._id,
+                      url: img.url,
+                      isPrimary: img.isPrimary,
+                      order: img.order,
+                      r2Key: img.r2Key,
+                    })) ?? []}
+                    onImagesChange={handleImagesChange}
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-description">Description</Label>
-                  <Input
-                    id="edit-description"
-                    name="description"
-                    defaultValue={productToEdit.description || ""}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-price">Price *</Label>
-                    <Input
-                      id="edit-price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      defaultValue={productToEdit.price}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="edit-quantity">Quantity *</Label>
-                    <Input
-                      id="edit-quantity"
-                      name="quantity"
-                      type="number"
-                      min="0"
-                      defaultValue={productToEdit.quantity}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-category">Category</Label>
-                  <Input
-                    id="edit-category"
-                    name="category"
-                    defaultValue={productToEdit.category || ""}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-status">Status</Label>
-                  <Select
-                    value={editStatus}
-                    onValueChange={(v) => setEditStatus(v as ProductStatus)}
-                  >
-                    <SelectTrigger id="edit-status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
+                </TabsContent>
+              </Tabs>
+
+              <DialogFooter className="mt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -460,9 +639,11 @@ export default function ProductsPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
+                {editTab === "details" && (
+                  <Button type="submit" form="edit-form">Save Changes</Button>
+                )}
               </DialogFooter>
-            </form>
+            </>
           )}
         </DialogContent>
       </Dialog>
@@ -473,7 +654,7 @@ export default function ProductsPage() {
           <DialogHeader>
             <DialogTitle>Delete Product</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              Are you sure you want to delete this product? This will also delete all associated images. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -494,3 +675,92 @@ export default function ProductsPage() {
   );
 }
 
+// Separate component for product row to fetch primary image
+function ProductRow({ 
+  product, 
+  onEdit, 
+  onDelete 
+}: { 
+  product: {
+    _id: Id<"products">;
+    name: string;
+    description?: string;
+    category?: string;
+    price: number;
+    quantity: number;
+    status: ProductStatus;
+    createdAt: number;
+  };
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const primaryImage = useQuery(api.productImages.getPrimaryImage, { productId: product._id });
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="relative h-10 w-10 overflow-hidden rounded border bg-muted">
+          {primaryImage?.url ? (
+            <Image
+              src={primaryImage.url}
+              alt={product.name}
+              fill
+              className="object-cover"
+              sizes="40px"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="font-medium">{product.name}</TableCell>
+      <TableCell>
+        {product.category ? (
+          <Badge variant="outline">{product.category}</Badge>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
+      </TableCell>
+      <TableCell>${product.price.toLocaleString()}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <Package className="h-3 w-3 text-muted-foreground" />
+          {product.quantity}
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge variant={statusColors[product.status]}>
+          {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        {new Date(product.createdAt).toLocaleDateString()}
+      </TableCell>
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <span className="sr-only">Open menu</span>
+              <span>...</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
+  );
+}
