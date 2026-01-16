@@ -65,6 +65,10 @@ export const create = mutation({
     quantity: v.number(),
     category: v.optional(v.string()),
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
+    country: v.optional(v.string()),
+    minOrderQuantity: v.optional(v.number()),
+    specifications: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getOrCreateUser(ctx);
@@ -78,6 +82,10 @@ export const create = mutation({
       quantity: args.quantity,
       category: args.category,
       status: args.status ?? "active",
+      country: args.country,
+      minOrderQuantity: args.minOrderQuantity,
+      specifications: args.specifications,
+      tags: args.tags,
       createdAt: now,
       updatedAt: now,
     });
@@ -95,6 +103,10 @@ export const update = mutation({
     quantity: v.optional(v.number()),
     category: v.optional(v.string()),
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
+    country: v.optional(v.string()),
+    minOrderQuantity: v.optional(v.number()),
+    specifications: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -149,7 +161,22 @@ export const remove = mutation({
       throw new Error("Unauthorized");
     }
 
+    // Delete all associated images from Convex (R2 cleanup should be done via API)
+    const images = await ctx.db
+      .query("productImages")
+      .withIndex("by_product", (q) => q.eq("productId", args.id))
+      .collect();
+
+    const r2Keys: string[] = [];
+    for (const image of images) {
+      r2Keys.push(image.r2Key);
+      await ctx.db.delete(image._id);
+    }
+
     await ctx.db.delete(args.id);
+
+    // Return the R2 keys so the caller can delete them from R2
+    return { r2Keys };
   },
 });
 
@@ -184,7 +211,26 @@ export const marketplace = query({
       );
     }
 
-    return filtered.sort((a, b) => b.createdAt - a.createdAt);
+    const sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
+
+    // Include primary image for each product
+    const productsWithImages = await Promise.all(
+      sorted.map(async (product) => {
+        const primaryImage = await ctx.db
+          .query("productImages")
+          .withIndex("by_product_primary", (q) =>
+            q.eq("productId", product._id).eq("isPrimary", true)
+          )
+          .first();
+
+        return {
+          ...product,
+          primaryImageUrl: primaryImage?.url ?? null,
+        };
+      })
+    );
+
+    return productsWithImages;
   },
 });
 
@@ -216,14 +262,119 @@ export const publicMarketplace = query({
       );
     }
 
-    const sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
+    let sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
     
     // Apply limit if specified
     if (args.limit && args.limit > 0) {
-      return sorted.slice(0, args.limit);
+      sorted = sorted.slice(0, args.limit);
     }
 
-    return sorted;
+    // Include primary image for each product
+    const productsWithImages = await Promise.all(
+      sorted.map(async (product) => {
+        const primaryImage = await ctx.db
+          .query("productImages")
+          .withIndex("by_product_primary", (q) =>
+            q.eq("productId", product._id).eq("isPrimary", true)
+          )
+          .first();
+
+        return {
+          ...product,
+          primaryImageUrl: primaryImage?.url ?? null,
+        };
+      })
+    );
+
+    return productsWithImages;
+  },
+});
+
+// Get product with all images
+export const getProductWithImages = query({
+  args: { id: v.id("products") },
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.id);
+    if (!product) {
+      return null;
+    }
+
+    const images = await ctx.db
+      .query("productImages")
+      .withIndex("by_product", (q) => q.eq("productId", args.id))
+      .collect();
+
+    const sortedImages = images.sort((a, b) => a.order - b.order);
+
+    // Get seller information
+    const seller = await ctx.db.get(product.sellerId as unknown as import("./_generated/dataModel").Id<"users">);
+    
+    // Get seller's business if they have one
+    let business = null;
+    if (seller?.businessId) {
+      business = await ctx.db.get(seller.businessId);
+    }
+
+    return {
+      ...product,
+      images: sortedImages,
+      seller: seller ? {
+        _id: seller._id,
+        name: seller.name,
+        imageUrl: seller.imageUrl,
+      } : null,
+      business: business ? {
+        _id: business._id,
+        name: business.name,
+        country: business.country,
+        verificationStatus: business.verificationStatus,
+        logoUrl: business.logoUrl,
+      } : null,
+    };
+  },
+});
+
+// Get related products (same category)
+export const getRelatedProducts = query({
+  args: {
+    productId: v.id("products"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.productId);
+    if (!product || !product.category) {
+      return [];
+    }
+
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+
+    // Filter by same category, excluding current product
+    const related = products
+      .filter((p) => p.category === product.category && p._id !== args.productId)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, args.limit ?? 4);
+
+    // Include primary image for each product
+    const relatedWithImages = await Promise.all(
+      related.map(async (p) => {
+        const primaryImage = await ctx.db
+          .query("productImages")
+          .withIndex("by_product_primary", (q) =>
+            q.eq("productId", p._id).eq("isPrimary", true)
+          )
+          .first();
+
+        return {
+          ...p,
+          primaryImageUrl: primaryImage?.url ?? null,
+        };
+      })
+    );
+
+    return relatedWithImages;
   },
 });
 
