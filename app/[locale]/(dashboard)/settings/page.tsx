@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,10 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const tToast = useTranslations("toast");
+  
   const { user } = useUser();
   const ensureUser = useMutation(api.users.ensureUser);
   const currentUser = useQuery(api.users.getCurrentUser);
@@ -29,7 +34,7 @@ export default function SettingsPage() {
   if (currentUser === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{tCommon("loading")}</div>
       </div>
     );
   }
@@ -38,23 +43,23 @@ export default function SettingsPage() {
     e.preventDefault();
     try {
       await updateProfile({ name: name || undefined });
-      toast.success("Profile updated successfully");
+      toast.success(tToast("productUpdated").replace("Product", "Profile"));
     } catch {
-      toast.error("Failed to update profile");
+      toast.error(tToast("error"));
     }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account settings and preferences</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Update your profile information</CardDescription>
+          <CardTitle>{t("profile")}</CardTitle>
+          <CardDescription>{t("profileDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
@@ -65,7 +70,7 @@ export default function SettingsPage() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{user?.fullName || "No name set"}</p>
+              <p className="font-medium">{user?.fullName || t("noNameSet")}</p>
               <p className="text-sm text-muted-foreground">{user?.emailAddresses[0]?.emailAddress}</p>
             </div>
           </div>
@@ -74,37 +79,37 @@ export default function SettingsPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Display Name</Label>
+              <Label htmlFor="name">{t("displayName")}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={currentUser?.name || user?.fullName || "Enter your name"}
+                placeholder={currentUser?.name || user?.fullName || t("enterName")}
               />
               <p className="text-sm text-muted-foreground">
-                This is your display name. It can be different from your account name.
+                {t("displayNameHelp")}
               </p>
             </div>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit">{tCommon("save")}</Button>
           </form>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Account Information</CardTitle>
-          <CardDescription>Your account details</CardDescription>
+          <CardTitle>{t("accountInfo")}</CardTitle>
+          <CardDescription>{t("accountInfoDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label>Email</Label>
+            <Label>{t("email")}</Label>
             <Input value={user?.emailAddresses[0]?.emailAddress || ""} disabled />
             <p className="text-sm text-muted-foreground">
-              Email is managed by Clerk. To change it, update your account settings.
+              {t("emailHelp")}
             </p>
           </div>
           <div className="grid gap-2">
-            <Label>User ID</Label>
+            <Label>{t("userId")}</Label>
             <Input value={user?.id || ""} disabled />
           </div>
         </CardContent>
@@ -112,4 +117,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

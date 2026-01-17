@@ -1,7 +1,8 @@
 "use client";
 
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -26,84 +27,7 @@ import {
   Hammer
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-
-const stats = [
-  { value: "50+", label: "Countries" },
-  { value: "10K+", label: "Suppliers" },
-  { value: "$2B+", label: "Trade Volume" },
-  { value: "99.5%", label: "Delivery Rate" },
-];
-
-const features = [
-  {
-    icon: Search,
-    title: "Discover Verified Suppliers",
-    description: "Browse thousands of verified manufacturers and wholesalers across Africa. Every supplier is vetted for quality and reliability.",
-  },
-  {
-    icon: Shield,
-    title: "Secure Trade Assurance",
-    description: "Protected payments with escrow services. Your money is safe until you confirm delivery and product quality.",
-  },
-  {
-    icon: Truck,
-    title: "Cross-Border Logistics",
-    description: "End-to-end shipping solutions handling customs, duties, and last-mile delivery across 50+ African countries.",
-  },
-  {
-    icon: CreditCard,
-    title: "Flexible Payment Options",
-    description: "Pay in local currencies with multiple payment methods including mobile money, bank transfers, and trade credit.",
-  },
-  {
-    icon: Package,
-    title: "Quality Inspection",
-    description: "Optional pre-shipment inspection services to ensure products meet your specifications before dispatch.",
-  },
-  {
-    icon: BarChart3,
-    title: "Trade Analytics",
-    description: "Track orders, analyze spending patterns, and optimize your supply chain with powerful business intelligence.",
-  },
-];
-
-const categories = [
-  { icon: Boxes, name: "Raw Materials", count: "2.5K+ suppliers" },
-  { icon: Leaf, name: "Agriculture", count: "1.8K+ suppliers" },
-  { icon: Gem, name: "Mining & Minerals", count: "950+ suppliers" },
-  { icon: Cpu, name: "Electronics", count: "1.2K+ suppliers" },
-  { icon: Shirt, name: "Textiles & Fashion", count: "3.1K+ suppliers" },
-  { icon: Utensils, name: "Food & Beverages", count: "2.3K+ suppliers" },
-  { icon: Hammer, name: "Construction", count: "1.5K+ suppliers" },
-  { icon: Building2, name: "Industrial Equipment", count: "890+ suppliers" },
-];
-
-const steps = [
-  {
-    step: "01",
-    title: "Browse & Source",
-    description: "Search our marketplace for products or post your requirements. Get quotes from multiple verified suppliers.",
-    icon: Search,
-  },
-  {
-    step: "02",
-    title: "Order & Pay Securely",
-    description: "Place orders with trade assurance protection. Pay securely with escrow-protected transactions.",
-    icon: ShoppingCart,
-  },
-  {
-    step: "03",
-    title: "Quality Check",
-    description: "Optional inspection services verify product quality and quantity before shipment.",
-    icon: FileCheck,
-  },
-  {
-    step: "04",
-    title: "Ship & Track",
-    description: "We handle customs, freight, and delivery. Track your shipment in real-time until it arrives.",
-    icon: MapPin,
-  },
-];
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const countries = [
   "Nigeria", "Kenya", "South Africa", "Ghana", "Egypt", 
@@ -112,6 +36,86 @@ const countries = [
 ];
 
 export default function LandingPage() {
+  const t = useTranslations("landing");
+
+  const stats = [
+    { value: "50+", labelKey: "stats.countries" },
+    { value: "10K+", labelKey: "stats.suppliers" },
+    { value: "$2B+", labelKey: "stats.tradeVolume" },
+    { value: "99.5%", labelKey: "stats.deliveryRate" },
+  ];
+
+  const features = [
+    {
+      icon: Search,
+      titleKey: "features.discoverSuppliers",
+      descKey: "features.discoverSuppliersDesc",
+    },
+    {
+      icon: Shield,
+      titleKey: "features.tradeAssurance",
+      descKey: "features.tradeAssuranceDesc",
+    },
+    {
+      icon: Truck,
+      titleKey: "features.logistics",
+      descKey: "features.logisticsDesc",
+    },
+    {
+      icon: CreditCard,
+      titleKey: "features.payments",
+      descKey: "features.paymentsDesc",
+    },
+    {
+      icon: Package,
+      titleKey: "features.inspection",
+      descKey: "features.inspectionDesc",
+    },
+    {
+      icon: BarChart3,
+      titleKey: "features.analytics",
+      descKey: "features.analyticsDesc",
+    },
+  ];
+
+  const categories = [
+    { icon: Boxes, nameKey: "categories.rawMaterials" },
+    { icon: Leaf, nameKey: "categories.agriculture" },
+    { icon: Gem, nameKey: "categories.miningMinerals" },
+    { icon: Cpu, nameKey: "categories.electronics" },
+    { icon: Shirt, nameKey: "categories.textilesFashion" },
+    { icon: Utensils, nameKey: "categories.foodBeverages" },
+    { icon: Hammer, nameKey: "categories.construction" },
+    { icon: Building2, nameKey: "categories.industrialEquipment" },
+  ];
+
+  const steps = [
+    {
+      step: "01",
+      titleKey: "howItWorks.step1Title",
+      descKey: "howItWorks.step1Description",
+      icon: Search,
+    },
+    {
+      step: "02",
+      titleKey: "howItWorks.step2Title",
+      descKey: "howItWorks.step2Description",
+      icon: ShoppingCart,
+    },
+    {
+      step: "03",
+      titleKey: "howItWorks.step3Title",
+      descKey: "howItWorks.step3Description",
+      icon: FileCheck,
+    },
+    {
+      step: "04",
+      titleKey: "howItWorks.step4Title",
+      descKey: "howItWorks.step4Description",
+      icon: MapPin,
+    },
+  ];
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -125,31 +129,32 @@ export default function LandingPage() {
           </Link>
           <div className="hidden md:flex items-center gap-6">
             <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Marketplace
+              {t("nav.marketplace")}
             </Link>
             <Link href="#categories" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Categories
+              {t("nav.categories")}
             </Link>
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              How It Works
+              {t("nav.howItWorks")}
             </Link>
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Features
+              {t("nav.features")}
             </Link>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <ThemeToggle />
             <SignedOut>
               <SignInButton mode="modal">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button variant="ghost" size="sm">{t("nav.signIn")}</Button>
               </SignInButton>
               <SignInButton mode="modal">
-                <Button size="sm">Get Started</Button>
+                <Button size="sm">{t("nav.getStarted")}</Button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm">Dashboard</Button>
+                <Button variant="ghost" size="sm">{t("nav.dashboard")}</Button>
               </Link>
               <UserButton />
             </SignedIn>
@@ -164,22 +169,21 @@ export default function LandingPage() {
             <div className="flex flex-col gap-6 opacity-0 animate-slide-up">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full w-fit">
                 <Globe2 className="h-4 w-4" />
-                Africa&apos;s Largest B2B Trade Platform
+                {t("hero.badge")}
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-                Source Products.{" "}
-                <span className="text-primary">Ship Anywhere.</span>{" "}
-                Grow Together.
+                {t("hero.title")}{" "}
+                <span className="text-primary">{t("hero.titleHighlight")}</span>{" "}
+                {t("hero.titleEnd")}
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl">
-                Connect with verified suppliers across Africa. From sourcing to doorstep delivery, 
-                we handle cross-border logistics, customs, and secure payments—so you can focus on growing your business.
+                {t("hero.description")}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-2">
                 <SignedOut>
                   <SignInButton mode="modal">
                     <Button size="lg" className="gap-2 text-base px-8">
-                      Start Sourcing
+                      {t("hero.startSourcing")}
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </SignInButton>
@@ -187,14 +191,14 @@ export default function LandingPage() {
                 <SignedIn>
                   <Link href="/marketplace">
                     <Button size="lg" className="gap-2 text-base px-8">
-                      Browse Marketplace
+                      {t("hero.browseMarketplace")}
                       <ArrowRight className="h-5 w-5" />
                     </Button>
                   </Link>
                 </SignedIn>
                 <Link href="/explore">
                   <Button size="lg" variant="outline" className="text-base px-8">
-                    Explore Products
+                    {t("hero.exploreProducts")}
                   </Button>
                 </Link>
               </div>
@@ -208,17 +212,17 @@ export default function LandingPage() {
                   <div className="grid grid-cols-2 gap-8">
                     {stats.map((stat, index) => (
                       <div 
-                        key={stat.label} 
+                        key={stat.labelKey} 
                         className={`text-center p-4 rounded-xl ${index % 2 === 0 ? 'bg-primary/5' : 'bg-accent/10'}`}
                       >
                         <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
-                        <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{t(stat.labelKey)}</div>
                       </div>
                     ))}
                   </div>
                   <div className="mt-8 pt-6 border-t">
                     <p className="text-sm text-muted-foreground text-center">
-                      Trusted by businesses in {countries.length}+ countries
+                      {t("hero.trustedBy", { count: countries.length })}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-4 justify-center">
                       {countries.slice(0, 6).map((country) => (
@@ -230,7 +234,7 @@ export default function LandingPage() {
                         </span>
                       ))}
                       <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">
-                        +{countries.length - 6} more
+                        {t("hero.more", { count: countries.length - 6 })}
                       </span>
                     </div>
                   </div>
@@ -256,16 +260,16 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 opacity-0 animate-slide-up">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Explore Product Categories
+              {t("categories.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Source from thousands of verified suppliers across diverse industries
+              {t("categories.description")}
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
             {categories.map((category, index) => (
               <Link 
-                key={category.name} 
+                key={category.nameKey} 
                 href="/explore"
                 className={`group opacity-0 animate-slide-up`}
                 style={{ animationDelay: `${index * 50}ms` }}
@@ -275,8 +279,8 @@ export default function LandingPage() {
                     <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                       <category.icon className="h-7 w-7 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-base">{category.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{category.count}</p>
+                    <h3 className="font-semibold text-base">{t(category.nameKey)}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{t("categories.suppliers", { count: "1K" })}</p>
                   </CardContent>
                 </Card>
               </Link>
@@ -285,7 +289,7 @@ export default function LandingPage() {
           <div className="text-center mt-12">
             <Link href="/explore">
               <Button variant="outline" size="lg" className="gap-2">
-                View All Categories
+                {t("categories.viewAll")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -298,10 +302,10 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 opacity-0 animate-slide-up">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              How AfriConnect Works
+              {t("howItWorks.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              From discovery to delivery, we simplify cross-border B2B trade
+              {t("howItWorks.description")}
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -323,8 +327,8 @@ export default function LandingPage() {
                       {item.step}
                     </div>
                   </div>
-                  <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
-                  <p className="text-muted-foreground">{item.description}</p>
+                  <h3 className="text-xl font-semibold mb-3">{t(item.titleKey)}</h3>
+                  <p className="text-muted-foreground">{t(item.descKey)}</p>
                 </div>
               </div>
             ))}
@@ -337,16 +341,16 @@ export default function LandingPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 opacity-0 animate-slide-up">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Everything You Need to Trade
+              {t("features.title")}
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Powerful tools and services to streamline your cross-border procurement
+              {t("features.description")}
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <Card 
-                key={feature.title} 
+                key={feature.titleKey} 
                 className={`group transition-all duration-300 hover:shadow-lg hover:border-primary/30 opacity-0 animate-slide-up`}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
@@ -354,9 +358,9 @@ export default function LandingPage() {
                   <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                     <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl">{t(feature.titleKey)}</CardTitle>
                   <CardDescription className="text-base leading-relaxed">
-                    {feature.description}
+                    {t(feature.descKey)}
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -371,17 +375,16 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl mx-auto text-center opacity-0 animate-slide-up">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Ready to Scale Your Business Across Africa?
+              {t("cta.title")}
             </h2>
             <p className="mt-6 text-lg opacity-90 max-w-xl mx-auto">
-              Join thousands of businesses already sourcing products and expanding their reach 
-              across the continent. Get started for free.
+              {t("cta.description")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <SignedOut>
                 <SignInButton mode="modal">
                   <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
-                    Create Free Account
+                    {t("cta.createAccount")}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </SignInButton>
@@ -389,13 +392,13 @@ export default function LandingPage() {
               <SignedIn>
                 <Link href="/dashboard">
                   <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
-                    Go to Dashboard
+                    {t("cta.goToDashboard")}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
               </SignedIn>
               <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/30 hover:bg-primary-foreground/10">
-                Talk to Sales
+                {t("cta.talkToSales")}
               </Button>
             </div>
           </div>
@@ -409,29 +412,29 @@ export default function LandingPage() {
             <div className="flex items-center gap-3">
               <Shield className="h-8 w-8 text-primary" />
               <div>
-                <div className="font-semibold">Trade Assurance</div>
-                <div className="text-sm text-muted-foreground">100% Payment Protection</div>
+                <div className="font-semibold">{t("trust.tradeAssurance")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.paymentProtection")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Truck className="h-8 w-8 text-primary" />
               <div>
-                <div className="font-semibold">Global Shipping</div>
-                <div className="text-sm text-muted-foreground">50+ Countries Covered</div>
+                <div className="font-semibold">{t("trust.globalShipping")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.countriesCovered")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <FileCheck className="h-8 w-8 text-primary" />
               <div>
-                <div className="font-semibold">Verified Suppliers</div>
-                <div className="text-sm text-muted-foreground">All Sellers Vetted</div>
+                <div className="font-semibold">{t("trust.verifiedSuppliers")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.sellersVetted")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <CreditCard className="h-8 w-8 text-primary" />
               <div>
-                <div className="font-semibold">Secure Payments</div>
-                <div className="text-sm text-muted-foreground">Multiple Options</div>
+                <div className="font-semibold">{t("trust.securePayments")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.multipleOptions")}</div>
               </div>
             </div>
           </div>
@@ -450,46 +453,45 @@ export default function LandingPage() {
                 <span className="text-xl font-bold">AfriConnect</span>
               </Link>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Africa&apos;s leading B2B marketplace connecting businesses across borders 
-                with seamless trade, logistics, and payment solutions.
+                {t("footer.tagline")}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Marketplace</h4>
+              <h4 className="font-semibold mb-4">{t("footer.marketplace")}</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="/explore" className="hover:text-foreground transition-colors">Browse Products</Link></li>
-                <li><Link href="#categories" className="hover:text-foreground transition-colors">Categories</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Verified Suppliers</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Trade Shows</Link></li>
+                <li><Link href="/explore" className="hover:text-foreground transition-colors">{t("footer.browseProducts")}</Link></li>
+                <li><Link href="#categories" className="hover:text-foreground transition-colors">{t("footer.categories")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.verifiedSuppliers")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.tradeShows")}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Services</h4>
+              <h4 className="font-semibold mb-4">{t("footer.services")}</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">Trade Assurance</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Logistics & Shipping</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Payment Solutions</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Quality Inspection</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.tradeAssurance")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.logistics")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.paymentSolutions")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.qualityInspection")}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h4 className="font-semibold mb-4">{t("footer.company")}</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">About Us</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Careers</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Contact</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">Blog</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.aboutUs")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.careers")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.contact")}</Link></li>
+                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.blog")}</Link></li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} AfriConnect. All rights reserved.
+              © {new Date().getFullYear()} AfriConnect. {t("footer.allRightsReserved")}
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Terms of Service</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Cookie Policy</Link>
+              <Link href="#" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
+              <Link href="#" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
+              <Link href="#" className="hover:text-foreground transition-colors">{t("footer.cookiePolicy")}</Link>
             </div>
           </div>
         </div>

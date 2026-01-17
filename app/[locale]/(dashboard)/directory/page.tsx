@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "convex/react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter, Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,10 +27,12 @@ import {
   Globe,
   X
 } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 
 export default function DirectoryPage() {
+  const t = useTranslations("directory");
+  const tCommon = useTranslations("common");
+  
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -86,7 +90,7 @@ export default function DirectoryPage() {
   if (businesses === undefined || countries === undefined || categories === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{tCommon("loading")}</div>
       </div>
     );
   }
@@ -94,9 +98,9 @@ export default function DirectoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Business Directory</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Discover verified businesses across Africa
+          {t("description")}
         </p>
       </div>
 
@@ -104,11 +108,11 @@ export default function DirectoryPage() {
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle>Browse Businesses</CardTitle>
+              <CardTitle>{t("title")}</CardTitle>
               <CardDescription>
                 {businesses.length > 0 
-                  ? `Showing ${businesses.length} verified business${businesses.length === 1 ? "" : "es"}`
-                  : "No businesses found"
+                  ? `${businesses.length} ${t("verified")}`
+                  : t("noBusinesses")
                 }
               </CardDescription>
             </div>
@@ -120,7 +124,7 @@ export default function DirectoryPage() {
                 className="w-fit"
               >
                 <X className="mr-2 h-4 w-4" />
-                Clear filters
+                {tCommon("clearFilters")}
               </Button>
             )}
           </div>
@@ -133,7 +137,7 @@ export default function DirectoryPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search businesses..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-9"
@@ -145,10 +149,10 @@ export default function DirectoryPage() {
                 <Select value={countryFilter || "all"} onValueChange={(v) => setCountryFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-full sm:w-[180px]">
                     <Globe className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="All Countries" />
+                    <SelectValue placeholder={t("allCountries")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Countries</SelectItem>
+                    <SelectItem value="all">{t("allCountries")}</SelectItem>
                     {countries.map((country) => (
                       <SelectItem key={country} value={country}>
                         {country}
@@ -164,7 +168,7 @@ export default function DirectoryPage() {
               <Tabs value={categoryFilter} onValueChange={setCategoryFilter}>
                 <TabsList className="h-auto flex-wrap justify-start gap-1">
                   <TabsTrigger value="" className="text-sm">
-                    All
+                    {tCommon("all")}
                   </TabsTrigger>
                   {categories.map((category) => (
                     <TabsTrigger key={category} value={category} className="text-sm">
@@ -180,7 +184,7 @@ export default function DirectoryPage() {
               <div className="flex flex-wrap gap-2">
                 {debouncedSearch && (
                   <Badge variant="secondary" className="gap-1">
-                    Search: {debouncedSearch}
+                    {tCommon("search")}: {debouncedSearch}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => {
@@ -192,7 +196,7 @@ export default function DirectoryPage() {
                 )}
                 {countryFilter && (
                   <Badge variant="secondary" className="gap-1">
-                    Country: {countryFilter}
+                    {t("allCountries").replace("All ", "")}: {countryFilter}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setCountryFilter("")}
@@ -201,7 +205,7 @@ export default function DirectoryPage() {
                 )}
                 {categoryFilter && (
                   <Badge variant="secondary" className="gap-1">
-                    Category: {categoryFilter}
+                    {t("allCategories").replace("All ", "")}: {categoryFilter}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setCategoryFilter("")}
@@ -216,15 +220,13 @@ export default function DirectoryPage() {
           {businesses.length === 0 ? (
             <div className="py-12 text-center">
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No businesses found</h3>
+              <h3 className="mt-4 text-lg font-semibold">{t("noBusinesses")}</h3>
               <p className="mt-2 text-muted-foreground">
-                {hasActiveFilters
-                  ? "Try adjusting your filters or search terms."
-                  : "No verified businesses available yet."}
+                {t("noBusinessesDescription")}
               </p>
               {hasActiveFilters && (
                 <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                  Clear all filters
+                  {tCommon("clearFilters")}
                 </Button>
               )}
             </div>
@@ -283,7 +285,7 @@ export default function DirectoryPage() {
                         </Badge>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Package className="h-3 w-3" />
-                          <span>{business.productCount} product{business.productCount === 1 ? "" : "s"}</span>
+                          <span>{business.productCount} {t("products")}</span>
                         </div>
                       </div>
                     </CardContent>

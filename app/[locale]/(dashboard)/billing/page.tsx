@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +11,17 @@ import { COMMERCE_ENABLED } from "@/lib/features";
 import { ComingSoonPage } from "@/components/ui/coming-soon";
 
 export default function BillingPage() {
+  const t = useTranslations("billing");
+  const tCommon = useTranslations("common");
+  const tOrders = useTranslations("orders");
+  
   const payments = useQuery(api.payments.list, COMMERCE_ENABLED ? {} : "skip");
 
   if (!COMMERCE_ENABLED) {
     return (
       <ComingSoonPage
-        title="Billing"
-        description="View your payment history and manage billing"
+        title={t("title")}
+        description={t("description")}
         icon={<CreditCard className="h-8 w-8 text-primary" />}
       />
     );
@@ -35,13 +40,13 @@ export default function BillingPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "success":
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Success</Badge>;
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">{tOrders("completed")}</Badge>;
       case "pending":
-        return <Badge variant="secondary">Pending</Badge>;
+        return <Badge variant="secondary">{tOrders("pending")}</Badge>;
       case "failed":
-        return <Badge variant="destructive">Failed</Badge>;
+        return <Badge variant="destructive">{t("failed")}</Badge>;
       case "cancelled":
-        return <Badge variant="outline">Cancelled</Badge>;
+        return <Badge variant="outline">{tOrders("cancelled")}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -50,8 +55,8 @@ export default function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Billing</h1>
-        <p className="text-muted-foreground">View your payment history</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       {/* Payment Method Card */}
@@ -59,9 +64,9 @@ export default function BillingPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Payment Method
+            {t("paymentMethod")}
           </CardTitle>
-          <CardDescription>Secure payments powered by Chapa</CardDescription>
+          <CardDescription>{t("paymentMethodDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
@@ -69,9 +74,9 @@ export default function BillingPage() {
               <CreditCard className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-medium">Chapa Payment Gateway</p>
+              <p className="font-medium">{t("chapaGateway")}</p>
               <p className="text-sm text-muted-foreground">
-                Pay securely with Mobile Money, Bank Transfer, or Card
+                {t("chapaDescription")}
               </p>
             </div>
             <a 
@@ -80,7 +85,7 @@ export default function BillingPage() {
               rel="noopener noreferrer"
               className="text-primary hover:underline text-sm flex items-center gap-1"
             >
-              Learn more
+              {t("learnMore")}
               <ExternalLink className="h-3 w-3" />
             </a>
           </div>
@@ -90,8 +95,8 @@ export default function BillingPage() {
       {/* Payment History */}
       <Card>
         <CardHeader>
-          <CardTitle>Payment History</CardTitle>
-          <CardDescription>View your recent transactions</CardDescription>
+          <CardTitle>{t("paymentHistory")}</CardTitle>
+          <CardDescription>{t("paymentHistoryDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {payments === undefined ? (
@@ -101,17 +106,17 @@ export default function BillingPage() {
           ) : payments.length === 0 ? (
             <div className="text-center py-8">
               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No payment history yet</p>
+              <p className="text-muted-foreground">{t("noPaymentHistory")}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("date")}</TableHead>
+                  <TableHead>{t("reference")}</TableHead>
+                  <TableHead>{t("type")}</TableHead>
+                  <TableHead>{t("amount")}</TableHead>
+                  <TableHead>{tCommon("status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

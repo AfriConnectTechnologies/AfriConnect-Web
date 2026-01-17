@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,11 @@ const BUSINESS_CATEGORIES = [
 ];
 
 export default function BusinessRegisterPage() {
+  const t = useTranslations("business");
+  const tCommon = useTranslations("common");
+  const tValidation = useTranslations("validation");
+  const tToast = useTranslations("toast");
+  
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [country, setCountry] = useState<string>("");
@@ -125,12 +131,12 @@ export default function BusinessRegisterPage() {
     if (isSubmitting) return;
 
     if (!country) {
-      toast.error("Please select a country");
+      toast.error(tValidation("selectCountry"));
       return;
     }
 
     if (!category) {
-      toast.error("Please select a business category");
+      toast.error(tValidation("selectCategory"));
       return;
     }
 
@@ -149,11 +155,11 @@ export default function BusinessRegisterPage() {
         category: category,
       });
 
-      toast.success("Business registered successfully! Pending verification.");
+      toast.success(tToast("businessRegistered"));
       router.push("/business/profile");
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to register business";
+        error instanceof Error ? error.message : tToast("failedToRegisterBusiness");
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -171,9 +177,9 @@ export default function BusinessRegisterPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Register Your Business</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("registerTitle")}</h1>
         <p className="text-muted-foreground">
-          Create a business profile to start selling on the marketplace
+          {t("registerDescription")}
         </p>
       </div>
 
@@ -181,50 +187,49 @@ export default function BusinessRegisterPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Business Information
+            {t("businessInformation")}
           </CardTitle>
           <CardDescription>
-            Provide details about your business. Your registration will be reviewed
-            by our team before activation.
+            {t("businessInfoDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Business Name *</Label>
+                <Label htmlFor="name">{t("businessName")} *</Label>
                 <Input
                   id="name"
                   name="name"
-                  placeholder="Enter your business name"
+                  placeholder={t("enterBusinessName")}
                   required
                   disabled={isSubmitting}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{t("description")}</Label>
                 <Input
                   id="description"
                   name="description"
-                  placeholder="Brief description of your business"
+                  placeholder={t("businessDescription")}
                   disabled={isSubmitting}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Describe what your business does and what products/services you offer.
+                  {t("descriptionHelp")}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="country">Country *</Label>
+                  <Label htmlFor="country">{t("country")} *</Label>
                   <Select
                     value={country}
                     onValueChange={setCountry}
                     disabled={isSubmitting}
                   >
                     <SelectTrigger id="country">
-                      <SelectValue placeholder="Select country" />
+                      <SelectValue placeholder={t("selectCountry")} />
                     </SelectTrigger>
                     <SelectContent>
                       {AFRICAN_COUNTRIES.map((c) => (
@@ -237,35 +242,35 @@ export default function BusinessRegisterPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">{t("city")}</Label>
                   <Input
                     id="city"
                     name="city"
-                    placeholder="Enter city"
+                    placeholder={t("enterCity")}
                     disabled={isSubmitting}
                   />
                 </div>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t("address")}</Label>
                 <Input
                   id="address"
                   name="address"
-                  placeholder="Business address"
+                  placeholder={t("businessAddress")}
                   disabled={isSubmitting}
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="category">Business Category *</Label>
+                <Label htmlFor="category">{t("category")} *</Label>
                 <Select
                   value={category}
                   onValueChange={setCategory}
                   disabled={isSubmitting}
                 >
                   <SelectTrigger id="category">
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder={t("selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {BUSINESS_CATEGORIES.map((c) => (
@@ -279,23 +284,23 @@ export default function BusinessRegisterPage() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">{t("phone")}</Label>
                   <Input
                     id="phone"
                     name="phone"
                     type="tel"
-                    placeholder="+251 xxx xxx xxxx"
+                    placeholder={t("phonePlaceholder")}
                     disabled={isSubmitting}
                   />
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="website">Website</Label>
+                  <Label htmlFor="website">{t("website")}</Label>
                   <Input
                     id="website"
                     name="website"
                     type="url"
-                    placeholder="https://example.com"
+                    placeholder={t("websitePlaceholder")}
                     disabled={isSubmitting}
                   />
                 </div>
@@ -309,16 +314,16 @@ export default function BusinessRegisterPage() {
                 onClick={() => router.back()}
                 disabled={isSubmitting}
               >
-                Cancel
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Registering...
+                    {t("registering")}
                   </>
                 ) : (
-                  "Register Business"
+                  t("registerTitle")
                 )}
               </Button>
             </div>

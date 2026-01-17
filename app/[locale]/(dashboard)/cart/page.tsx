@@ -2,19 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { ComingSoonBanner } from "@/components/ui/coming-soon";
 
 export default function CartPage() {
+  const t = useTranslations("cart");
+  const tCommon = useTranslations("common");
+  const tNav = useTranslations("navigation");
+  
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const ensureUser = useMutation(api.users.ensureUser);
@@ -44,7 +49,7 @@ export default function CartPage() {
   const handleRemove = async (itemId: Id<"cartItems">) => {
     try {
       await removeCartItem({ id: itemId });
-      toast.success("Item removed from cart");
+      toast.success(t("removeItem"));
     } catch {
       toast.error("Failed to remove item");
     }
@@ -52,7 +57,7 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     if (!cart || cart.length === 0) {
-      toast.error("Cart is empty");
+      toast.error(t("emptyCart"));
       return;
     }
 
@@ -101,7 +106,7 @@ export default function CartPage() {
   if (cart === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{tCommon("loading")}</div>
       </div>
     );
   }
@@ -116,16 +121,16 @@ export default function CartPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Shopping Cart</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Review your items before checkout
+          {t("description")}
         </p>
       </div>
 
       {!COMMERCE_ENABLED && (
         <ComingSoonBanner 
-          title="Cart & Checkout Coming Soon"
-          description="Our shopping cart and checkout features are currently under development. You'll be able to purchase products soon!"
+          title={`${t("title")} & ${t("checkout")}`}
+          description={t("emptyCartDescription")}
         />
       )}
 
@@ -133,9 +138,9 @@ export default function CartPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">Your cart is empty</p>
+            <p className="text-muted-foreground mb-4">{t("emptyCart")}</p>
             <Link href="/marketplace">
-              <Button>Browse Marketplace</Button>
+              <Button>{t("browseMarketplace")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -159,7 +164,7 @@ export default function CartPage() {
                           </Badge>
                         )}
                         <p className="text-sm text-muted-foreground mb-2">
-                          {item.product.description || "No description"}
+                          {item.product.description || tCommon("noDescription")}
                         </p>
                         <div className="flex items-center gap-4">
                           <div className="text-lg font-semibold">
@@ -218,7 +223,7 @@ export default function CartPage() {
                           </Button>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-muted-foreground">Subtotal</div>
+                          <div className="text-sm text-muted-foreground">{t("subtotal")}</div>
                           <div className="font-semibold">
                             ${(item.product.price * item.quantity).toLocaleString()}
                           </div>
@@ -234,25 +239,21 @@ export default function CartPage() {
           <div className="md:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>{t("title")}</CardTitle>
                 <CardDescription>
-                  {itemCount} {itemCount === 1 ? "item" : "items"} in your cart
+                  {itemCount} {itemCount === 1 ? "item" : "items"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-muted-foreground">{t("subtotal")}</span>
                     <span>${total.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Items</span>
-                    <span>{itemCount}</span>
                   </div>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-semibold">
-                    <span>Total</span>
+                    <span>{t("total")}</span>
                     <span>${total.toLocaleString()}</span>
                   </div>
                 </div>
@@ -264,23 +265,23 @@ export default function CartPage() {
                   {isCheckingOut ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Processing...
+                      {tCommon("loading")}
                     </>
                   ) : !COMMERCE_ENABLED ? (
                     <>
                       <CreditCard className="h-4 w-4" />
-                      Coming Soon
+                      {tCommon("soon")}
                     </>
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4" />
-                      Pay with Chapa
+                      {t("checkout")}
                     </>
                   )}
                 </Button>
                 <Link href="/marketplace">
                   <Button variant="outline" className="w-full">
-                    Continue Shopping
+                    {t("browseMarketplace")}
                   </Button>
                 </Link>
               </CardContent>
@@ -291,4 +292,3 @@ export default function CartPage() {
     </div>
   );
 }
-

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,10 @@ const statusColors: Record<ProductStatus, "default" | "secondary" | "outline" | 
 };
 
 export default function ProductsPage() {
+  const t = useTranslations("products");
+  const tCommon = useTranslations("common");
+  const tToast = useTranslations("toast");
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatus | "all">("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -118,11 +123,11 @@ export default function ProductsPage() {
       if (result?._id) {
         setCreatedProductId(result._id);
         setCreateStep(2);
-        toast.success("Product created! Now add images to complete your listing.");
+        toast.success(tToast("productCreated"));
       }
     } catch (error) {
       console.error("Create product error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to create product";
+      const errorMessage = error instanceof Error ? error.message : tToast("failedToCreate");
       toast.error(errorMessage);
     } finally {
       isSubmittingRef.current = false;
@@ -134,10 +139,10 @@ export default function ProductsPage() {
   const handleCompleteCreate = () => {
     const imageCount = productImages?.length ?? 0;
     if (imageCount === 0) {
-      toast.warning("Consider adding at least one image to help your product stand out.");
+      toast.warning(tToast("addImageSuggestion"));
     }
     resetCreateDialog();
-    toast.success("Product listing complete!");
+    toast.success(tToast("productListingComplete"));
   };
 
   // Reset create dialog state
@@ -167,10 +172,10 @@ export default function ProductsPage() {
           ? parseInt(formData.get("minOrderQuantity") as string) 
           : undefined,
       });
-      toast.success("Product updated successfully");
+      toast.success(tToast("productUpdated"));
       setEditingProduct(null);
     } catch {
-      toast.error("Failed to update product");
+      toast.error(tToast("failedToUpdate"));
     }
   };
 
@@ -194,10 +199,10 @@ export default function ProductsPage() {
         }
       }
       
-      toast.success("Product deleted successfully");
+      toast.success(tToast("productDeleted"));
       setDeleteConfirm(null);
     } catch {
-      toast.error("Failed to delete product");
+      toast.error(tToast("failedToDelete"));
     }
   };
 
@@ -224,7 +229,7 @@ export default function ProductsPage() {
   if (products === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{tCommon("loading")}</div>
       </div>
     );
   }
@@ -233,20 +238,20 @@ export default function ProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Products</h1>
-          <p className="text-muted-foreground">Manage your product listings</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <Button onClick={() => setIsCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Product
+          {t("addProduct")}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Products</CardTitle>
+          <CardTitle>{t("allProducts")}</CardTitle>
           <CardDescription>
-            Search and filter your products to find what you need
+            {t("searchDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -254,7 +259,7 @@ export default function ProductsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search products..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -265,12 +270,12 @@ export default function ProductsPage() {
               onValueChange={(v) => setStatusFilter(v as ProductStatus | "all")}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t("filterByStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">{t("allStatuses")}</SelectItem>
+                <SelectItem value="active">{t("active")}</SelectItem>
+                <SelectItem value="inactive">{t("inactive")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -278,22 +283,22 @@ export default function ProductsPage() {
           {filteredProducts.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
               {products.length === 0
-                ? "No products yet. Add your first product to get started."
-                : "No products match your search criteria."}
+                ? t("noProducts")
+                : t("noMatchingProducts")}
             </div>
           ) : (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60px]">Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="w-[60px]">{t("image")}</TableHead>
+                    <TableHead>{t("productName")}</TableHead>
+                    <TableHead>{t("category")}</TableHead>
+                    <TableHead>{t("price")}</TableHead>
+                    <TableHead>{t("quantity")}</TableHead>
+                    <TableHead>{t("status")}</TableHead>
+                    <TableHead>{tCommon("created")}</TableHead>
+                    <TableHead className="text-right">{tCommon("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -303,6 +308,7 @@ export default function ProductsPage() {
                       product={product}
                       onEdit={() => setEditingProduct(product._id)}
                       onDelete={() => setDeleteConfirm(product._id)}
+                      translations={{ edit: tCommon("edit"), delete: tCommon("delete"), active: t("active"), inactive: t("inactive") }}
                     />
                   ))}
                 </TableBody>
@@ -316,11 +322,11 @@ export default function ProductsPage() {
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && resetCreateDialog()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Add New Product</DialogTitle>
+            <DialogTitle>{t("addNewProduct")}</DialogTitle>
             <DialogDescription>
               {createStep === 1 
-                ? "Enter product details to get started."
-                : "Add images to make your product stand out."}
+                ? t("enterDetailsStep")
+                : t("addImagesStep")}
             </DialogDescription>
           </DialogHeader>
 
@@ -354,8 +360,8 @@ export default function ProductsPage() {
             </div>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground px-4 -mt-2 mb-2">
-            <span className={cn(createStep >= 1 && "text-foreground font-medium")}>Product Details</span>
-            <span className={cn(createStep >= 2 && "text-foreground font-medium")}>Add Images</span>
+            <span className={cn(createStep >= 1 && "text-foreground font-medium")}>{t("productDetails")}</span>
+            <span className={cn(createStep >= 2 && "text-foreground font-medium")}>{t("addImages")}</span>
           </div>
 
           {/* Step 1: Product Details */}
@@ -363,25 +369,25 @@ export default function ProductsPage() {
             <form ref={createFormRef} onSubmit={handleCreateStep1} className="flex-1 overflow-y-auto">
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="create-name">Product Name *</Label>
+                  <Label htmlFor="create-name">{t("productName")} *</Label>
                   <Input
                     id="create-name"
                     name="name"
-                    placeholder="Enter product name"
+                    placeholder={t("enterProductName")}
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="create-description">Description</Label>
+                  <Label htmlFor="create-description">{t("descriptionLabel")}</Label>
                   <Input
                     id="create-description"
                     name="description"
-                    placeholder="Describe your product"
+                    placeholder={t("describeProduct")}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="create-price">Price *</Label>
+                    <Label htmlFor="create-price">{t("price")} *</Label>
                     <Input
                       id="create-price"
                       name="price"
@@ -392,7 +398,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-quantity">Stock Quantity *</Label>
+                    <Label htmlFor="create-quantity">{t("stockQuantity")} *</Label>
                     <Input
                       id="create-quantity"
                       name="quantity"
@@ -405,25 +411,25 @@ export default function ProductsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="create-category">Category</Label>
+                    <Label htmlFor="create-category">{t("category")}</Label>
                     <Input
                       id="create-category"
                       name="category"
-                      placeholder="e.g., Electronics"
+                      placeholder={t("categoryPlaceholder")}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-country">Origin Country</Label>
+                    <Label htmlFor="create-country">{t("originCountry")}</Label>
                     <Input
                       id="create-country"
                       name="country"
-                      placeholder="e.g., Ethiopia"
+                      placeholder={t("countryPlaceholder")}
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="create-minOrderQuantity">Min Order Qty</Label>
+                    <Label htmlFor="create-minOrderQuantity">{t("minOrderQty")}</Label>
                     <Input
                       id="create-minOrderQuantity"
                       name="minOrderQuantity"
@@ -433,7 +439,7 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-status">Status</Label>
+                    <Label htmlFor="create-status">{t("status")}</Label>
                     <Select
                       value={createStatus}
                       onValueChange={(v) => setCreateStatus(v as ProductStatus)}
@@ -442,8 +448,8 @@ export default function ProductsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="active">{t("active")}</SelectItem>
+                        <SelectItem value="inactive">{t("inactive")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -451,10 +457,10 @@ export default function ProductsPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={resetCreateDialog} disabled={isSubmitting}>
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Next: Add Images"}
+                  {isSubmitting ? t("creating") : t("nextAddImages")}
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </DialogFooter>
@@ -480,14 +486,14 @@ export default function ProductsPage() {
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={handleCompleteCreate}>
-                  Skip for Now
+                  {t("skipForNow")}
                 </Button>
                 <Button type="button" onClick={handleCompleteCreate}>
                   <Check className="mr-2 h-4 w-4" />
-                  Complete Listing
+                  {t("completeListing")}
                   {productImages && productImages.length > 0 && (
                     <Badge variant="secondary" className="ml-2">
-                      {productImages.length} image{productImages.length !== 1 ? 's' : ''}
+                      {productImages.length} {t("image")}{productImages.length !== 1 ? 's' : ''}
                     </Badge>
                   )}
                 </Button>
@@ -503,17 +509,17 @@ export default function ProductsPage() {
           {productToEdit && (
             <>
               <DialogHeader>
-                <DialogTitle>Edit Product</DialogTitle>
+                <DialogTitle>{t("editProduct")}</DialogTitle>
                 <DialogDescription>
-                  Update product details and manage images.
+                  {t("updateDetails")}
                 </DialogDescription>
               </DialogHeader>
               
               <Tabs value={editTab} onValueChange={setEditTab} className="flex-1 overflow-hidden flex flex-col">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="details">Details</TabsTrigger>
+                  <TabsTrigger value="details">{tCommon("details")}</TabsTrigger>
                   <TabsTrigger value="images">
-                    Images
+                    {t("images")}
                     {productImages && productImages.length > 0 && (
                       <Badge variant="secondary" className="ml-2">
                         {productImages.length}
@@ -526,7 +532,7 @@ export default function ProductsPage() {
                   <form onSubmit={handleUpdate} id="edit-form">
                     <div className="grid gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="edit-name">Name *</Label>
+                        <Label htmlFor="edit-name">{t("productName")} *</Label>
                         <Input
                           id="edit-name"
                           name="name"
@@ -535,7 +541,7 @@ export default function ProductsPage() {
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="edit-description">Description</Label>
+                        <Label htmlFor="edit-description">{t("descriptionLabel")}</Label>
                         <Input
                           id="edit-description"
                           name="description"
@@ -544,7 +550,7 @@ export default function ProductsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-price">Price *</Label>
+                          <Label htmlFor="edit-price">{t("price")} *</Label>
                           <Input
                             id="edit-price"
                             name="price"
@@ -555,7 +561,7 @@ export default function ProductsPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-quantity">Quantity *</Label>
+                          <Label htmlFor="edit-quantity">{t("quantity")} *</Label>
                           <Input
                             id="edit-quantity"
                             name="quantity"
@@ -568,7 +574,7 @@ export default function ProductsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-category">Category</Label>
+                          <Label htmlFor="edit-category">{t("category")}</Label>
                           <Input
                             id="edit-category"
                             name="category"
@@ -576,7 +582,7 @@ export default function ProductsPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-country">Origin Country</Label>
+                          <Label htmlFor="edit-country">{t("originCountry")}</Label>
                           <Input
                             id="edit-country"
                             name="country"
@@ -586,7 +592,7 @@ export default function ProductsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-minOrderQuantity">Min Order Qty</Label>
+                          <Label htmlFor="edit-minOrderQuantity">{t("minOrderQty")}</Label>
                           <Input
                             id="edit-minOrderQuantity"
                             name="minOrderQuantity"
@@ -596,7 +602,7 @@ export default function ProductsPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-status">Status</Label>
+                          <Label htmlFor="edit-status">{t("status")}</Label>
                           <Select
                             value={editStatus}
                             onValueChange={(v) => setEditStatus(v as ProductStatus)}
@@ -605,8 +611,8 @@ export default function ProductsPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
+                              <SelectItem value="active">{t("active")}</SelectItem>
+                              <SelectItem value="inactive">{t("inactive")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -637,10 +643,10 @@ export default function ProductsPage() {
                   variant="outline"
                   onClick={() => setEditingProduct(null)}
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </Button>
                 {editTab === "details" && (
-                  <Button type="submit" form="edit-form">Save Changes</Button>
+                  <Button type="submit" form="edit-form">{t("saveChanges")}</Button>
                 )}
               </DialogFooter>
             </>
@@ -652,9 +658,9 @@ export default function ProductsPage() {
       <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>{t("deleteProduct")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this product? This will also delete all associated images. This action cannot be undone.
+              {t("deleteConfirmation")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -663,10 +669,10 @@ export default function ProductsPage() {
               variant="outline"
               onClick={() => setDeleteConfirm(null)}
             >
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button type="button" variant="destructive" onClick={handleDelete}>
-              Delete
+              {tCommon("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -679,7 +685,8 @@ export default function ProductsPage() {
 function ProductRow({ 
   product, 
   onEdit, 
-  onDelete 
+  onDelete,
+  translations,
 }: { 
   product: {
     _id: Id<"products">;
@@ -693,6 +700,7 @@ function ProductRow({
   };
   onEdit: () => void;
   onDelete: () => void;
+  translations: { edit: string; delete: string; active: string; inactive: string };
 }) {
   const primaryImage = useQuery(api.productImages.getPrimaryImage, { productId: product._id });
 
@@ -732,7 +740,7 @@ function ProductRow({
       </TableCell>
       <TableCell>
         <Badge variant={statusColors[product.status]}>
-          {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+          {product.status === "active" ? translations.active : translations.inactive}
         </Badge>
       </TableCell>
       <TableCell>
@@ -749,14 +757,14 @@ function ProductRow({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>
               <Pencil className="mr-2 h-4 w-4" />
-              Edit
+              {translations.edit}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={onDelete}
               className="text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {translations.delete}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

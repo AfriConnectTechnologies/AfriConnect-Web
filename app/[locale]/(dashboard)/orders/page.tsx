@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,10 @@ const statusColors: Record<OrderStatus, "default" | "secondary" | "outline" | "d
 };
 
 export default function OrdersPage() {
+  const t = useTranslations("orders");
+  const tCommon = useTranslations("common");
+  const tToast = useTranslations("toast");
+  
   const [activeTab, setActiveTab] = useState<OrderTab>("purchases");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
@@ -93,10 +98,10 @@ export default function OrdersPage() {
     if (!deleteConfirm) return;
     try {
       await deleteOrder({ id: deleteConfirm });
-      toast.success("Order deleted successfully");
+      toast.success(tToast("orderDeleted"));
       setDeleteConfirm(null);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to delete order";
+      const errorMessage = error instanceof Error ? error.message : tToast("failedToDeleteOrder");
       toast.error(errorMessage);
     }
   };
@@ -107,9 +112,9 @@ export default function OrdersPage() {
         id: orderId,
         status: newStatus,
       });
-      toast.success("Order status updated");
+      toast.success(tToast("orderStatusUpdated"));
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to update order";
+      const errorMessage = error instanceof Error ? error.message : tToast("failedToUpdateOrder");
       toast.error(errorMessage);
     }
   };
@@ -117,8 +122,8 @@ export default function OrdersPage() {
   if (!COMMERCE_ENABLED) {
     return (
       <ComingSoonPage
-        title="Orders"
-        description="Track and manage your purchases and sales"
+        title={t("title")}
+        description={t("trackAndManage")}
         icon={<ShoppingBag className="h-8 w-8 text-primary" />}
       />
     );
@@ -127,7 +132,7 @@ export default function OrdersPage() {
   if (purchases === undefined || sales === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{tCommon("loading")}</div>
       </div>
     );
   }
@@ -135,9 +140,9 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Manage your purchases and sales
+          {t("description")}
         </p>
       </div>
 
@@ -147,17 +152,17 @@ export default function OrdersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>
-                  {activeTab === "purchases" ? "My Purchases" : "My Sales"}
+                  {activeTab === "purchases" ? t("myPurchases") : t("mySales")}
                 </CardTitle>
                 <CardDescription>
                   {activeTab === "purchases"
-                    ? "Orders you've placed from other businesses"
-                    : "Orders placed by other businesses for your products"}
+                    ? t("purchasesDescription")
+                    : t("salesDescription")}
                 </CardDescription>
               </div>
               <TabsList>
-                <TabsTrigger value="purchases">Purchases</TabsTrigger>
-                <TabsTrigger value="sales">Sales</TabsTrigger>
+                <TabsTrigger value="purchases">{t("purchases")}</TabsTrigger>
+                <TabsTrigger value="sales">{t("sales")}</TabsTrigger>
               </TabsList>
             </div>
           </CardHeader>
@@ -167,7 +172,7 @@ export default function OrdersPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search orders..."
+                    placeholder={t("searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -178,14 +183,14 @@ export default function OrdersPage() {
                   onValueChange={(v) => setStatusFilter(v as OrderStatus | "all")}
                 >
                   <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
+                    <SelectValue placeholder={t("filterByStatus")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="all">{t("allStatuses")}</SelectItem>
+                    <SelectItem value="pending">{t("pending")}</SelectItem>
+                    <SelectItem value="processing">{t("processing")}</SelectItem>
+                    <SelectItem value="completed">{t("completed")}</SelectItem>
+                    <SelectItem value="cancelled">{t("cancelled")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -193,31 +198,31 @@ export default function OrdersPage() {
               {filteredOrders.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   {purchases.length === 0
-                    ? "No purchases yet. Start shopping in the marketplace!"
-                    : "No orders match your search criteria."}
+                    ? t("noPurchasesYet")
+                    : t("noMatchingOrders")}
                 </div>
               ) : (
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Order</TableHead>
-                        <TableHead>Seller</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>{t("order")}</TableHead>
+                        <TableHead>{t("seller")}</TableHead>
+                        <TableHead>{t("amount")}</TableHead>
+                        <TableHead>{tCommon("status")}</TableHead>
+                        <TableHead>{tCommon("created")}</TableHead>
+                        <TableHead className="text-right">{tCommon("actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredOrders.map((order) => (
                         <TableRow key={order._id}>
                           <TableCell className="font-medium">{order.title}</TableCell>
-                          <TableCell>{order.sellerId ? "Seller" : order.customer}</TableCell>
+                          <TableCell>{order.sellerId ? t("seller") : order.customer}</TableCell>
                           <TableCell>${order.amount.toLocaleString()}</TableCell>
                           <TableCell>
                             <Badge variant={statusColors[order.status]}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              {t(order.status)}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -234,7 +239,7 @@ export default function OrdersPage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => setSelectedOrder(order._id)}>
                                   <Package className="mr-2 h-4 w-4" />
-                                  View Details
+                                  {tCommon("viewDetails")}
                                 </DropdownMenuItem>
                                 {order.status === "pending" && (
                                   <DropdownMenuItem
@@ -242,7 +247,7 @@ export default function OrdersPage() {
                                     className="text-destructive"
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Cancel Order
+                                    {t("cancelOrder")}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -261,7 +266,7 @@ export default function OrdersPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search orders..."
+                    placeholder={t("searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -272,14 +277,14 @@ export default function OrdersPage() {
                   onValueChange={(v) => setStatusFilter(v as OrderStatus | "all")}
                 >
                   <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
+                    <SelectValue placeholder={t("filterByStatus")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="all">{t("allStatuses")}</SelectItem>
+                    <SelectItem value="pending">{t("pending")}</SelectItem>
+                    <SelectItem value="processing">{t("processing")}</SelectItem>
+                    <SelectItem value="completed">{t("completed")}</SelectItem>
+                    <SelectItem value="cancelled">{t("cancelled")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -287,20 +292,20 @@ export default function OrdersPage() {
               {filteredOrders.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   {sales.length === 0
-                    ? "No sales yet. List products to start selling!"
-                    : "No orders match your search criteria."}
+                    ? t("noSalesYet")
+                    : t("noMatchingOrders")}
                 </div>
               ) : (
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Order</TableHead>
-                        <TableHead>Buyer</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>{t("order")}</TableHead>
+                        <TableHead>{t("buyer")}</TableHead>
+                        <TableHead>{t("amount")}</TableHead>
+                        <TableHead>{tCommon("status")}</TableHead>
+                        <TableHead>{tCommon("created")}</TableHead>
+                        <TableHead className="text-right">{tCommon("actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -311,7 +316,7 @@ export default function OrdersPage() {
                           <TableCell>${order.amount.toLocaleString()}</TableCell>
                           <TableCell>
                             <Badge variant={statusColors[order.status]}>
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              {t(order.status)}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -328,19 +333,19 @@ export default function OrdersPage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => setSelectedOrder(order._id)}>
                                   <Package className="mr-2 h-4 w-4" />
-                                  View Details
+                                  {tCommon("viewDetails")}
                                 </DropdownMenuItem>
                                 {order.status === "pending" && (
                                   <>
                                     <DropdownMenuItem
                                       onClick={() => handleStatusUpdate(order._id, "processing")}
                                     >
-                                      Mark as Processing
+                                      {t("markAsProcessing")}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => handleStatusUpdate(order._id, "completed")}
                                     >
-                                      Mark as Completed
+                                      {t("markAsCompleted")}
                                     </DropdownMenuItem>
                                   </>
                                 )}
@@ -348,7 +353,7 @@ export default function OrdersPage() {
                                   <DropdownMenuItem
                                     onClick={() => handleStatusUpdate(order._id, "completed")}
                                   >
-                                    Mark as Completed
+                                    {t("markAsCompleted")}
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -373,31 +378,31 @@ export default function OrdersPage() {
               <DialogHeader>
                 <DialogTitle>{orderDetails.title}</DialogTitle>
                 <DialogDescription>
-                  Order placed on {new Date(orderDetails.createdAt).toLocaleString()}
+                  {t("orderPlacedOn", { date: new Date(orderDetails.createdAt).toLocaleString() })}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-sm text-muted-foreground">Status</div>
+                    <div className="text-sm text-muted-foreground">{tCommon("status")}</div>
                     <Badge variant={statusColors[orderDetails.status]}>
-                      {orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}
+                      {t(orderDetails.status)}
                     </Badge>
                   </div>
                   <div>
-                    <div className="text-sm text-muted-foreground">Total Amount</div>
+                    <div className="text-sm text-muted-foreground">{t("totalAmount")}</div>
                     <div className="font-semibold">${orderDetails.amount.toLocaleString()}</div>
                   </div>
                 </div>
                 {orderDetails.description && (
                   <div>
-                    <div className="text-sm text-muted-foreground mb-1">Description</div>
+                    <div className="text-sm text-muted-foreground mb-1">{tCommon("details")}</div>
                     <p>{orderDetails.description}</p>
                   </div>
                 )}
                 {orderDetails.items && orderDetails.items.length > 0 && (
                   <div>
-                    <div className="text-sm font-semibold mb-2">Order Items</div>
+                    <div className="text-sm font-semibold mb-2">{t("orderItems")}</div>
                     <div className="space-y-2">
                       {orderDetails.items.map((item, idx) => (
                         <div
@@ -406,10 +411,10 @@ export default function OrdersPage() {
                         >
                           <div>
                             <div className="font-medium">
-                              {item.product?.name || "Unknown Product"}
+                              {item.product?.name || t("unknownProduct")}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              Quantity: {item.quantity} × ${item.price.toLocaleString()}
+                              {item.quantity} × ${item.price.toLocaleString()}
                             </div>
                           </div>
                           <div className="font-semibold">
@@ -422,17 +427,17 @@ export default function OrdersPage() {
                 )}
               </div>
               <DialogFooter>
-                <Button onClick={() => setSelectedOrder(null)}>Close</Button>
+                <Button onClick={() => setSelectedOrder(null)}>{tCommon("close")}</Button>
               </DialogFooter>
             </>
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>Loading Order...</DialogTitle>
-                <DialogDescription>Please wait while we fetch the order details.</DialogDescription>
+                <DialogTitle>{t("loadingOrder")}</DialogTitle>
+                <DialogDescription>{t("loadingOrderDetails")}</DialogDescription>
               </DialogHeader>
               <div className="py-8 text-center text-muted-foreground">
-                Loading...
+                {tCommon("loading")}
               </div>
             </>
           )}
@@ -443,9 +448,9 @@ export default function OrdersPage() {
       <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Order</DialogTitle>
+            <DialogTitle>{t("cancelOrder")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this order? This action cannot be undone.
+              {t("cancelOrderConfirmation")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -454,10 +459,10 @@ export default function OrdersPage() {
               variant="outline"
               onClick={() => setDeleteConfirm(null)}
             >
-              Keep Order
+              {t("keepOrder")}
             </Button>
             <Button type="button" variant="destructive" onClick={handleDelete}>
-              Cancel Order
+              {t("cancelOrder")}
             </Button>
           </DialogFooter>
         </DialogContent>

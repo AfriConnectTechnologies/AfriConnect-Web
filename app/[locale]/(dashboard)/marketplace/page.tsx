@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useRouter, Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,12 +19,13 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Search, ShoppingCart, Package, ImageIcon, X, SlidersHorizontal, ArrowUpDown } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 
 type SortOption = "newest" | "price_asc" | "price_desc";
 
 export default function MarketplacePage() {
+  const t = useTranslations("marketplace");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -138,7 +141,7 @@ export default function MarketplacePage() {
   if (categories === undefined || countries === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{tCommon("loading")}</div>
       </div>
     );
   }
@@ -150,9 +153,9 @@ export default function MarketplacePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Marketplace</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">
-          Browse products from businesses across the platform
+          {t("description")}
         </p>
       </div>
 
@@ -160,13 +163,13 @@ export default function MarketplacePage() {
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle>Browse Products</CardTitle>
+              <CardTitle>{t("browseProducts")}</CardTitle>
               <CardDescription>
                 {isRefetching 
-                  ? "Loading products..."
+                  ? t("loadingProducts")
                   : displayProducts.length > 0 
-                    ? `Showing ${displayProducts.length} product${displayProducts.length === 1 ? "" : "s"}`
-                    : "No products found"
+                    ? t("showingProducts", { count: displayProducts.length })
+                    : t("noProducts")
                 }
               </CardDescription>
             </div>
@@ -178,7 +181,7 @@ export default function MarketplacePage() {
                 className="w-fit"
               >
                 <X className="mr-2 h-4 w-4" />
-                Clear filters
+                {tCommon("clearFilters")}
               </Button>
             )}
           </div>
@@ -191,7 +194,7 @@ export default function MarketplacePage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-9"
@@ -202,12 +205,12 @@ export default function MarketplacePage() {
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
                 <SelectTrigger className="w-full sm:w-[180px]">
                   <ArrowUpDown className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t("sortBy")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
+                  <SelectItem value="newest">{t("sortNewest")}</SelectItem>
+                  <SelectItem value="price_asc">{t("sortPriceAsc")}</SelectItem>
+                  <SelectItem value="price_desc">{t("sortPriceDesc")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -218,7 +221,7 @@ export default function MarketplacePage() {
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Filters
+                {tCommon("filters")}
                 {activeFilterCount > 0 && (
                   <Badge variant="secondary" className="ml-2">
                     {activeFilterCount}
@@ -233,10 +236,10 @@ export default function MarketplacePage() {
               {countries.length > 0 && (
                 <Select value={countryFilter || "all"} onValueChange={(v) => setCountryFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="All Countries" />
+                    <SelectValue placeholder={t("allCountries")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Countries</SelectItem>
+                    <SelectItem value="all">{t("allCountries")}</SelectItem>
                     {countries.map((country) => (
                       <SelectItem key={country} value={country}>
                         {country}
@@ -250,10 +253,10 @@ export default function MarketplacePage() {
               {categories.length > 0 && (
                 <Select value={categoryFilter || "all"} onValueChange={(v) => setCategoryFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="All Categories" />
+                    <SelectValue placeholder={t("allCategories")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">{t("allCategories")}</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
@@ -268,7 +271,7 @@ export default function MarketplacePage() {
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      Price: ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
+                      {t("price")}: ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
                     </span>
                   </div>
                   <Slider
@@ -288,7 +291,7 @@ export default function MarketplacePage() {
               <div className="flex flex-wrap gap-2">
                 {debouncedSearch && (
                   <Badge variant="secondary" className="gap-1">
-                    Search: {debouncedSearch}
+                    {tCommon("search")}: {debouncedSearch}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => {
@@ -300,7 +303,7 @@ export default function MarketplacePage() {
                 )}
                 {countryFilter && (
                   <Badge variant="secondary" className="gap-1">
-                    Country: {countryFilter}
+                    {t("country")}: {countryFilter}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setCountryFilter("")}
@@ -309,7 +312,7 @@ export default function MarketplacePage() {
                 )}
                 {categoryFilter && (
                   <Badge variant="secondary" className="gap-1">
-                    Category: {categoryFilter}
+                    {t("category")}: {categoryFilter}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setCategoryFilter("")}
@@ -318,7 +321,7 @@ export default function MarketplacePage() {
                 )}
                 {isPriceFilterActive && (
                   <Badge variant="secondary" className="gap-1">
-                    Price: ${userPriceRange![0]} - ${userPriceRange![1]}
+                    {t("price")}: ${userPriceRange![0]} - ${userPriceRange![1]}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setUserPriceRange(null)}
@@ -333,20 +336,20 @@ export default function MarketplacePage() {
           {isRefetching ? (
             <div className="py-12 text-center">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-              <p className="mt-4 text-muted-foreground">Loading products...</p>
+              <p className="mt-4 text-muted-foreground">{t("loadingProducts")}</p>
             </div>
           ) : displayProducts.length === 0 ? (
             <div className="py-12 text-center">
               <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">No products found</h3>
+              <h3 className="mt-4 text-lg font-semibold">{t("noProducts")}</h3>
               <p className="mt-2 text-muted-foreground">
                 {hasActiveFilters
-                  ? "Try adjusting your filters or search terms."
-                  : "No products available in the marketplace yet."}
+                  ? t("tryAdjustingFilters")
+                  : t("noProductsYet")}
               </p>
               {hasActiveFilters && (
                 <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                  Clear all filters
+                  {t("clearAllFilters")}
                 </Button>
               )}
             </div>
@@ -395,7 +398,7 @@ export default function MarketplacePage() {
                       {product.quantity === 0 && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/80">
                           <Badge variant="destructive" className="text-sm">
-                            Out of Stock
+                            {t("outOfStock")}
                           </Badge>
                         </div>
                       )}
@@ -406,7 +409,7 @@ export default function MarketplacePage() {
                         {product.name}
                       </CardTitle>
                       <CardDescription className="line-clamp-2 min-h-[2.5rem]">
-                        {product.description || "No description available"}
+                        {product.description || tCommon("noDescription")}
                       </CardDescription>
                     </CardHeader>
                     
@@ -419,7 +422,7 @@ export default function MarketplacePage() {
                           {product.quantity > 0 && (
                             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                               <Package className="h-3 w-3" />
-                              {product.quantity} in stock
+                              {t("inStock", { count: product.quantity })}
                             </div>
                           )}
                         </div>

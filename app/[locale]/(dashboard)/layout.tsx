@@ -2,6 +2,7 @@
 
 import { Authenticated, Unauthenticated } from "convex/react";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
 
@@ -10,6 +11,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("common");
+  
   return (
     <>
       <SignedIn>
@@ -24,7 +27,7 @@ export default function DashboardLayout({
         </Authenticated>
         <Unauthenticated>
           <div className="flex min-h-screen items-center justify-center">
-            <div className="text-muted-foreground">Setting up your account...</div>
+            <div className="text-muted-foreground">{t("settingUp")}</div>
           </div>
         </Unauthenticated>
       </SignedIn>
