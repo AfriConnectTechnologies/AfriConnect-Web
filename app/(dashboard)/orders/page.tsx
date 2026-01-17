@@ -32,7 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Trash2, Package } from "lucide-react";
+import { Search, Trash2, Package, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -40,6 +40,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { COMMERCE_ENABLED } from "@/lib/features";
+import { ComingSoonPage } from "@/components/ui/coming-soon";
 
 type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 type OrderTab = "purchases" | "sales";
@@ -111,6 +113,16 @@ export default function OrdersPage() {
       toast.error(errorMessage);
     }
   };
+
+  if (!COMMERCE_ENABLED) {
+    return (
+      <ComingSoonPage
+        title="Orders"
+        description="Track and manage your purchases and sales"
+        icon={<ShoppingBag className="h-8 w-8 text-primary" />}
+      />
+    );
+  }
 
   if (purchases === undefined || sales === undefined) {
     return (

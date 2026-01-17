@@ -11,6 +11,8 @@ import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from 
 import Link from "next/link";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
+import { COMMERCE_ENABLED } from "@/lib/features";
+import { ComingSoonBanner } from "@/components/ui/coming-soon";
 
 export default function CartPage() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -119,6 +121,13 @@ export default function CartPage() {
           Review your items before checkout
         </p>
       </div>
+
+      {!COMMERCE_ENABLED && (
+        <ComingSoonBanner 
+          title="Cart & Checkout Coming Soon"
+          description="Our shopping cart and checkout features are currently under development. You'll be able to purchase products soon!"
+        />
+      )}
 
       {cart.length === 0 ? (
         <Card>
@@ -250,12 +259,17 @@ export default function CartPage() {
                 <Button
                   className="w-full gap-2"
                   onClick={handleCheckout}
-                  disabled={isCheckingOut || cart.length === 0}
+                  disabled={isCheckingOut || cart.length === 0 || !COMMERCE_ENABLED}
                 >
                   {isCheckingOut ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Processing...
+                    </>
+                  ) : !COMMERCE_ENABLED ? (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Coming Soon
                     </>
                   ) : (
                     <>

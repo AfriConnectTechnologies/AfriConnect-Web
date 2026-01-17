@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 import { ImageGallery } from "@/components/products";
 import Image from "next/image";
+import { COMMERCE_ENABLED } from "@/lib/features";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -255,12 +256,18 @@ export default function ProductDetailPage() {
                   className="w-full"
                   size="lg"
                   onClick={handleAddToCart}
-                  disabled={productData.quantity === 0 || quantity > productData.quantity}
+                  disabled={productData.quantity === 0 || quantity > productData.quantity || !COMMERCE_ENABLED}
                 >
                   <ShoppingCart className="mr-2 h-4 w-4" />
-                  Add to Cart
+                  {COMMERCE_ENABLED ? "Add to Cart" : "Coming Soon"}
                 </Button>
-                {productData.quantity === 0 && (
+                {!COMMERCE_ENABLED && (
+                  <p className="text-sm text-muted-foreground text-center flex items-center justify-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Shopping cart feature is coming soon
+                  </p>
+                )}
+                {COMMERCE_ENABLED && productData.quantity === 0 && (
                   <p className="text-sm text-destructive text-center">
                     This product is currently out of stock
                   </p>

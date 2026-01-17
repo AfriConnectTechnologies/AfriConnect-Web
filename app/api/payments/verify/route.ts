@@ -2,10 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPayment, ChapaError } from "@/lib/chapa";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import { COMMERCE_ENABLED } from "@/lib/features";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(request: NextRequest) {
+  // Check if commerce features are enabled
+  if (!COMMERCE_ENABLED) {
+    return NextResponse.json(
+      { error: "Payment features are currently unavailable. Coming soon!" },
+      { status: 503 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const txRef = searchParams.get("tx_ref");

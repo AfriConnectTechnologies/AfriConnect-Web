@@ -11,22 +11,24 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { COMMERCE_ENABLED } from "@/lib/features";
 
 type NavItem = {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   showBadge?: boolean;
+  isCommerce?: boolean;
 };
 
 const baseNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/marketplace", label: "Marketplace", icon: Store },
   { href: "/products", label: "My Products", icon: Package },
-  { href: "/cart", label: "Cart", icon: ShoppingCart, showBadge: true },
-  { href: "/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/cart", label: "Cart", icon: ShoppingCart, showBadge: true, isCommerce: true },
+  { href: "/orders", label: "Orders", icon: ShoppingBag, isCommerce: true },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/billing", label: "Billing", icon: CreditCard, isCommerce: true },
 ];
 
 const sellerNavItems: NavItem[] = [
@@ -164,7 +166,8 @@ function SidebarContent({
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          const showBadge = item.showBadge && cartItemCount > 0;
+          const showBadge = item.showBadge && cartItemCount > 0 && COMMERCE_ENABLED;
+          const showComingSoon = item.isCommerce && !COMMERCE_ENABLED;
           return (
             <Link
               key={item.href}
@@ -182,19 +185,32 @@ function SidebarContent({
               {!isCollapsed && (
                 <>
                   <span className="truncate">{item.label}</span>
-                  {showBadge && (
+                  {showComingSoon && (
+                    <Badge variant="outline" className="ml-auto h-5 px-1.5 text-[10px] shrink-0 bg-muted">
+                      Soon
+                    </Badge>
+                  )}
+                  {showBadge && !showComingSoon && (
                     <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-xs shrink-0">
                       {cartItemCount}
                     </Badge>
                   )}
                 </>
               )}
-              {isCollapsed && showBadge && (
+              {isCollapsed && showBadge && !showComingSoon && (
                 <Badge
                   variant="secondary"
                   className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-xs shrink-0"
                 >
                   {cartItemCount}
+                </Badge>
+              )}
+              {isCollapsed && showComingSoon && (
+                <Badge
+                  variant="outline"
+                  className="absolute -top-1 -right-1 h-4 px-1 text-[8px] shrink-0 bg-muted"
+                >
+                  Soon
                 </Badge>
               )}
             </Link>

@@ -3,8 +3,17 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { initializePayment, getPaymentUrls, ChapaError } from "@/lib/chapa";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import { COMMERCE_ENABLED } from "@/lib/features";
 
 export async function POST(request: NextRequest) {
+  // Check if commerce features are enabled
+  if (!COMMERCE_ENABLED) {
+    return NextResponse.json(
+      { error: "Payment features are currently unavailable. Coming soon!" },
+      { status: 503 }
+    );
+  }
+
   try {
     // Check authentication
     const { userId, getToken } = await auth();

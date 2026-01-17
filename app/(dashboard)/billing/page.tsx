@@ -6,9 +6,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CreditCard, Loader2, ExternalLink, Shield } from "lucide-react";
+import { COMMERCE_ENABLED } from "@/lib/features";
+import { ComingSoonPage } from "@/components/ui/coming-soon";
 
 export default function BillingPage() {
-  const payments = useQuery(api.payments.list, {});
+  const payments = useQuery(api.payments.list, COMMERCE_ENABLED ? {} : "skip");
+
+  if (!COMMERCE_ENABLED) {
+    return (
+      <ComingSoonPage
+        title="Billing"
+        description="View your payment history and manage billing"
+        icon={<CreditCard className="h-8 w-8 text-primary" />}
+      />
+    );
+  }
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
