@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { UserButton } from "@clerk/nextjs";
 import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,47 +13,50 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
 
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses";
+
 type NavItem = {
   href: string;
-  label: string;
+  labelKey: NavItemKey;
   icon: React.ComponentType<{ className?: string }>;
   showBadge?: boolean;
   isCommerce?: boolean;
 };
 
 const baseNavItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/marketplace", label: "Marketplace", icon: Store },
-  { href: "/directory", label: "Directory", icon: Building },
-  { href: "/products", label: "My Products", icon: Package },
-  { href: "/cart", label: "Cart", icon: ShoppingCart, showBadge: true, isCommerce: true },
-  { href: "/orders", label: "Orders", icon: ShoppingBag, isCommerce: true },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/billing", label: "Billing", icon: CreditCard, isCommerce: true },
+  { href: "/dashboard", labelKey: "dashboard", icon: BarChart3 },
+  { href: "/marketplace", labelKey: "marketplace", icon: Store },
+  { href: "/directory", labelKey: "directory", icon: Building },
+  { href: "/products", labelKey: "products", icon: Package },
+  { href: "/cart", labelKey: "cart", icon: ShoppingCart, showBadge: true, isCommerce: true },
+  { href: "/orders", labelKey: "orders", icon: ShoppingBag, isCommerce: true },
+  { href: "/settings", labelKey: "settings", icon: Settings },
+  { href: "/billing", labelKey: "billing", icon: CreditCard, isCommerce: true },
 ];
 
 const sellerNavItems: NavItem[] = [
-  { href: "/business/profile", label: "My Business", icon: Building2 },
+  { href: "/business/profile", labelKey: "myBusiness", icon: Building2 },
 ];
 
 const buyerNavItems: NavItem[] = [
-  { href: "/business/register", label: "Register Business", icon: Building2 },
+  { href: "/business/register", labelKey: "registerBusiness", icon: Building2 },
 ];
 
 const adminNavItems: NavItem[] = [
-  { href: "/admin/users", label: "Manage Users", icon: Users },
-  { href: "/admin/businesses", label: "Manage Businesses", icon: Building },
+  { href: "/admin/users", labelKey: "manageUsers", icon: Users },
+  { href: "/admin/businesses", labelKey: "manageBusinesses", icon: Building },
 ];
 
 export function MobileSidebarTrigger() {
   const pathname = usePathname();
+  const t = useTranslations("navigation");
 
   return (
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle menu</span>
+          <span className="sr-only">{t("toggleMenu")}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0">
@@ -107,6 +110,8 @@ function SidebarContent({
   toggleCollapse: () => void;
   isMobile?: boolean;
 }) {
+  const t = useTranslations("navigation");
+  const tCommon = useTranslations("common");
   const cart = useQuery(api.cart.get);
   const currentUser = useQuery(api.users.getCurrentUser);
   const cartItemCount = cart?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
@@ -159,13 +164,14 @@ function SidebarContent({
           ) : (
             <ChevronLeft className="h-3 w-3" />
           )}
-          <span className="sr-only">Toggle sidebar</span>
+          <span className="sr-only">{t("toggleSidebar")}</span>
         </Button>
       )}
 
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const label = t(item.labelKey);
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           const showBadge = item.showBadge && cartItemCount > 0 && COMMERCE_ENABLED;
           const showComingSoon = item.isCommerce && !COMMERCE_ENABLED;
@@ -180,15 +186,15 @@ function SidebarContent({
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
-              title={isCollapsed ? item.label : undefined}
+              title={isCollapsed ? label : undefined}
             >
               <Icon className="h-5 w-5 shrink-0" />
               {!isCollapsed && (
                 <>
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{label}</span>
                   {showComingSoon && (
                     <Badge variant="outline" className="ml-auto h-5 px-1.5 text-[10px] shrink-0 bg-muted">
-                      Soon
+                      {tCommon("soon")}
                     </Badge>
                   )}
                   {showBadge && !showComingSoon && (
@@ -211,7 +217,7 @@ function SidebarContent({
                   variant="outline"
                   className="absolute -top-1 -right-1 h-4 px-1 text-[8px] shrink-0 bg-muted"
                 >
-                  Soon
+                  {tCommon("soon")}
                 </Badge>
               )}
             </Link>
@@ -223,7 +229,7 @@ function SidebarContent({
           <div className="pt-4 mt-4 border-t">
             <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <Shield className="h-3 w-3" />
-              <span>Admin</span>
+              <span>{tCommon("admin")}</span>
             </div>
           </div>
         )}
@@ -232,7 +238,7 @@ function SidebarContent({
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Account</span>
+              <span className="text-sm text-muted-foreground">{tCommon("account")}</span>
               {currentUser?.role && (
                 <Badge variant="outline" className="text-xs w-fit mt-1">
                   {currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)}
@@ -246,4 +252,3 @@ function SidebarContent({
     </div>
   );
 }
-

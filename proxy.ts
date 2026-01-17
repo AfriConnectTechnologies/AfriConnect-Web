@@ -1,6 +1,31 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import createMiddleware from 'next-intl/middleware'
+import { routing } from './i18n/navigation'
+import { NextRequest } from 'next/server'
 
-export const proxy = clerkMiddleware()
+const intlMiddleware = createMiddleware(routing)
+
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/:locale',
+  '/:locale/explore',
+  '/:locale/sign-in(.*)',
+  '/:locale/sign-up(.*)',
+  '/api(.*)',
+])
+
+export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
+  // Handle internationalization first
+  const response = intlMiddleware(request)
+  
+  // Protect non-public routes
+  if (!isPublicRoute(request)) {
+    await auth.protect()
+  }
+  
+  return response
+})
 
 export const config = {
   matcher: [
@@ -10,4 +35,3 @@ export const config = {
     '/(api|trpc)(.*)',
   ],
 }
-

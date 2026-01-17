@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { MobileSidebarTrigger } from "./sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { BarChart3 } from "lucide-react";
 
 export function DashboardHeader() {
@@ -14,6 +15,7 @@ export function DashboardHeader() {
         <span className="font-semibold">AfriConnect</span>
       </Link>
       <div className="flex-1" />
+      <LanguageSwitcher />
       <ThemeToggle />
     </header>
   );
