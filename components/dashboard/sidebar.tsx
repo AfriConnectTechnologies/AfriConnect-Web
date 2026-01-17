@@ -24,6 +24,7 @@ type NavItem = {
 const baseNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/marketplace", label: "Marketplace", icon: Store },
+  { href: "/directory", label: "Directory", icon: Building },
   { href: "/products", label: "My Products", icon: Package },
   { href: "/cart", label: "Cart", icon: ShoppingCart, showBadge: true, isCommerce: true },
   { href: "/orders", label: "Orders", icon: ShoppingBag, isCommerce: true },

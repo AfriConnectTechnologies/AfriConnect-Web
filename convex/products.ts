@@ -183,7 +183,17 @@ export const remove = mutation({
 export const marketplace = query({
   args: {
     category: v.optional(v.string()),
+    country: v.optional(v.string()),
     search: v.optional(v.string()),
+    minPrice: v.optional(v.number()),
+    maxPrice: v.optional(v.number()),
+    sortBy: v.optional(
+      v.union(
+        v.literal("newest"),
+        v.literal("price_asc"),
+        v.literal("price_desc")
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -198,10 +208,17 @@ export const marketplace = query({
 
     let filtered = products;
 
+    // Apply category filter
     if (args.category) {
       filtered = filtered.filter((p) => p.category === args.category);
     }
 
+    // Apply country filter
+    if (args.country) {
+      filtered = filtered.filter((p) => p.country === args.country);
+    }
+
+    // Apply search filter
     if (args.search) {
       const searchLower = args.search.toLowerCase();
       filtered = filtered.filter(
@@ -211,7 +228,29 @@ export const marketplace = query({
       );
     }
 
-    const sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
+    // Apply price range filters
+    if (args.minPrice !== undefined) {
+      filtered = filtered.filter((p) => p.price >= args.minPrice!);
+    }
+    if (args.maxPrice !== undefined) {
+      filtered = filtered.filter((p) => p.price <= args.maxPrice!);
+    }
+
+    // Apply sorting
+    const sortBy = args.sortBy ?? "newest";
+    let sorted: typeof filtered;
+    switch (sortBy) {
+      case "price_asc":
+        sorted = filtered.sort((a, b) => a.price - b.price);
+        break;
+      case "price_desc":
+        sorted = filtered.sort((a, b) => b.price - a.price);
+        break;
+      case "newest":
+      default:
+        sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
+        break;
+    }
 
     // Include primary image for each product
     const productsWithImages = await Promise.all(
@@ -238,7 +277,17 @@ export const marketplace = query({
 export const publicMarketplace = query({
   args: {
     category: v.optional(v.string()),
+    country: v.optional(v.string()),
     search: v.optional(v.string()),
+    minPrice: v.optional(v.number()),
+    maxPrice: v.optional(v.number()),
+    sortBy: v.optional(
+      v.union(
+        v.literal("newest"),
+        v.literal("price_asc"),
+        v.literal("price_desc")
+      )
+    ),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -249,10 +298,17 @@ export const publicMarketplace = query({
 
     let filtered = products;
 
+    // Apply category filter
     if (args.category) {
       filtered = filtered.filter((p) => p.category === args.category);
     }
 
+    // Apply country filter
+    if (args.country) {
+      filtered = filtered.filter((p) => p.country === args.country);
+    }
+
+    // Apply search filter
     if (args.search) {
       const searchLower = args.search.toLowerCase();
       filtered = filtered.filter(
@@ -262,8 +318,30 @@ export const publicMarketplace = query({
       );
     }
 
-    let sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
-    
+    // Apply price range filters
+    if (args.minPrice !== undefined) {
+      filtered = filtered.filter((p) => p.price >= args.minPrice!);
+    }
+    if (args.maxPrice !== undefined) {
+      filtered = filtered.filter((p) => p.price <= args.maxPrice!);
+    }
+
+    // Apply sorting
+    const sortBy = args.sortBy ?? "newest";
+    let sorted: typeof filtered;
+    switch (sortBy) {
+      case "price_asc":
+        sorted = filtered.sort((a, b) => a.price - b.price);
+        break;
+      case "price_desc":
+        sorted = filtered.sort((a, b) => b.price - a.price);
+        break;
+      case "newest":
+      default:
+        sorted = filtered.sort((a, b) => b.createdAt - a.createdAt);
+        break;
+    }
+
     // Apply limit if specified
     if (args.limit && args.limit > 0) {
       sorted = sorted.slice(0, args.limit);
@@ -287,6 +365,59 @@ export const publicMarketplace = query({
     );
 
     return productsWithImages;
+  },
+});
+
+// Get price range of active products
+export const getProductPriceRange = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+
+    if (products.length === 0) {
+      return { min: 0, max: 1000 };
+    }
+
+    const prices = products.map((p) => p.price);
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    };
+  },
+});
+
+// Get unique countries from active products
+export const getProductCountries = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+
+    const countries = [
+      ...new Set(products.map((p) => p.country).filter((c): c is string => !!c)),
+    ];
+    return countries.sort();
+  },
+});
+
+// Get unique categories from active products
+export const getProductCategories = query({
+  args: {},
+  handler: async (ctx) => {
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .collect();
+
+    const categories = [
+      ...new Set(products.map((p) => p.category).filter((c): c is string => !!c)),
+    ];
+    return categories.sort();
   },
 });
 
