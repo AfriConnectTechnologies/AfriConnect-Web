@@ -16,7 +16,18 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
-  // Handle internationalization first
+  const { pathname } = request.nextUrl
+  
+  // Skip i18n middleware for API routes - they don't need locale handling
+  if (pathname.startsWith('/api')) {
+    // Still check auth for protected API routes if needed
+    if (!isPublicRoute(request)) {
+      await auth.protect()
+    }
+    return // Let the request continue to API route without i18n processing
+  }
+  
+  // Handle internationalization for non-API routes
   const response = intlMiddleware(request)
   
   // Protect non-public routes

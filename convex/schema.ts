@@ -9,6 +9,7 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     role: v.optional(v.union(v.literal("buyer"), v.literal("seller"), v.literal("admin"))),
     businessId: v.optional(v.id("businesses")),
+    welcomeEmailSent: v.optional(v.boolean()),
     preferences: v.optional(
       v.object({
         theme: v.optional(v.string()),

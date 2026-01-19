@@ -2,9 +2,27 @@
 
 import { Authenticated, Unauthenticated } from "convex/react";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { useWelcomeEmail } from "@/lib/hooks/useWelcomeEmail";
+
+function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
+  const locale = useLocale();
+  
+  // Initialize user and send welcome email for new users
+  useWelcomeEmail(locale);
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -17,13 +35,7 @@ export default function DashboardLayout({
     <>
       <SignedIn>
         <Authenticated>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <DashboardHeader />
-              <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-            </div>
-          </div>
+          <AuthenticatedDashboard>{children}</AuthenticatedDashboard>
         </Authenticated>
         <Unauthenticated>
           <div className="flex min-h-screen items-center justify-center">

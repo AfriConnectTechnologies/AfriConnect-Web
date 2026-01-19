@@ -107,10 +107,30 @@ export default function AdminBusinessesPage() {
 
     setIsSubmitting(true);
     try {
-      await verifyBusiness({
+      const result = await verifyBusiness({
         businessId: actionDialog.businessId,
         status: actionDialog.action === "verify" ? "verified" : "rejected",
       });
+
+      // Send verification/rejection email to business owner
+      if (result?.ownerEmail) {
+        const emailType = actionDialog.action === "verify" 
+          ? "business-verified" 
+          : "business-rejected";
+        
+        fetch("/api/email/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: emailType,
+            to: result.ownerEmail,
+            businessName: actionDialog.businessName,
+            ownerName: result.ownerName,
+            locale: "en", // Admin panel doesn't have locale context, default to English
+          }),
+        }).catch((err) => console.error("Failed to send verification email:", err));
+      }
+
       toast.success(
         actionDialog.action === "verify"
           ? "Business verified successfully"

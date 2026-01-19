@@ -33,18 +33,50 @@ export const ensureUser = mutation({
       .first();
 
     if (existingUser) {
-      return existingUser._id;
+      // Check if welcome email needs to be sent (user exists but hasn't received welcome email)
+      const shouldSendWelcomeEmail = !existingUser.welcomeEmailSent;
+      return { 
+        userId: existingUser._id, 
+        isNewUser: false, 
+        shouldSendWelcomeEmail,
+        email: existingUser.email, 
+        name: existingUser.name 
+      };
     }
+
+    const email = identity.email ?? "";
+    const name = typeof identity.name === "string" ? identity.name : undefined;
 
     const userId = await ctx.db.insert("users", {
       clerkId: identity.subject,
-      email: identity.email ?? "",
-      name: typeof identity.name === "string" ? identity.name : undefined,
+      email,
+      name,
       imageUrl: typeof identity.picture === "string" ? identity.picture : undefined,
       role: "buyer", // Default role for new users
+      welcomeEmailSent: false,
     });
 
-    return userId;
+    return { userId, isNewUser: true, shouldSendWelcomeEmail: true, email, name };
+  },
+});
+
+// Mark welcome email as sent
+export const markWelcomeEmailSent = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (user) {
+      await ctx.db.patch(user._id, { welcomeEmailSent: true });
+    }
   },
 });
 

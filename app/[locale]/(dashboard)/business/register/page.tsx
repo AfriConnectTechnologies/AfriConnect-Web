@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,6 +110,7 @@ export default function BusinessRegisterPage() {
   const tCommon = useTranslations("common");
   const tValidation = useTranslations("validation");
   const tToast = useTranslations("toast");
+  const locale = useLocale();
   
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,18 +143,50 @@ export default function BusinessRegisterPage() {
 
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
+    const businessName = formData.get("name") as string;
+    const city = (formData.get("city") as string) || undefined;
 
     try {
-      await createBusiness({
-        name: formData.get("name") as string,
+      const result = await createBusiness({
+        name: businessName,
         description: (formData.get("description") as string) || undefined,
         country: country,
-        city: (formData.get("city") as string) || undefined,
+        city: city,
         address: (formData.get("address") as string) || undefined,
         phone: (formData.get("phone") as string) || undefined,
         website: (formData.get("website") as string) || undefined,
         category: category,
       });
+
+      // Send registration confirmation email to business owner
+      fetch("/api/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "business-registered",
+          to: result?.ownerEmail,
+          businessName: businessName,
+          ownerName: result?.ownerName,
+          category: category,
+          country: country,
+          locale: locale,
+        }),
+      }).catch((err) => console.error("Failed to send registration email:", err));
+
+      // Send notification to admin about new business registration
+      fetch("/api/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "admin-new-business",
+          businessName: businessName,
+          ownerName: result?.ownerName || "Not provided",
+          ownerEmail: result?.ownerEmail,
+          category: category,
+          country: country,
+          city: city,
+        }),
+      }).catch((err) => console.error("Failed to send admin notification:", err));
 
       toast.success(tToast("businessRegistered"));
       router.push("/business/profile");

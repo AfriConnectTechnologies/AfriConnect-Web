@@ -44,7 +44,14 @@ export const createBusiness = mutation({
       businessId: businessId,
     });
 
-    return await ctx.db.get(businessId);
+    const business = await ctx.db.get(businessId);
+    
+    // Return business with owner info for email notifications
+    return {
+      ...business,
+      ownerEmail: user.email,
+      ownerName: user.name,
+    };
   },
 });
 
@@ -222,7 +229,16 @@ export const verifyBusiness = mutation({
       updatedAt: Date.now(),
     });
 
-    return await ctx.db.get(args.businessId);
+    const updatedBusiness = await ctx.db.get(args.businessId);
+    
+    // Get owner info for email notification
+    const owner = await ctx.db.get(business.ownerId);
+    
+    return {
+      ...updatedBusiness,
+      ownerEmail: owner?.email,
+      ownerName: owner?.name,
+    };
   },
 });
 
