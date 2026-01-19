@@ -376,5 +376,115 @@
       "getStarted": "Anza",
       "dashboard": "Dashibodi"
     }
+  },
+  "legal": {
+    "backToHome": "Rudi Nyumbani",
+    "tableOfContents": "Jedwali la Yaliyomo",
+    "viewPrivacyPolicy": "Tazama Sera ya Faragha",
+    "viewTermsOfService": "Tazama Masharti ya Huduma",
+    "terms": {
+      "title": "Masharti ya Huduma",
+      "lastUpdated": "Imesasishwa Mwisho",
+      "lastUpdatedDate": "Januari 2026",
+      "introduction": "Karibu AfriConnect. Masharti haya ya Huduma (\"Masharti\") yanaongoza ufikiaji wako na matumizi ya jukwaa la AfriConnect, ikiwa ni pamoja na tovuti yetu, programu za simu, na huduma (kwa pamoja, \"Jukwaa\"). Kwa kufikia au kutumia Jukwaa letu, unakubali kufungwa na Masharti haya na Sera yetu ya Faragha. Tafadhali yasome kwa makini kabla ya kutumia huduma zetu.",
+      "acceptance": {
+        "title": "Kukubali Masharti",
+        "content": "Kwa kuunda akaunti, kufikia, au kutumia Jukwaa la AfriConnect, unakiri kuwa umesoma, umeelewa, na unakubali kufungwa na Masharti haya ya Huduma. Ikiwa hukubaliani na Masharti haya, huwezi kufikia au kutumia Jukwaa letu.\n\nMasharti haya yanaunda makubaliano ya kisheria yanayofunga kati yako na AfriConnect Inc. Tunaweza kusasisha Masharti haya mara kwa mara, na matumizi yako yanayoendelea ya Jukwaa baada ya mabadiliko yoyote yanamaanisha kukubali Masharti mapya.\n\nIkiwa unatumia Jukwaa kwa niaba ya biashara au chombo kingine cha kisheria, unawakilisha kuwa una mamlaka ya kufunga chombo hicho kwa Masharti haya."
+      },
+      "eligibility": {
+        "title": "Mahitaji ya Ustahiki",
+        "content": "Kutumia AfriConnect, lazima:\n\n• Uwe na umri wa angalau miaka 18 au umri wa utu uzima wa kisheria katika eneo lako\n• Uwe chombo cha biashara kilichosajiliwa au mwakilishi aliyeidhinishwa wa kimoja\n• Uwe na uwezo wa kisheria wa kuingia mikataba inayofunga\n• Usiwe umezuiwa kutumia Jukwaa chini ya sheria zinazotumika\n• Kutoa taarifa sahihi na kamili za usajili\n\nKwa kusajili akaunti, unawakilisha na kudhibitisha kuwa unakidhi mahitaji yote ya ustahiki. Tunahifadhi haki ya kukataa huduma, kusitisha akaunti, au kughairi maagizo kwa hiari yetu ikiwa tunaamini haukidhi mahitaji haya."
+      },
+      "accounts": {
+        "title": "Usajili wa Akaunti na Usalama",
+        "content": "Unapounda akaunti kwenye AfriConnect, unakubali:\n\n• Kutoa taarifa sahihi, za sasa, na kamili wakati wa usajili\n• Kudumisha na kusasisha haraka taarifa za akaunti yako\n• Kuweka siri za kuingia zako salama na siri\n• Kutoshiriki akaunti yako na wengine au kuruhusu ufikiaji usioruhusiwa\n• Kutuarifu mara moja juu ya matumizi yoyote yasiyoruhusiwa ya akaunti yako\n• Kuwajibika kwa shughuli zote zinazotokea chini ya akaunti yako\n\nTunaweza kuthibitisha sifa zako za biashara na tunaweza kuhitaji nyaraka za ziada. Taarifa za uongo au zinazopotosha zinaweza kusababisha kusimamishwa au kufungwa kwa akaunti.\n\nUna jukumu peke yako la kudumisha usiri wa sifa za akaunti yako na kuzuia ufikiaji wa vifaa vyako."
+      },
+      "marketplace": {
+        "title": "Sheria na Mwenendo wa Soko",
+        "content": "AfriConnect inafanya kazi kama soko la B2B linalounganisha wanunuzi na wauzaji kote Afrika. Watumiaji wanakubali:\n\n• Kufanya miamala yote kwa uaminifu mzuri na nia ya uaminifu\n• Kutoa maelezo sahihi ya bidhaa, bei, na taarifa za upatikanaji\n• Kuheshimu maagizo yaliyoahidiwa na ratiba za uwasilishaji\n• Kudumisha mawasiliano ya kitaalamu na watumiaji wengine\n• Kuzingatia sheria zote zinazotumika za biashara na kanuni\n• Kutodanganya bei, hakiki, au vipimo vya soko\n\nWauzaji lazima wahakikishe bidhaa zinakidhi vipimo na viwango vya ubora vilivyoelezwa. Wanunuzi lazima wafanye malipo kama ilivyokubalika na kutoa taarifa sahihi za usafirishaji.\n\nTunahifadhi haki ya kuondoa orodha, kusimamisha akaunti, au kuchukua hatua nyingine kudumisha uadilifu wa soko."
+      },
+      "payments": {
+        "title": "Malipo na Miamala",
+        "content": "Miamala yote ya kifedha kwenye AfriConnect inachakatwa kupitia mfumo wetu salama wa malipo unaoendeshwa na Chapa na watoa huduma wengine wa malipo wenye leseni.\n\n• Malipo lazima yafanywe kwa kutumia njia za malipo zilizoidhinishwa\n• Ada za miamala na kodi zinazotumika zitafunuliwa wazi\n• Ubadilishaji wa sarafu unategemea viwango vya sasa vya ubadilishaji\n• Marejesho yanategemea sera yetu ya marejesho na masharti ya muuzaji\n• Huduma za escrow zinaweza kutumika kwa miamala ya uhakikisho wa biashara\n\nHatuhifadhi maelezo kamili ya kadi ya malipo. Uchakataji wote wa malipo unazingatia viwango vya PCI-DSS.\n\nMiamala inayopingwa itashughulikiwa kulingana na taratibu zetu za utatuzi wa migogoro. Chargebacks zinaweza kusababisha vikwazo vya akaunti."
+      },
+      "prohibited": {
+        "title": "Shughuli Zilizozuiliwa",
+        "content": "Watumiaji wanazuiliwa kabisa:\n\n• Kuuza bidhaa bandia, zilizoibwa, au zilizopatikana kinyume cha sheria\n• Kushiriki katika ulaghai, utakasaji wa fedha, au miamala haramu\n• Kuepuka ada za jukwaa au hatua za usalama\n• Kudharau, kutishia, au kubagua watumiaji wengine\n• Kuchapisha maudhui ya uongo, yanayopotosha, au ya kashfa\n• Kujaribu kudukuliwa, kusumbua, au kuharibu Jukwaa\n• Kukwangua data au kutumia mifumo ya kiotomatiki bila ruhusa\n• Kukiuka haki za mali miliki ya akili za wengine\n• Kufanya biashara ya vitu vilivyozuiliwa ikiwa ni pamoja na silaha, dawa, na bidhaa zilizowekwa vikwazo\n• Kuunda akaunti nyingi kuepuka vikwazo\n\nUkiukaji unaweza kusababisha kufungwa mara moja kwa akaunti, upotezaji wa fedha, na hatua za kisheria."
+      },
+      "ip": {
+        "title": "Haki za Mali Miliki ya Akili",
+        "content": "Maudhui yote, vipengele, na utendaji wa Jukwaa la AfriConnect, ikiwa ni pamoja na lakini si tu maandishi, michoro, nembo, ikoni, picha, programu, na mkusanyiko wake, ni mali ya kipekee ya AfriConnect Inc. au watoa leseni wake na yanalindwa na sheria za kimataifa za hakimiliki, alama za biashara, na mali miliki ya akili nyingine.\n\nWatumiaji wanabaki wamiliki wa maudhui wanayowasilisha lakini wanapeana AfriConnect leseni ya ulimwengu, isiyo ya kipekee, isiyo na malipo ya kutumia, kuonyesha, na kusambaza maudhui kama hayo kuhusiana na Jukwaa.\n\nHuwezi kunakili, kusambaza, kurekebisha, kuunda kazi zinazotokana, au kutumia kibiashara maudhui yoyote ya Jukwaa bila idhini yetu ya awali ya maandishi.\n\nIkiwa unaamini haki zako za mali miliki ya akili zimekiukwa, tafadhali wasiliana na timu yetu ya kisheria na taarifa za kina kuhusu ukiukaji unaodaiwa."
+      },
+      "liability": {
+        "title": "Kikomo cha Dhima",
+        "content": "KWA KIWANGO CHA JUU KINACHORUHUSIWA NA SHERIA INAYOTUMIKA:\n\nAfriConnect inatoa Jukwaa \"KAMA ILIVYO\" na \"KAMA INAVYOPATIKANA\" bila dhamana ya aina yoyote, iwe ya wazi au ya kimya kimya, ikiwa ni pamoja na lakini si tu dhamana za kimya kimya za uuzaji, kufaa kwa kusudi fulani, na kutokiuka.\n\nHatuhakikishi kuwa:\n• Jukwaa litakuwa bila usumbufu, salama, au bila makosa\n• Matokeo yaliyopatikana kutokana na kutumia Jukwaa yatakuwa sahihi\n• Kasoro katika Jukwaa zitarekebishwa\n\nAfriConnect haitawajibika kwa uharibifu wowote usio wa moja kwa moja, wa bahati mbaya, maalum, wa matokeo, au wa adhabu unaotokana na au unaohusiana na matumizi yako ya Jukwaa.\n\nJumla ya dhima yetu kwa madai yoyote chini ya Masharti haya haitazidi kiasi ulichotulipa katika miezi kumi na miwili (12) iliyotangulia dai.\n\nMamlaka mengine hayaruhusu kikomo cha dhima, kwa hivyo vikomo hivi vinaweza visitumike kwako."
+      },
+      "disputes": {
+        "title": "Utatuzi wa Migogoro",
+        "content": "Tunawahimiza watumiaji kutatua migogoro moja kwa moja kupitia kituo cha utatuzi wa migogoro cha Jukwaa letu. Mchakato wetu ni pamoja na:\n\n1. Majadiliano ya Moja kwa Moja: Wahusika wanapaswa kwanza kujaribu kutatua masuala kupitia mawasiliano ya moja kwa moja\n2. Upatanishi: AfriConnect inaweza kutoa huduma za upatanishi kwa migogoro isiyotatuliwa\n3. Usuluhishi: Usuluhishi unaofunga unaweza kuhitajika kwa migogoro fulani\n\nKwa migogoro ambayo haiwezi kutatuliwa kupitia njia hizi:\n\n• Masharti haya yanaongozwa na sheria za Jamhuri ya Kenya\n• Kesi zozote za kisheria zitaendeshwa katika mahakama za Nairobi, Kenya\n• Masharti ya madai ya kikundi yanaondolewa kwa kiwango kinachoruhusiwa na sheria\n\nHakuna chochote katika Masharti haya kinachozuia haki yako ya kuwasilisha malalamiko kwa mamlaka husika za ulinzi wa watumiaji au biashara katika eneo lako."
+      },
+      "changes": {
+        "title": "Marekebisho ya Masharti",
+        "content": "AfriConnect inahifadhi haki ya kurekebisha Masharti haya wakati wowote. Tunapofanya mabadiliko makubwa:\n\n• Tutachapisha Masharti yaliyosasishwa kwenye Jukwaa\n• Tutasasisha tarehe ya \"Imesasishwa Mwisho\" hapo juu\n• Tunaweza kukuarifu kupitia barua pepe au arifa ya Jukwaa kwa mabadiliko makubwa\n• Matumizi yanayoendelea baada ya mabadiliko yanamaanisha kukubali\n\nIkiwa haukubaliani na mabadiliko yoyote, unapaswa kuacha kutumia Jukwaa na kufunga akaunti yako. Mabadiliko mengine yanaweza kuhitaji idhini yako ya wazi kabla ya kuanza kutumika.\n\nTunapendekeza kupitia Masharti haya mara kwa mara ili kukaa na habari kuhusu sasisho zozote."
+      },
+      "contact": {
+        "title": "Wasiliana Nasi",
+        "content": "Ikiwa una maswali yoyote kuhusu Masharti haya ya Huduma au unahitaji msaada, tafadhali wasiliana na timu yetu ya kisheria. Tumejitolea kushughulikia wasiwasi wako na kutoa uwazi kuhusu sera zetu."
+      }
+    },
+    "privacy": {
+      "title": "Sera ya Faragha",
+      "lastUpdated": "Imesasishwa Mwisho",
+      "lastUpdatedDate": "Januari 2026",
+      "introduction": "Katika AfriConnect, tumejitolea kulinda faragha yako na kuhakikisha usalama wa taarifa zako binafsi. Sera hii ya Faragha inaeleza jinsi tunavyokusanya, kutumia, kufichua, na kulinda taarifa zako unapotumia Jukwaa letu. Tunachakata data binafsi kulingana na sheria zinazotumika za ulinzi wa data, ikiwa ni pamoja na Kanuni ya Jumla ya Ulinzi wa Data (GDPR), Sheria ya Ulinzi wa Data ya Kenya, Kanuni ya Ulinzi wa Data ya Nigeria, POPIA ya Afrika Kusini, na sheria nyingine zinazotumika za ulinzi wa data za Afrika.",
+      "compliance": {
+        "title": "Uzingatiaji wa Ulinzi wa Data",
+        "content": "AfriConnect imejitolea kuzingatia sheria za kimataifa na za kikanda za ulinzi wa data ikiwa ni pamoja na GDPR (EU), Sheria ya Ulinzi wa Data ya Kenya 2019, Kanuni ya Ulinzi wa Data ya Nigeria 2019, POPIA ya Afrika Kusini, Sheria ya Ulinzi wa Data ya Ghana, na mifumo mingine inayotumika ya ulinzi wa data ya Umoja wa Afrika na kitaifa. Tunatekeleza hatua sahihi za kiufundi na shirika kuhakikisha ulinzi wa data kwa muundo na kwa chaguo-msingi."
+      },
+      "collection": {
+        "title": "Taarifa Tunazokusanya",
+        "content": "Tunakusanya taarifa unazotupa moja kwa moja, ikiwa ni pamoja na:\n\n• Taarifa za Akaunti: Jina, anwani ya barua pepe, nambari ya simu, nenosiri, jina la biashara, na maelezo ya usajili\n• Taarifa za Biashara: Nyaraka za usajili wa kampuni, nambari za kitambulisho cha kodi, anwani ya biashara, na nyaraka za uthibitisho\n• Data ya Miamala: Historia ya ununuzi, taarifa za malipo, anwani za usafirishaji, na maelezo ya agizo\n• Mawasiliano: Ujumbe na watumiaji wengine, maswali ya msaada, na maoni\n• Taarifa za Wasifu: Maelezo ya biashara, orodha za bidhaa, na picha za wasifu\n\nTunakusanya kiotomatiki taarifa fulani unapotumia Jukwaa letu:\n\n• Taarifa za Kifaa: Anwani ya IP, aina ya kivinjari, mfumo wa uendeshaji, na vitambulisho vya kifaa\n• Data ya Matumizi: Kurasa zilizotembelewe, vipengele vilivyotumika, maswali ya utafutaji, na mifumo ya mwingiliano\n• Data ya Eneo: Eneo la jumla la kijiografia kulingana na anwani ya IP\n• Kuki na Teknolojia za Ufuatiliaji: Taarifa zilizokusanywa kupitia kuki, pikseli, na teknolojia zinazofanana"
+      },
+      "usage": {
+        "title": "Jinsi Tunavyotumia Taarifa Zako",
+        "content": "Tunatumia taarifa zilizokusanywa kwa madhumuni yafuatayo:\n\n• Utoaji wa Huduma: Kutoa, kudumisha, na kuboresha Jukwaa letu na huduma\n• Usimamizi wa Akaunti: Kuunda na kusimamia akaunti yako, kuthibitisha utambulisho wako, na kuchakata miamala\n• Mawasiliano: Kutuma sasisho za huduma, arifa za usalama, na ujumbe wa msaada\n• Ubinafsishaji: Kurekebisha uzoefu wako na kutoa mapendekezo husika\n• Usalama na Ulinzi: Kugundua, kuzuia, na kushughulikia ulaghai, matumizi mabaya, na masuala ya usalama\n• Uzingatiaji wa Kisheria: Kuzingatia wajibu wa kisheria na kujibu maombi ya kisheria\n• Uchambuzi: Kuelewa jinsi watumiaji wanavyoingiliana na Jukwaa letu na kuboresha huduma zetu\n• Masoko: Kutuma mawasiliano ya kutangaza (kwa idhini yako inapohitajika)\n\nTunachakata data yako kulingana na: utendaji wa mkataba, maslahi halali, wajibu wa kisheria, na idhini yako inapotumika."
+      },
+      "sharing": {
+        "title": "Kushiriki na Kufichua Taarifa",
+        "content": "Tunaweza kushiriki taarifa zako katika hali zifuatazo:\n\n• Na Watumiaji Wengine: Taarifa za wasifu wa biashara na maelezo ya miamala muhimu kuwezesha biashara\n• Watoa Huduma: Na wachuuzi wa wahusika wengine wanaosaidia kuendesha Jukwaa letu (vichakataji vya malipo, mwenyeji wa wingu, uchambuzi)\n• Uhamisho wa Biashara: Kuhusiana na muungano, ununuzi, au uuzaji wa mali za kampuni\n• Mahitaji ya Kisheria: Yanapohitajika na sheria, amri ya mahakama, au mamlaka ya serikali\n• Ulinzi wa Haki: Kulinda haki, mali, na usalama wa AfriConnect, watumiaji wetu, na umma\n\nTunahitaji wahusika wote wengine kuheshimu usalama wa data yako na kuichakata kulingana na sheria zinazotumika. Hatuuzi taarifa zako binafsi kwa wahusika wengine.\n\nUhamisho wa data wa kimataifa unalindwa na ulinzi unaofaa ikiwa ni pamoja na Vifungu vya Mkataba wa Kawaida vilivyoidhinishwa na mamlaka husika za ulinzi wa data."
+      },
+      "security": {
+        "title": "Usalama wa Data",
+        "content": "Tunatekeleza hatua madhubuti za usalama kulinda taarifa zako binafsi:\n\n• Usimbaji fiche: Data yote inayotumwa inasimbwa kwa kutumia itifaki za TLS/SSL\n• Udhibiti wa Ufikiaji: Udhibiti mkali wa ufikiaji na mbinu za uthibitishaji\n• Usalama wa Miundombinu: Vituo vya data salama na usalama wa kimwili na wa mtandao\n• Ukaguzi wa Mara kwa Mara: Tathmini za mara kwa mara za usalama na upimaji wa udhaifu\n• Mafunzo ya Wafanyakazi: Mafunzo ya mara kwa mara ya ulinzi wa data kwa wafanyakazi wote\n• Mwitikio wa Tukio: Taratibu zilizowekwa za kugundua na kujibu ukiukaji wa data\n\nIngawa tunajitahidi kulinda taarifa zako, hakuna njia ya usambazaji kupitia Mtandao ambayo ni salama 100%. Hatuwezi kudhamini usalama kamili lakini tunajitolea kukuarifu wewe na mamlaka husika kuhusu ukiukaji wowote wa data kama inavyohitajika na sheria."
+      },
+      "rights": {
+        "title": "Haki Zako na Chaguzi",
+        "content": "Kulingana na eneo lako, una haki fulani kuhusu data yako binafsi:\n\n• Ufikiaji: Omba nakala ya data binafsi tunayohifadhi kukuhusu\n• Marekebisho: Omba marekebisho ya data isiyosahihi au isiyo kamili\n• Kufutwa: Omba kufutwa kwa data yako binafsi (\"haki ya kusahaulika\")\n• Kizuizi: Omba kikomo cha uchakataji wa data yako\n• Uhamishaji: Pokea data yako katika umbizo lililoundwa, linalosomeka na mashine\n• Upinzani: Pinga uchakataji unaotegemea maslahi halali au kwa masoko\n• Kuondoa Idhini: Ondoa idhini iliyotolewa awali wakati wowote\n• Maamuzi ya Kiotomatiki: Omba ukaguzi wa kibinadamu wa maamuzi ya kiotomatiki yanayokuathiri\n\nKutekeleza haki hizi, wasiliana na Afisa wetu wa Ulinzi wa Data. Tutajibu ndani ya siku 30 (au kama inavyohitajika na sheria inayotumika). Tunaweza kuthibitisha utambulisho wako kabla ya kuchakata maombi.\n\nUna pia haki ya kuwasilisha malalamiko kwa mamlaka yako ya ndani ya ulinzi wa data."
+      },
+      "cookies": {
+        "title": "Kuki na Teknolojia za Ufuatiliaji",
+        "content": "Tunatumia kuki na teknolojia zinazofanana kuboresha uzoefu wako:\n\n• Kuki Muhimu: Zinahitajika kwa utendaji wa Jukwaa (uthibitishaji, usalama)\n• Kuki za Utendaji: Zinatusaidia kuelewa jinsi wageni wanavyoingiliana na Jukwaa\n• Kuki za Utendakazi: Zinakumbuka mapendeleo na mipangilio yako\n• Kuki za Masoko: Zinatumika kutoa matangazo husika (kwa idhini)\n\nUnaweza kusimamia mapendeleo ya kuki kupitia mipangilio ya kivinjari chako au chombo chetu cha idhini ya kuki. Kuzima kuki fulani kunaweza kuathiri utendaji wa Jukwaa.\n\nTunatumia pia huduma za uchambuzi (mfano, Google Analytics) kukusanya data ya matumizi. Huduma hizi zinaweza kutumia kuki zao na zinategemea sera zao za faragha.\n\nIshara za Do Not Track (DNT) zinaheshimiwa inapowezekana kiufundi."
+      },
+      "retention": {
+        "title": "Uhifadhi wa Data",
+        "content": "Tunahifadhi taarifa zako binafsi kwa muda unaohitajika ili:\n\n• Kutoa huduma zetu na kudumisha akaunti yako\n• Kuzingatia wajibu wa kisheria, kodi, na udhibiti\n• Kutatua migogoro na kutekeleza makubaliano yetu\n• Kudumisha rekodi za biashara kwa madhumuni ya ukaguzi\n\nVipindi vya uhifadhi vinatofautiana kulingana na aina ya data:\n• Data ya akaunti: Muda wa akaunti pamoja na miaka 7\n• Data ya miamala: Miaka 7 kwa madhumuni ya kodi na ukaguzi\n• Kumbukumbu za mawasiliano: Miaka 3\n• Mapendeleo ya masoko: Hadi idhini itakapofutwa\n\nData isipohitajika tena, tunaifuta kwa usalama au kuifanya isiwe na jina. Data isiyokuwa na jina inaweza kuhifadhiwa bila kikomo kwa uchambuzi wa takwimu."
+      },
+      "international": {
+        "title": "Uhamisho wa Data wa Kimataifa",
+        "content": "AfriConnect inafanya kazi katika nchi nyingi za Afrika na inaweza kuhamisha data kimataifa. Tunapohamisha data binafsi nje ya nchi yako:\n\n• Tunahakikisha ulinzi unaofaa upo (Vifungu vya Mkataba wa Kawaida, maamuzi ya kutosha)\n• Tunazingatia mahitaji ya ndani ya data inapotumika\n• Tunadumisha makubaliano ya uchakataji wa data na washirika wote wa kimataifa\n• Tunakadiria viwango vya ulinzi wa data vya nchi zinazokaribisha\n\nKwa wakazi wa EU, uhamisho nje ya EEA unalindwa na Vifungu vya Mkataba wa Kawaida vilivyoidhinishwa na EU.\n\nKwa watumiaji wa Afrika, tunazingatia mahitaji yanayotumika ya ndani ya data na uhamisho wa mpakani chini ya sheria za ndani."
+      },
+      "children": {
+        "title": "Faragha ya Watoto",
+        "content": "AfriConnect ni jukwaa la B2B linalopendekezwa kwa watumiaji wa biashara. Hatukusanyi kwa makusudi taarifa binafsi kutoka kwa watu walio chini ya umri wa miaka 18.\n\nTukigundua kuwa tumekusanya data binafsi kutoka kwa mtoto bila idhini iliyothibitishwa ya mzazi, tutachukua hatua za kufuta taarifa hiyo mara moja.\n\nUkiamini mtoto ametupa taarifa binafsi, tafadhali wasiliana na Afisa wetu wa Ulinzi wa Data mara moja."
+      },
+      "changes": {
+        "title": "Mabadiliko ya Sera Hii",
+        "content": "Tunaweza kusasisha Sera hii ya Faragha mara kwa mara kuonyesha mabadiliko katika mazoea yetu, teknolojia, mahitaji ya kisheria, au mambo mengine.\n\nTunapofanya mabadiliko makubwa:\n• Tutachapisha sera iliyosasishwa kwenye Jukwaa\n• Tutasasisha tarehe ya \"Imesasishwa Mwisho\"\n• Tunaweza kukuarifu kupitia barua pepe au arifa ya Jukwaa kwa mabadiliko makubwa\n• Tunaweza kuomba idhini mpya kwa shughuli fulani za uchakataji\n\nTunakuhimiza kupitia Sera hii ya Faragha mara kwa mara. Matumizi yako yanayoendelea ya Jukwaa baada ya mabadiliko yanamaanisha kukubali sera iliyosasishwa."
+      },
+      "dpo": {
+        "title": "Afisa wa Ulinzi wa Data",
+        "content": "Tumeteuwa Afisa wa Ulinzi wa Data (DPO) anayesimamia mkakati wetu wa ulinzi wa data na uzingatiaji. Kwa maswali yoyote yanayohusiana na faragha, wasiwasi, au kutekeleza haki zako za data, tafadhali wasiliana na DPO wetu."
+      }
+    }
   }
 }

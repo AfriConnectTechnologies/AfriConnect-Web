@@ -489,9 +489,9 @@ export default function LandingPage() {
               © {new Date().getFullYear()} AfriConnect. {t("footer.allRightsReserved")}
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="#" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">{t("footer.cookiePolicy")}</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
+              <Link href="/privacy#cookies" className="hover:text-foreground transition-colors">{t("footer.cookiePolicy")}</Link>
             </div>
           </div>
         </div>

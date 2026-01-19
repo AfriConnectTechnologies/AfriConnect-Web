@@ -376,5 +376,115 @@
       "getStarted": "Get Started",
       "dashboard": "Dashboard"
     }
+  },
+  "legal": {
+    "backToHome": "Back to Home",
+    "tableOfContents": "Table of Contents",
+    "viewPrivacyPolicy": "View Privacy Policy",
+    "viewTermsOfService": "View Terms of Service",
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last Updated",
+      "lastUpdatedDate": "January 2026",
+      "introduction": "Welcome to AfriConnect. These Terms of Service (\"Terms\") govern your access to and use of the AfriConnect platform, including our website, mobile applications, and services (collectively, the \"Platform\"). By accessing or using our Platform, you agree to be bound by these Terms and our Privacy Policy. Please read them carefully before using our services.",
+      "acceptance": {
+        "title": "Acceptance of Terms",
+        "content": "By creating an account, accessing, or using the AfriConnect Platform, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service. If you do not agree to these Terms, you may not access or use our Platform.\n\nThese Terms constitute a legally binding agreement between you and AfriConnect Inc. We may update these Terms from time to time, and your continued use of the Platform after any changes constitutes acceptance of the new Terms.\n\nIf you are using the Platform on behalf of a business or other legal entity, you represent that you have the authority to bind such entity to these Terms."
+      },
+      "eligibility": {
+        "title": "Eligibility Requirements",
+        "content": "To use AfriConnect, you must:\n\n• Be at least 18 years of age or the age of legal majority in your jurisdiction\n• Be a registered business entity or authorized representative of one\n• Have the legal capacity to enter into binding contracts\n• Not be prohibited from using the Platform under applicable laws\n• Provide accurate and complete registration information\n\nBy registering for an account, you represent and warrant that you meet all eligibility requirements. We reserve the right to refuse service, terminate accounts, or cancel orders at our discretion if we believe you do not meet these requirements."
+      },
+      "accounts": {
+        "title": "Account Registration and Security",
+        "content": "When you create an account on AfriConnect, you agree to:\n\n• Provide accurate, current, and complete information during registration\n• Maintain and promptly update your account information\n• Keep your login credentials secure and confidential\n• Not share your account with others or allow unauthorized access\n• Notify us immediately of any unauthorized use of your account\n• Be responsible for all activities that occur under your account\n\nWe may verify your business credentials and may require additional documentation. False or misleading information may result in account suspension or termination.\n\nYou are solely responsible for maintaining the confidentiality of your account credentials and for restricting access to your devices."
+      },
+      "marketplace": {
+        "title": "Marketplace Rules and Conduct",
+        "content": "AfriConnect operates as a B2B marketplace connecting buyers and sellers across Africa. Users agree to:\n\n• Conduct all transactions in good faith and with honest intent\n• Provide accurate product descriptions, pricing, and availability information\n• Honor committed orders and delivery timelines\n• Maintain professional communication with other users\n• Comply with all applicable trade laws and regulations\n• Not manipulate pricing, reviews, or marketplace metrics\n\nSellers must ensure products meet described specifications and quality standards. Buyers must make payments as agreed and provide accurate shipping information.\n\nWe reserve the right to remove listings, suspend accounts, or take other actions to maintain marketplace integrity."
+      },
+      "payments": {
+        "title": "Payments and Transactions",
+        "content": "All financial transactions on AfriConnect are processed through our secure payment system powered by Chapa and other licensed payment providers.\n\n• Payments must be made using approved payment methods\n• Transaction fees and applicable taxes will be clearly disclosed\n• Currency conversions are based on prevailing exchange rates\n• Refunds are subject to our refund policy and seller terms\n• Escrow services may be used for trade assurance transactions\n\nWe do not store complete payment card details. All payment processing complies with PCI-DSS standards.\n\nDisputed transactions will be handled according to our dispute resolution procedures. Chargebacks may result in account restrictions."
+      },
+      "prohibited": {
+        "title": "Prohibited Activities",
+        "content": "Users are strictly prohibited from:\n\n• Selling counterfeit, stolen, or illegally obtained goods\n• Engaging in fraud, money laundering, or illegal transactions\n• Circumventing platform fees or security measures\n• Harassing, threatening, or discriminating against other users\n• Posting false, misleading, or defamatory content\n• Attempting to hack, disrupt, or damage the Platform\n• Scraping data or using automated systems without permission\n• Violating intellectual property rights of others\n• Trading in prohibited items including weapons, drugs, and sanctioned goods\n• Creating multiple accounts to evade restrictions\n\nViolations may result in immediate account termination, forfeiture of funds, and legal action."
+      },
+      "ip": {
+        "title": "Intellectual Property Rights",
+        "content": "All content, features, and functionality of the AfriConnect Platform, including but not limited to text, graphics, logos, icons, images, software, and the compilation thereof, are the exclusive property of AfriConnect Inc. or its licensors and are protected by international copyright, trademark, and other intellectual property laws.\n\nUsers retain ownership of content they submit but grant AfriConnect a worldwide, non-exclusive, royalty-free license to use, display, and distribute such content in connection with the Platform.\n\nYou may not reproduce, distribute, modify, create derivative works from, or commercially exploit any Platform content without our prior written consent.\n\nIf you believe your intellectual property rights have been infringed, please contact our legal team with detailed information about the alleged infringement."
+      },
+      "liability": {
+        "title": "Limitation of Liability",
+        "content": "TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:\n\nAfriConnect provides the Platform \"AS IS\" and \"AS AVAILABLE\" without warranties of any kind, either express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement.\n\nWe do not guarantee that:\n• The Platform will be uninterrupted, secure, or error-free\n• Results obtained from using the Platform will be accurate\n• Defects in the Platform will be corrected\n\nAfriConnect shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or relating to your use of the Platform.\n\nOur total liability for any claims under these Terms shall not exceed the amount you paid us in the twelve (12) months preceding the claim.\n\nSome jurisdictions do not allow limitation of liability, so these limitations may not apply to you."
+      },
+      "disputes": {
+        "title": "Dispute Resolution",
+        "content": "We encourage users to resolve disputes directly through our Platform's dispute resolution center. Our process includes:\n\n1. Direct Negotiation: Parties should first attempt to resolve issues through direct communication\n2. Mediation: AfriConnect may offer mediation services for unresolved disputes\n3. Arbitration: Binding arbitration may be required for certain disputes\n\nFor disputes that cannot be resolved through these means:\n\n• These Terms are governed by the laws of the Republic of Kenya\n• Any legal proceedings shall be conducted in the courts of Nairobi, Kenya\n• Class action lawsuits are waived to the extent permitted by law\n\nNothing in these Terms limits your rights to file complaints with relevant consumer protection or trade authorities in your jurisdiction."
+      },
+      "changes": {
+        "title": "Modifications to Terms",
+        "content": "AfriConnect reserves the right to modify these Terms at any time. When we make material changes:\n\n• We will post the updated Terms on the Platform\n• We will update the \"Last Updated\" date at the top\n• We may notify you via email or Platform notification for significant changes\n• Continued use after changes constitutes acceptance\n\nIf you disagree with any changes, you should stop using the Platform and close your account. Some changes may require your explicit consent before taking effect.\n\nWe recommend reviewing these Terms periodically to stay informed about any updates."
+      },
+      "contact": {
+        "title": "Contact Us",
+        "content": "If you have any questions about these Terms of Service or need assistance, please contact our legal team. We are committed to addressing your concerns and providing clarity on our policies."
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last Updated",
+      "lastUpdatedDate": "January 2026",
+      "introduction": "At AfriConnect, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Platform. We process personal data in accordance with applicable data protection laws, including the General Data Protection Regulation (GDPR), Kenya's Data Protection Act, Nigeria's Data Protection Regulation, South Africa's POPIA, and other applicable African data protection legislation.",
+      "compliance": {
+        "title": "Data Protection Compliance",
+        "content": "AfriConnect is committed to compliance with international and regional data protection laws including GDPR (EU), Kenya Data Protection Act 2019, Nigeria Data Protection Regulation 2019, South Africa POPIA, Ghana Data Protection Act, and other applicable African Union and national data protection frameworks. We implement appropriate technical and organizational measures to ensure data protection by design and by default."
+      },
+      "collection": {
+        "title": "Information We Collect",
+        "content": "We collect information that you provide directly to us, including:\n\n• Account Information: Name, email address, phone number, password, business name, and registration details\n• Business Information: Company registration documents, tax identification numbers, business address, and verification documents\n• Transaction Data: Purchase history, payment information, shipping addresses, and order details\n• Communications: Messages with other users, support inquiries, and feedback\n• Profile Information: Business descriptions, product listings, and profile photos\n\nWe automatically collect certain information when you use our Platform:\n\n• Device Information: IP address, browser type, operating system, and device identifiers\n• Usage Data: Pages visited, features used, search queries, and interaction patterns\n• Location Data: General geographic location based on IP address\n• Cookies and Tracking Technologies: Information collected through cookies, pixels, and similar technologies"
+      },
+      "usage": {
+        "title": "How We Use Your Information",
+        "content": "We use collected information for the following purposes:\n\n• Service Delivery: To provide, maintain, and improve our Platform and services\n• Account Management: To create and manage your account, verify your identity, and process transactions\n• Communication: To send service updates, security alerts, and support messages\n• Personalization: To customize your experience and provide relevant recommendations\n• Safety and Security: To detect, prevent, and address fraud, abuse, and security issues\n• Legal Compliance: To comply with legal obligations and respond to legal requests\n• Analytics: To understand how users interact with our Platform and improve our services\n• Marketing: To send promotional communications (with your consent where required)\n\nWe process your data based on: contract performance, legitimate interests, legal obligations, and your consent where applicable."
+      },
+      "sharing": {
+        "title": "Information Sharing and Disclosure",
+        "content": "We may share your information in the following circumstances:\n\n• With Other Users: Business profile information and transaction details necessary to facilitate trades\n• Service Providers: With third-party vendors who assist in operating our Platform (payment processors, cloud hosting, analytics)\n• Business Transfers: In connection with mergers, acquisitions, or sale of company assets\n• Legal Requirements: When required by law, court order, or governmental authority\n• Protection of Rights: To protect the rights, property, and safety of AfriConnect, our users, and the public\n\nWe require all third parties to respect the security of your data and process it in accordance with applicable laws. We do not sell your personal information to third parties.\n\nInternational data transfers are protected by appropriate safeguards including Standard Contractual Clauses approved by relevant data protection authorities."
+      },
+      "security": {
+        "title": "Data Security",
+        "content": "We implement robust security measures to protect your personal information:\n\n• Encryption: All data transmitted is encrypted using TLS/SSL protocols\n• Access Controls: Strict access controls and authentication mechanisms\n• Infrastructure Security: Secure data centers with physical and network security\n• Regular Audits: Periodic security assessments and vulnerability testing\n• Employee Training: Regular data protection training for all staff\n• Incident Response: Established procedures for detecting and responding to data breaches\n\nWhile we strive to protect your information, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security but commit to notifying you and relevant authorities of any data breach as required by law."
+      },
+      "rights": {
+        "title": "Your Rights and Choices",
+        "content": "Depending on your location, you have certain rights regarding your personal data:\n\n• Access: Request a copy of the personal data we hold about you\n• Rectification: Request correction of inaccurate or incomplete data\n• Erasure: Request deletion of your personal data (\"right to be forgotten\")\n• Restriction: Request limitation of processing of your data\n• Portability: Receive your data in a structured, machine-readable format\n• Objection: Object to processing based on legitimate interests or for marketing\n• Withdraw Consent: Withdraw previously given consent at any time\n• Automated Decisions: Request human review of automated decisions affecting you\n\nTo exercise these rights, contact our Data Protection Officer. We will respond within 30 days (or as required by applicable law). We may verify your identity before processing requests.\n\nYou also have the right to lodge a complaint with your local data protection authority."
+      },
+      "cookies": {
+        "title": "Cookies and Tracking Technologies",
+        "content": "We use cookies and similar technologies to enhance your experience:\n\n• Essential Cookies: Required for Platform functionality (authentication, security)\n• Performance Cookies: Help us understand how visitors interact with the Platform\n• Functional Cookies: Remember your preferences and settings\n• Marketing Cookies: Used to deliver relevant advertisements (with consent)\n\nYou can manage cookie preferences through your browser settings or our cookie consent tool. Disabling certain cookies may affect Platform functionality.\n\nWe also use analytics services (e.g., Google Analytics) to collect usage data. These services may use their own cookies and are subject to their respective privacy policies.\n\nDo Not Track (DNT) signals are respected where technically feasible."
+      },
+      "retention": {
+        "title": "Data Retention",
+        "content": "We retain your personal information for as long as necessary to:\n\n• Provide our services and maintain your account\n• Comply with legal, tax, and regulatory obligations\n• Resolve disputes and enforce our agreements\n• Maintain business records for audit purposes\n\nRetention periods vary based on data type:\n• Account data: Duration of account plus 7 years\n• Transaction data: 7 years for tax and audit purposes\n• Communication logs: 3 years\n• Marketing preferences: Until consent is withdrawn\n\nWhen data is no longer needed, we securely delete or anonymize it. Anonymized data may be retained indefinitely for statistical analysis."
+      },
+      "international": {
+        "title": "International Data Transfers",
+        "content": "AfriConnect operates across multiple African countries and may transfer data internationally. When we transfer personal data outside your country:\n\n• We ensure appropriate safeguards are in place (Standard Contractual Clauses, adequacy decisions)\n• We comply with local data localization requirements where applicable\n• We maintain data processing agreements with all international partners\n• We assess the data protection standards of recipient countries\n\nFor EU residents, transfers outside the EEA are protected by EU-approved Standard Contractual Clauses.\n\nFor African users, we comply with applicable data localization and cross-border transfer requirements under local laws."
+      },
+      "children": {
+        "title": "Children's Privacy",
+        "content": "AfriConnect is a B2B platform intended for business users. We do not knowingly collect personal information from individuals under 18 years of age.\n\nIf we become aware that we have collected personal data from a child without verified parental consent, we will take steps to delete that information promptly.\n\nIf you believe a child has provided us with personal information, please contact our Data Protection Officer immediately."
+      },
+      "changes": {
+        "title": "Changes to This Policy",
+        "content": "We may update this Privacy Policy periodically to reflect changes in our practices, technology, legal requirements, or other factors.\n\nWhen we make material changes:\n• We will post the updated policy on the Platform\n• We will update the \"Last Updated\" date\n• We will notify you via email or Platform notification for significant changes\n• We may request renewed consent for certain processing activities\n\nWe encourage you to review this Privacy Policy regularly. Your continued use of the Platform after changes constitutes acceptance of the updated policy."
+      },
+      "dpo": {
+        "title": "Data Protection Officer",
+        "content": "We have appointed a Data Protection Officer (DPO) responsible for overseeing our data protection strategy and compliance. For any privacy-related questions, concerns, or to exercise your data rights, please contact our DPO."
+      }
+    }
   }
 }
