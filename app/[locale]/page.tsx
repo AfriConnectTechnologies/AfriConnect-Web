@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -30,36 +29,8 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-// Hook for scroll-triggered animations
-function useScrollAnimation() {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("animate-in");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
-    );
-
-    const elements = ref.current?.querySelectorAll(
-      ".scroll-animate, .scroll-animate-left, .scroll-animate-right, .scroll-animate-scale"
-    );
-    elements?.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
-
-  return ref;
-}
-
 export default function LandingPage() {
   const t = useTranslations("landing");
-  const scrollRef = useScrollAnimation();
 
   const features = [
     {
@@ -140,7 +111,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div ref={scrollRef} className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -267,18 +238,18 @@ export default function LandingPage() {
       <section id="features" className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               {t("features.title")}
             </h2>
-            <p className="scroll-animate text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {t("features.description")}
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
               <Card 
                 key={feature.titleKey} 
-                className="scroll-animate group transition-all duration-300 hover:shadow-md hover:border-primary/20"
+                className="group transition-all duration-300 hover:shadow-md hover:border-primary/20"
               >
                 <CardHeader>
                   <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary/15">
@@ -299,19 +270,19 @@ export default function LandingPage() {
       <section id="categories" className="py-24 bg-muted/30 pattern-lines">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               {t("categories.title")}
             </h2>
-            <p className="scroll-animate text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {t("categories.description")}
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 stagger-children">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
             {categories.map((category) => (
               <Link 
                 key={category.nameKey} 
                 href="/explore"
-                className="scroll-animate group"
+                className="group"
               >
                 <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/20 cursor-pointer">
                   <CardContent className="p-6 flex flex-col items-center text-center">
@@ -339,10 +310,10 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-24 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               {t("howItWorks.title")}
             </h2>
-            <p className="scroll-animate text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {t("howItWorks.description")}
             </p>
           </div>
@@ -350,8 +321,7 @@ export default function LandingPage() {
             {steps.map((item, index) => (
               <div 
                 key={item.step} 
-                className="scroll-animate relative"
-                style={{ transitionDelay: `${index * 100}ms` }}
+                className="relative"
               >
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-12 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/40 to-transparent" />
@@ -386,13 +356,13 @@ export default function LandingPage() {
         
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
               {t("cta.title")}
             </h2>
-            <p className="scroll-animate text-lg opacity-90 max-w-xl mx-auto mb-10">
+            <p className="text-lg opacity-90 max-w-xl mx-auto mb-10">
               {t("cta.description")}
             </p>
-            <div className="scroll-animate flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <SignedOut>
                 <SignInButton mode="modal">
                   <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
@@ -423,21 +393,21 @@ export default function LandingPage() {
       <section className="py-16 bg-muted/30 border-y">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-            <div className="scroll-animate-left flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <Shield className="h-8 w-8 text-primary" />
               <div>
                 <div className="font-semibold">{t("trust.securePayments")}</div>
                 <div className="text-sm text-muted-foreground">{t("trust.securePaymentsDesc")}</div>
               </div>
             </div>
-            <div className="scroll-animate flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <BadgeCheck className="h-8 w-8 text-primary" />
               <div>
                 <div className="font-semibold">{t("trust.verifiedBusinesses")}</div>
                 <div className="text-sm text-muted-foreground">{t("trust.verifiedBusinessesDesc")}</div>
               </div>
             </div>
-            <div className="scroll-animate-right flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <Languages className="h-8 w-8 text-primary" />
               <div>
                 <div className="font-semibold">{t("trust.multiLanguage")}</div>
