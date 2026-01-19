@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -9,14 +10,9 @@ import {
   ArrowRight, 
   Globe2, 
   Shield, 
-  Truck, 
   Package, 
-  CreditCard, 
-  BarChart3,
-  Search,
+  Users,
   ShoppingCart,
-  FileCheck,
-  MapPin,
   Building2,
   Boxes,
   Leaf,
@@ -24,57 +20,77 @@ import {
   Cpu,
   Shirt,
   Utensils,
-  Hammer
+  Hammer,
+  CheckCircle2,
+  Sparkles,
+  Store,
+  Languages,
+  BadgeCheck
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-const countries = [
-  "Nigeria", "Kenya", "South Africa", "Ghana", "Egypt", 
-  "Morocco", "Tanzania", "Ethiopia", "Rwanda", "Senegal",
-  "Côte d'Ivoire", "Uganda"
-];
+// Hook for scroll-triggered animations
+function useScrollAnimation() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("animate-in");
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+    );
+
+    const elements = ref.current?.querySelectorAll(
+      ".scroll-animate, .scroll-animate-left, .scroll-animate-right, .scroll-animate-scale"
+    );
+    elements?.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, []);
+
+  return ref;
+}
 
 export default function LandingPage() {
   const t = useTranslations("landing");
-
-  const stats = [
-    { value: "50+", labelKey: "stats.countries" },
-    { value: "10K+", labelKey: "stats.suppliers" },
-    { value: "$2B+", labelKey: "stats.tradeVolume" },
-    { value: "99.5%", labelKey: "stats.deliveryRate" },
-  ];
+  const scrollRef = useScrollAnimation();
 
   const features = [
     {
-      icon: Search,
-      titleKey: "features.discoverSuppliers",
-      descKey: "features.discoverSuppliersDesc",
+      icon: Store,
+      titleKey: "features.marketplace",
+      descKey: "features.marketplaceDesc",
+    },
+    {
+      icon: Building2,
+      titleKey: "features.directory",
+      descKey: "features.directoryDesc",
+    },
+    {
+      icon: BadgeCheck,
+      titleKey: "features.verification",
+      descKey: "features.verificationDesc",
     },
     {
       icon: Shield,
-      titleKey: "features.tradeAssurance",
-      descKey: "features.tradeAssuranceDesc",
+      titleKey: "features.securePayments",
+      descKey: "features.securePaymentsDesc",
     },
     {
-      icon: Truck,
-      titleKey: "features.logistics",
-      descKey: "features.logisticsDesc",
+      icon: Languages,
+      titleKey: "features.multiLanguage",
+      descKey: "features.multiLanguageDesc",
     },
     {
-      icon: CreditCard,
-      titleKey: "features.payments",
-      descKey: "features.paymentsDesc",
-    },
-    {
-      icon: Package,
-      titleKey: "features.inspection",
-      descKey: "features.inspectionDesc",
-    },
-    {
-      icon: BarChart3,
-      titleKey: "features.analytics",
-      descKey: "features.analyticsDesc",
+      icon: Users,
+      titleKey: "features.community",
+      descKey: "features.communityDesc",
     },
   ];
 
@@ -93,31 +109,38 @@ export default function LandingPage() {
     {
       step: "01",
       titleKey: "howItWorks.step1Title",
-      descKey: "howItWorks.step1Description",
-      icon: Search,
+      descKey: "howItWorks.step1Desc",
+      icon: Users,
     },
     {
       step: "02",
       titleKey: "howItWorks.step2Title",
-      descKey: "howItWorks.step2Description",
-      icon: ShoppingCart,
+      descKey: "howItWorks.step2Desc",
+      icon: Building2,
     },
     {
       step: "03",
       titleKey: "howItWorks.step3Title",
-      descKey: "howItWorks.step3Description",
-      icon: FileCheck,
+      descKey: "howItWorks.step3Desc",
+      icon: Package,
     },
     {
       step: "04",
       titleKey: "howItWorks.step4Title",
-      descKey: "howItWorks.step4Description",
-      icon: MapPin,
+      descKey: "howItWorks.step4Desc",
+      icon: ShoppingCart,
     },
   ];
 
+  const benefits = [
+    { key: "benefits.item1", icon: CheckCircle2 },
+    { key: "benefits.item2", icon: CheckCircle2 },
+    { key: "benefits.item3", icon: CheckCircle2 },
+    { key: "benefits.item4", icon: CheckCircle2 },
+  ];
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div ref={scrollRef} className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -131,14 +154,11 @@ export default function LandingPage() {
             <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               {t("nav.marketplace")}
             </Link>
-            <Link href="#categories" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.categories")}
+            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              {t("nav.features")}
             </Link>
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               {t("nav.howItWorks")}
-            </Link>
-            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.features")}
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -163,83 +183,71 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-16 hero-gradient pattern-overlay overflow-hidden">
-        <div className="container mx-auto px-4 py-24 lg:py-32">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="flex flex-col gap-6 opacity-0 animate-slide-up">
-              <div className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full w-fit">
-                <Globe2 className="h-4 w-4" />
-                {t("hero.badge")}
-              </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-                {t("hero.title")}{" "}
-                <span className="text-primary">{t("hero.titleHighlight")}</span>{" "}
-                {t("hero.titleEnd")}
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
-                {t("hero.description")}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <Button size="lg" className="gap-2 text-base px-8">
-                      {t("hero.startSourcing")}
-                      <ArrowRight className="h-5 w-5" />
-                    </Button>
-                  </SignInButton>
-                </SignedOut>
-                <SignedIn>
-                  <Link href="/marketplace">
-                    <Button size="lg" className="gap-2 text-base px-8">
-                      {t("hero.browseMarketplace")}
-                      <ArrowRight className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                </SignedIn>
-                <Link href="/explore">
-                  <Button size="lg" variant="outline" className="text-base px-8">
-                    {t("hero.exploreProducts")}
-                  </Button>
-                </Link>
-              </div>
+      <section className="relative pt-16 min-h-[90vh] flex items-center hero-gradient pattern-overlay overflow-hidden">
+        {/* Floating decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="floating-shape floating-shape-1 top-20 left-[10%] w-64 h-64 rounded-full bg-primary/5 blur-3xl" />
+          <div className="floating-shape floating-shape-2 top-40 right-[15%] w-48 h-48 rounded-full bg-accent/10 blur-2xl" />
+          <div className="floating-shape floating-shape-3 bottom-32 left-[20%] w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
+          
+          {/* Geometric shapes */}
+          <div className="absolute top-32 right-[10%] w-20 h-20 border-2 border-primary/10 rounded-xl rotate-12 animate-float-slow" />
+          <div className="absolute bottom-48 right-[25%] w-12 h-12 bg-accent/10 rounded-lg rotate-45 animate-float-reverse" />
+          <div className="absolute top-1/2 left-[5%] w-8 h-8 border-2 border-accent/20 rounded-full animate-float" />
+        </div>
+
+        <div className="container mx-auto px-4 py-16 lg:py-24 relative">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full mb-8 opacity-0 animate-fade-in animation-delay-100">
+              <Sparkles className="h-4 w-4" />
+              {t("hero.badge")}
             </div>
             
-            {/* Stats Card */}
-            <div className="relative opacity-0 animate-slide-up animation-delay-200">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-3xl animate-pulse-glow" />
-              <Card className="relative bg-card/80 backdrop-blur-sm border-2 shadow-2xl">
-                <CardContent className="p-8">
-                  <div className="grid grid-cols-2 gap-8">
-                    {stats.map((stat, index) => (
-                      <div 
-                        key={stat.labelKey} 
-                        className={`text-center p-4 rounded-xl ${index % 2 === 0 ? 'bg-primary/5' : 'bg-accent/10'}`}
-                      >
-                        <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
-                        <div className="text-sm text-muted-foreground mt-1">{t(stat.labelKey)}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-8 pt-6 border-t">
-                    <p className="text-sm text-muted-foreground text-center">
-                      {t("hero.trustedBy", { count: countries.length })}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                      {countries.slice(0, 6).map((country) => (
-                        <span 
-                          key={country} 
-                          className="text-xs bg-secondary px-3 py-1.5 rounded-full font-medium"
-                        >
-                          {country}
-                        </span>
-                      ))}
-                      <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">
-                        {t("hero.more", { count: countries.length - 6 })}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Main Headline */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1] mb-6 opacity-0 animate-slide-up animation-delay-200">
+              {t("hero.title")}{" "}
+              <span className="gradient-text">{t("hero.titleHighlight")}</span>
+            </h1>
+            
+            {/* Subheadline */}
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 opacity-0 animate-slide-up animation-delay-300">
+              {t("hero.description")}
+            </p>
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 opacity-0 animate-slide-up animation-delay-400">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button size="lg" className="gap-2 text-base px-8">
+                    {t("hero.getStarted")}
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <Link href="/marketplace">
+                  <Button size="lg" className="gap-2 text-base px-8">
+                    {t("hero.browseMarketplace")}
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </SignedIn>
+              <Link href="/explore">
+                <Button size="lg" variant="outline" className="text-base px-8">
+                  {t("hero.exploreProducts")}
+                </Button>
+              </Link>
+            </div>
+
+            {/* Benefits list */}
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 opacity-0 animate-fade-in animation-delay-600">
+              {benefits.map((benefit, index) => (
+                <div key={benefit.key} className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <benefit.icon className="h-4 w-4 text-primary" />
+                  <span>{t(benefit.key)}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -255,32 +263,62 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section id="categories" className="py-24 bg-background">
+      {/* Features Section */}
+      <section id="features" className="py-24 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 opacity-0 animate-slide-up">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <div className="text-center mb-16">
+            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-4">
+              {t("features.title")}
+            </h2>
+            <p className="scroll-animate text-lg text-muted-foreground max-w-2xl mx-auto">
+              {t("features.description")}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
+            {features.map((feature) => (
+              <Card 
+                key={feature.titleKey} 
+                className="scroll-animate group transition-all duration-300 hover:shadow-md hover:border-primary/20"
+              >
+                <CardHeader>
+                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary/15">
+                    <feature.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">{t(feature.titleKey)}</CardTitle>
+                  <CardDescription className="text-base leading-relaxed">
+                    {t(feature.descKey)}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section id="categories" className="py-24 bg-muted/30 pattern-lines">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-4">
               {t("categories.title")}
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="scroll-animate text-lg text-muted-foreground max-w-2xl mx-auto">
               {t("categories.description")}
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {categories.map((category, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 stagger-children">
+            {categories.map((category) => (
               <Link 
                 key={category.nameKey} 
                 href="/explore"
-                className={`group opacity-0 animate-slide-up`}
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="scroll-animate group"
               >
-                <Card className="h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 hover:-translate-y-1 cursor-pointer">
+                <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/20 cursor-pointer">
                   <CardContent className="p-6 flex flex-col items-center text-center">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary/15">
                       <category.icon className="h-7 w-7 text-primary" />
                     </div>
                     <h3 className="font-semibold text-base">{t(category.nameKey)}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{t("categories.suppliers", { count: "1K" })}</p>
                   </CardContent>
                 </Card>
               </Link>
@@ -298,13 +336,13 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 bg-muted/30">
+      <section id="how-it-works" className="py-24 bg-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 opacity-0 animate-slide-up">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <div className="text-center mb-16">
+            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-4">
               {t("howItWorks.title")}
             </h2>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="scroll-animate text-lg text-muted-foreground max-w-2xl mx-auto">
               {t("howItWorks.description")}
             </p>
           </div>
@@ -312,18 +350,18 @@ export default function LandingPage() {
             {steps.map((item, index) => (
               <div 
                 key={item.step} 
-                className={`relative opacity-0 animate-slide-up`}
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="scroll-animate relative"
+                style={{ transitionDelay: `${index * 100}ms` }}
               >
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-12 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/40 to-transparent" />
                 )}
                 <div className="flex flex-col items-center text-center">
                   <div className="relative mb-6">
-                    <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center group hover:bg-primary/20 transition-colors">
                       <item.icon className="h-10 w-10 text-primary" />
                     </div>
-                    <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">
+                    <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold shadow-lg">
                       {item.step}
                     </div>
                   </div>
@@ -336,51 +374,25 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 opacity-0 animate-slide-up">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              {t("features.title")}
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t("features.description")}
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card 
-                key={feature.titleKey} 
-                className={`group transition-all duration-300 hover:shadow-lg hover:border-primary/30 opacity-0 animate-slide-up`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <CardHeader>
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground transition-colors" />
-                  </div>
-                  <CardTitle className="text-xl">{t(feature.titleKey)}</CardTitle>
-                  <CardDescription className="text-base leading-relaxed">
-                    {t(feature.descKey)}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">
         <div className="absolute inset-0 pattern-overlay opacity-20" />
+        
+        {/* Animated background shapes */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-white/5 animate-float-slow" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-white/5 animate-float-reverse" />
+        </div>
+        
         <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl mx-auto text-center opacity-0 animate-slide-up">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="scroll-animate text-3xl md:text-4xl font-bold tracking-tight mb-6">
               {t("cta.title")}
             </h2>
-            <p className="mt-6 text-lg opacity-90 max-w-xl mx-auto">
+            <p className="scroll-animate text-lg opacity-90 max-w-xl mx-auto mb-10">
               {t("cta.description")}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+            <div className="scroll-animate flex flex-col sm:flex-row gap-4 justify-center">
               <SignedOut>
                 <SignInButton mode="modal">
                   <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
@@ -397,44 +409,39 @@ export default function LandingPage() {
                   </Button>
                 </Link>
               </SignedIn>
-              <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/30 hover:bg-primary-foreground/10">
-                {t("cta.talkToSales")}
-              </Button>
+              <Link href="/explore">
+                <Button size="lg" variant="secondary" className="text-base px-8">
+                  {t("cta.explore")}
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Trust Indicators */}
+      {/* Simple Trust Section */}
       <section className="py-16 bg-muted/30 border-y">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+            <div className="scroll-animate-left flex items-center gap-3">
               <Shield className="h-8 w-8 text-primary" />
               <div>
-                <div className="font-semibold">{t("trust.tradeAssurance")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.paymentProtection")}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Truck className="h-8 w-8 text-primary" />
-              <div>
-                <div className="font-semibold">{t("trust.globalShipping")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.countriesCovered")}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <FileCheck className="h-8 w-8 text-primary" />
-              <div>
-                <div className="font-semibold">{t("trust.verifiedSuppliers")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.sellersVetted")}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-8 w-8 text-primary" />
-              <div>
                 <div className="font-semibold">{t("trust.securePayments")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.multipleOptions")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.securePaymentsDesc")}</div>
+              </div>
+            </div>
+            <div className="scroll-animate flex items-center gap-3">
+              <BadgeCheck className="h-8 w-8 text-primary" />
+              <div>
+                <div className="font-semibold">{t("trust.verifiedBusinesses")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.verifiedBusinessesDesc")}</div>
+              </div>
+            </div>
+            <div className="scroll-animate-right flex items-center gap-3">
+              <Languages className="h-8 w-8 text-primary" />
+              <div>
+                <div className="font-semibold">{t("trust.multiLanguage")}</div>
+                <div className="text-sm text-muted-foreground">{t("trust.multiLanguageDesc")}</div>
               </div>
             </div>
           </div>
@@ -461,26 +468,21 @@ export default function LandingPage() {
               <ul className="space-y-3 text-sm text-muted-foreground">
                 <li><Link href="/explore" className="hover:text-foreground transition-colors">{t("footer.browseProducts")}</Link></li>
                 <li><Link href="#categories" className="hover:text-foreground transition-colors">{t("footer.categories")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.verifiedSuppliers")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.tradeShows")}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">{t("footer.services")}</h4>
+              <h4 className="font-semibold mb-4">{t("footer.forBusinesses")}</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.tradeAssurance")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.logistics")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.paymentSolutions")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.qualityInspection")}</Link></li>
+                <li><Link href="/business/register" className="hover:text-foreground transition-colors">{t("footer.registerBusiness")}</Link></li>
+                <li><Link href="/products" className="hover:text-foreground transition-colors">{t("footer.listProducts")}</Link></li>
+                <li><Link href="/dashboard" className="hover:text-foreground transition-colors">{t("footer.dashboard")}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">{t("footer.company")}</h4>
+              <h4 className="font-semibold mb-4">{t("footer.legal")}</h4>
               <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.aboutUs")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.careers")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.contact")}</Link></li>
-                <li><Link href="#" className="hover:text-foreground transition-colors">{t("footer.blog")}</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link></li>
+                <li><Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link></li>
               </ul>
             </div>
           </div>
@@ -488,10 +490,9 @@ export default function LandingPage() {
             <div className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} AfriConnect. {t("footer.allRightsReserved")}
             </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link>
-              <Link href="/privacy#cookies" className="hover:text-foreground transition-colors">{t("footer.cookiePolicy")}</Link>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Globe2 className="h-4 w-4" />
+              {t("footer.madeForAfrica")}
             </div>
           </div>
         </div>
