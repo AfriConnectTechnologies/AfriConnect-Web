@@ -402,6 +402,36 @@
     "skipForNow": "Ruka kwa Sasa",
     "signInToResend": "Ingia ili kutuma tena barua pepe ya uthibitishaji"
   },
+  "cookieConsent": {
+    "title": "Tunatumia kuki",
+    "description": "Tunatumia kuki kuboresha uzoefu wako wa kuvinjari, kuchambua trafiki ya tovuti, na kubinafsisha maudhui. Kwa kubofya \"Kubali Zote\", unakubali matumizi yetu ya kuki. Soma yetu",
+    "privacyPolicy": "Sera ya Faragha",
+    "acceptAll": "Kubali Zote",
+    "rejectNonEssential": "Kataa Zisizo Muhimu",
+    "customize": "Rekebisha",
+    "close": "Funga",
+    "settings": {
+      "title": "Mapendeleo ya Kuki",
+      "description": "Simamia mapendeleo yako ya kuki. Kuki muhimu zimewezeshwa kila wakati kwani zinahitajika ili tovuti ifanye kazi vizuri.",
+      "save": "Hifadhi Mapendeleo",
+      "essential": {
+        "title": "Kuki Muhimu",
+        "description": "Zinahitajika kwa utendaji wa msingi wa tovuti. Haziwezi kuzimwa."
+      },
+      "functional": {
+        "title": "Kuki za Utendakazi",
+        "description": "Zinakumbuka mapendeleo na mipangilio yako kwa uzoefu bora."
+      },
+      "analytics": {
+        "title": "Kuki za Uchambuzi",
+        "description": "Zinatusaidia kuelewa jinsi wageni wanavyoingilia na tovuti yetu."
+      },
+      "marketing": {
+        "title": "Kuki za Masoko",
+        "description": "Zinatumika kutoa matangazo husika na kufuatilia kampeni."
+      }
+    }
+  },
   "legal": {
     "backToHome": "Rudi Nyumbani",
     "tableOfContents": "Jedwali la Yaliyomo",

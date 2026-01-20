@@ -402,6 +402,36 @@
     "skipForNow": "Skip for Now",
     "signInToResend": "Sign in to resend verification email"
   },
+  "cookieConsent": {
+    "title": "We use cookies",
+    "description": "We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. By clicking \"Accept All\", you consent to our use of cookies. Read our",
+    "privacyPolicy": "Privacy Policy",
+    "acceptAll": "Accept All",
+    "rejectNonEssential": "Reject Non-Essential",
+    "customize": "Customize",
+    "close": "Close",
+    "settings": {
+      "title": "Cookie Preferences",
+      "description": "Manage your cookie preferences. Essential cookies are always enabled as they are necessary for the website to function properly.",
+      "save": "Save Preferences",
+      "essential": {
+        "title": "Essential Cookies",
+        "description": "Required for basic website functionality. Cannot be disabled."
+      },
+      "functional": {
+        "title": "Functional Cookies",
+        "description": "Remember your preferences and settings for a better experience."
+      },
+      "analytics": {
+        "title": "Analytics Cookies",
+        "description": "Help us understand how visitors interact with our website."
+      },
+      "marketing": {
+        "title": "Marketing Cookies",
+        "description": "Used to deliver relevant advertisements and track campaigns."
+      }
+    }
+  },
   "legal": {
     "backToHome": "Back to Home",
     "tableOfContents": "Table of Contents",

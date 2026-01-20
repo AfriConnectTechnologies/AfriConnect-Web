@@ -5,6 +5,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import ConvexClientProvider from '../ConvexClientProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { locales, type Locale } from '@/i18n/config';
 
 const geistSans = Geist({
@@ -50,6 +51,7 @@ export default async function LocaleLayout({
               <ConvexClientProvider>
                 {children}
                 <Toaster />
+                <CookieConsentBanner />
               </ConvexClientProvider>
             </ClerkProvider>
           </ThemeProvider>
