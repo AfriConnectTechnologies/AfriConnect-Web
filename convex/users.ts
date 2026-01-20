@@ -35,10 +35,15 @@ export const ensureUser = mutation({
     if (existingUser) {
       // Check if welcome email needs to be sent (user exists but hasn't received welcome email)
       const shouldSendWelcomeEmail = !existingUser.welcomeEmailSent;
+      // Check if verification email needs to be sent - send if email is not verified
+      // Only send automatically for new users or users who haven't received any email yet
+      const shouldSendVerificationEmail = !existingUser.emailVerified && !existingUser.welcomeEmailSent;
       return { 
         userId: existingUser._id, 
         isNewUser: false, 
         shouldSendWelcomeEmail,
+        shouldSendVerificationEmail,
+        emailVerified: existingUser.emailVerified ?? false,
         email: existingUser.email, 
         name: existingUser.name 
       };
@@ -54,9 +59,18 @@ export const ensureUser = mutation({
       imageUrl: typeof identity.picture === "string" ? identity.picture : undefined,
       role: "buyer", // Default role for new users
       welcomeEmailSent: false,
+      emailVerified: false,
     });
 
-    return { userId, isNewUser: true, shouldSendWelcomeEmail: true, email, name };
+    return { 
+      userId, 
+      isNewUser: true, 
+      shouldSendWelcomeEmail: true, 
+      shouldSendVerificationEmail: true,
+      emailVerified: false,
+      email, 
+      name 
+    };
   },
 });
 

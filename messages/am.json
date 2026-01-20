@@ -365,6 +365,43 @@
       "dashboard": "ዳሽቦርድ"
     }
   },
+  "verificationBanner": {
+    "message": "ሁሉንም ባህሪያት ለመድረስ እባክዎ የኢሜል አድራሻዎን ያረጋግጡ።",
+    "resend": "እንደገና ላክ",
+    "verify": "አረጋግጥ",
+    "sent": "ኢሜል ተልኳል!",
+    "dismiss": "ዝጋ"
+  },
+  "verifyEmail": {
+    "verifying": {
+      "title": "ኢሜልዎን በማረጋገጥ ላይ",
+      "description": "እባክዎ የኢሜል አድራሻዎን እናረጋግጥ እስከምንም ድረስ ይጠብቁ..."
+    },
+    "success": {
+      "title": "ኢሜል ተረጋግጧል!",
+      "description": "ኢሜልዎ በተሳካ ሁኔታ ተረጋግጧል። አሁን ሁሉንም ባህሪያት መድረስ ይችላሉ።",
+      "goToDashboard": "ወደ ዳሽቦርድ ሂድ",
+      "signIn": "ግባ"
+    },
+    "error": {
+      "title": "ማረጋገጥ አልተሳካም",
+      "description": "ኢሜልዎን ማረጋገጥ አልቻልንም። ማገናኛው ጊዜው ያለፈበት ወይም ቀድሞ ጥቅም ላይ የዋለ ሊሆን ይችላል።",
+      "requestNewLink": "አዲስ ማገናኛ ጠይቅ"
+    },
+    "pending": {
+      "title": "ኢሜልዎን ያረጋግጡ",
+      "description": "እባክዎ የማረጋገጫ ማገናኛ ለማግኘት ገቢ መልእክትዎን ይፈትሹ።",
+      "descriptionWithEmail": "የማረጋገጫ ማገናኛ ወደ {email} ልከናል። እባክዎ ገቢ መልእክትዎን ይፈትሹ።"
+    },
+    "resend": {
+      "button": "የማረጋገጫ ኢሜል እንደገና ላክ",
+      "sending": "በመላክ ላይ...",
+      "sent": "የማረጋገጫ ኢሜል ተልኳል! እባክዎ ገቢ መልእክትዎን ይፈትሹ።",
+      "cooldown": "በ{seconds}ሰ እንደገና ላክ"
+    },
+    "skipForNow": "ለአሁን ዝለል",
+    "signInToResend": "የማረጋገጫ ኢሜል እንደገና ለመላክ ግባ"
+  },
   "legal": {
     "backToHome": "ወደ መነሻ ተመለስ",
     "tableOfContents": "ዝርዝር ይዘቶች",

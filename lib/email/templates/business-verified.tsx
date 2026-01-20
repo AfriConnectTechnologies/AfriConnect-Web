@@ -85,7 +85,7 @@ export function BusinessVerifiedEmail({
 }: BusinessVerifiedEmailProps) {
   const t = translations[locale as keyof typeof translations] || translations.en;
   const name = ownerName || "there";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://africonnect.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://africonnect.africa.com";
 
   return (
     <Html>

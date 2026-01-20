@@ -68,7 +68,7 @@ const translations = {
 export function WelcomeEmail({ userName, locale = "en" }: WelcomeEmailProps) {
   const t = translations[locale as keyof typeof translations] || translations.en;
   const name = userName || "there";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://africonnect.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://africonnect.africa.com";
 
   return (
     <Html>

@@ -365,6 +365,43 @@
       "dashboard": "Dashibodi"
     }
   },
+  "verificationBanner": {
+    "message": "Tafadhali thibitisha anwani yako ya barua pepe ili kufikia vipengele vyote.",
+    "resend": "Tuma tena",
+    "verify": "Thibitisha",
+    "sent": "Barua pepe imetumwa!",
+    "dismiss": "Ondoa"
+  },
+  "verifyEmail": {
+    "verifying": {
+      "title": "Kuthibitisha Barua Pepe Yako",
+      "description": "Tafadhali subiri tunapothibitisha anwani yako ya barua pepe..."
+    },
+    "success": {
+      "title": "Barua Pepe Imethibitishwa!",
+      "description": "Barua pepe yako imethibitishwa kwa mafanikio. Sasa unaweza kufikia vipengele vyote.",
+      "goToDashboard": "Nenda kwenye Dashibodi",
+      "signIn": "Ingia"
+    },
+    "error": {
+      "title": "Uthibitishaji Umeshindikana",
+      "description": "Hatukuweza kuthibitisha barua pepe yako. Kiungo kinaweza kuwa kimeisha muda au tayari kimetumika.",
+      "requestNewLink": "Omba Kiungo Kipya"
+    },
+    "pending": {
+      "title": "Thibitisha Barua Pepe Yako",
+      "description": "Tafadhali angalia kikasha chako cha barua pepe kwa kiungo cha uthibitishaji.",
+      "descriptionWithEmail": "Tumetuma kiungo cha uthibitishaji kwa {email}. Tafadhali angalia kikasha chako."
+    },
+    "resend": {
+      "button": "Tuma Tena Barua Pepe ya Uthibitishaji",
+      "sending": "Inatuma...",
+      "sent": "Barua pepe ya uthibitishaji imetumwa! Tafadhali angalia kikasha chako.",
+      "cooldown": "Tuma tena baada ya {seconds}s"
+    },
+    "skipForNow": "Ruka kwa Sasa",
+    "signInToResend": "Ingia ili kutuma tena barua pepe ya uthibitishaji"
+  },
   "legal": {
     "backToHome": "Rudi Nyumbani",
     "tableOfContents": "Jedwali la Yaliyomo",

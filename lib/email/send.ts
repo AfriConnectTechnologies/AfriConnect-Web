@@ -4,10 +4,12 @@ import { BusinessRegisteredEmail } from "./templates/business-registered";
 import { BusinessVerifiedEmail } from "./templates/business-verified";
 import { BusinessRejectedEmail } from "./templates/business-rejected";
 import { AdminNewBusinessEmail } from "./templates/admin-new-business";
+import { EmailVerificationEmail } from "./templates/email-verification";
 
 // Email types
 export type EmailType =
   | "welcome"
+  | "email-verification"
   | "business-registered"
   | "business-verified"
   | "business-rejected"
@@ -18,6 +20,14 @@ export interface WelcomeEmailPayload {
   type: "welcome";
   to: string;
   userName?: string;
+  locale?: string;
+}
+
+export interface EmailVerificationPayload {
+  type: "email-verification";
+  to: string;
+  userName?: string;
+  verificationToken: string;
   locale?: string;
 }
 
@@ -59,6 +69,7 @@ export interface AdminNewBusinessEmailPayload {
 
 export type EmailPayload =
   | WelcomeEmailPayload
+  | EmailVerificationPayload
   | BusinessRegisteredEmailPayload
   | BusinessVerifiedEmailPayload
   | BusinessRejectedEmailPayload
@@ -70,6 +81,11 @@ const subjects: Record<EmailType, Record<string, string>> = {
     en: "Welcome to AfriConnect!",
     am: "እንኳን ደህና መጡ ወደ AfriConnect!",
     sw: "Karibu AfriConnect!",
+  },
+  "email-verification": {
+    en: "Verify Your Email Address - AfriConnect",
+    am: "የኢሜል አድራሻዎን ያረጋግጡ - AfriConnect",
+    sw: "Thibitisha Anwani Yako ya Barua Pepe - AfriConnect",
   },
   "business-registered": {
     en: "Business Registration Received",
@@ -108,6 +124,20 @@ export async function sendEmail(payload: EmailPayload): Promise<{ success: boole
           to,
           subject: getSubject("welcome", locale),
           react: WelcomeEmail({ userName, locale }),
+        });
+        if (error) throw new Error(error.message);
+        break;
+      }
+
+      case "email-verification": {
+        const { to, userName, verificationToken, locale = "en" } = payload;
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://africonnect.africa.com";
+        const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+        const { error } = await resend.emails.send({
+          from: EMAIL_FROM,
+          to,
+          subject: getSubject("email-verification", locale),
+          react: EmailVerificationEmail({ userName, verificationUrl, locale }),
         });
         if (error) throw new Error(error.message);
         break;
@@ -189,6 +219,15 @@ export async function sendWelcomeEmail(
   locale?: string
 ): Promise<{ success: boolean; error?: string }> {
   return sendEmail({ type: "welcome", to, userName, locale });
+}
+
+export async function sendEmailVerification(
+  to: string,
+  verificationToken: string,
+  userName?: string,
+  locale?: string
+): Promise<{ success: boolean; error?: string }> {
+  return sendEmail({ type: "email-verification", to, userName, verificationToken, locale });
 }
 
 export async function sendBusinessRegisteredEmail(

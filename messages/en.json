@@ -365,6 +365,43 @@
       "dashboard": "Dashboard"
     }
   },
+  "verificationBanner": {
+    "message": "Please verify your email address to access all features.",
+    "resend": "Resend",
+    "verify": "Verify",
+    "sent": "Email sent!",
+    "dismiss": "Dismiss"
+  },
+  "verifyEmail": {
+    "verifying": {
+      "title": "Verifying Your Email",
+      "description": "Please wait while we verify your email address..."
+    },
+    "success": {
+      "title": "Email Verified!",
+      "description": "Your email has been successfully verified. You can now access all features.",
+      "goToDashboard": "Go to Dashboard",
+      "signIn": "Sign In"
+    },
+    "error": {
+      "title": "Verification Failed",
+      "description": "We couldn't verify your email. The link may have expired or already been used.",
+      "requestNewLink": "Request New Link"
+    },
+    "pending": {
+      "title": "Verify Your Email",
+      "description": "Please check your inbox for a verification link.",
+      "descriptionWithEmail": "We sent a verification link to {email}. Please check your inbox."
+    },
+    "resend": {
+      "button": "Resend Verification Email",
+      "sending": "Sending...",
+      "sent": "Verification email sent! Please check your inbox.",
+      "cooldown": "Resend in {seconds}s"
+    },
+    "skipForNow": "Skip for Now",
+    "signInToResend": "Sign in to resend verification email"
+  },
   "legal": {
     "backToHome": "Back to Home",
     "tableOfContents": "Table of Contents",

@@ -5,6 +5,7 @@ import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs";
 import { useTranslations, useLocale } from "next-intl";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 import { useWelcomeEmail } from "@/lib/hooks/useWelcomeEmail";
 
 function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
+        <EmailVerificationBanner />
         <DashboardHeader />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>

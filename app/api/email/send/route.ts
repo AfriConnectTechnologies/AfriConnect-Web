@@ -4,6 +4,14 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
     
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: "Email service not configured" },
+        { status: 500 }
+      );
+    }
+    
     // Import email module dynamically
     const { sendEmail } = await import("@/lib/email/send");
     
@@ -21,6 +29,15 @@ export async function POST(request: NextRequest) {
         if (!payload.to) {
           return NextResponse.json(
             { success: false, error: "Missing recipient email" },
+            { status: 400 }
+          );
+        }
+        break;
+
+      case "email-verification":
+        if (!payload.to || !payload.verificationToken) {
+          return NextResponse.json(
+            { success: false, error: "Missing recipient email or verification token" },
             { status: 400 }
           );
         }

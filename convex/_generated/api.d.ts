@@ -18,6 +18,7 @@ import type * as productImages from "../productImages.js";
 import type * as products from "../products.js";
 import type * as stats from "../stats.js";
 import type * as users from "../users.js";
+import type * as verification from "../verification.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   products: typeof products;
   stats: typeof stats;
   users: typeof users;
+  verification: typeof verification;
 }>;
 
 /**

@@ -10,6 +10,8 @@ export default defineSchema({
     role: v.optional(v.union(v.literal("buyer"), v.literal("seller"), v.literal("admin"))),
     businessId: v.optional(v.id("businesses")),
     welcomeEmailSent: v.optional(v.boolean()),
+    emailVerified: v.optional(v.boolean()),
+    emailVerifiedAt: v.optional(v.number()),
     preferences: v.optional(
       v.object({
         theme: v.optional(v.string()),
@@ -143,5 +145,17 @@ export default defineSchema({
     .index("by_order", ["orderId"])
     .index("by_chapa_ref", ["chapaTransactionRef"])
     .index("by_status", ["status"]),
+
+  verificationTokens: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    type: v.union(v.literal("email"), v.literal("password_reset")),
+    expiresAt: v.number(),
+    used: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_user", ["userId"])
+    .index("by_user_type", ["userId", "type"]),
 });
 
