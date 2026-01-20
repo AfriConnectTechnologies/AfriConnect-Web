@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -21,7 +21,42 @@ import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
+function VerifyEmailLoading() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
+        <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Globe2 className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">AfriConnect</span>
+          </div>
+        </nav>
+      </header>
+      <main className="flex-1 flex items-center justify-center pt-16 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+            </div>
+            <CardTitle className="text-2xl">Loading...</CardTitle>
+          </CardHeader>
+        </Card>
+      </main>
+    </div>
+  );
+}
+
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<VerifyEmailLoading />}>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const t = useTranslations("verifyEmail");
   const locale = useLocale();
   const searchParams = useSearchParams();
@@ -38,15 +73,36 @@ export default function VerifyEmailPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const verificationStatus = useQuery(api.verification.isEmailVerified);
-  const createToken = useMutation(api.verification.createEmailVerificationToken);
   const resendToken = useMutation(api.verification.resendVerificationToken);
 
   // Verify token on mount if present
   useEffect(() => {
+    const verifyToken = async (verificationToken: string) => {
+      setVerificationState("verifying");
+      try {
+        const response = await fetch("/api/email/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: verificationToken }),
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          setVerificationState("success");
+        } else {
+          setVerificationState("error");
+          setErrorMessage(data.error || "Verification failed");
+        }
+      } catch {
+        setVerificationState("error");
+        setErrorMessage("Failed to verify email. Please try again.");
+      }
+    };
+
     if (token && verificationState === "idle") {
       verifyToken(token);
     }
-  }, [token]);
+  }, [token, verificationState]);
 
   // Countdown timer for resend cooldown
   useEffect(() => {
@@ -55,28 +111,6 @@ export default function VerifyEmailPage() {
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
-
-  const verifyToken = async (verificationToken: string) => {
-    setVerificationState("verifying");
-    try {
-      const response = await fetch("/api/email/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: verificationToken }),
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        setVerificationState("success");
-      } else {
-        setVerificationState("error");
-        setErrorMessage(data.error || "Verification failed");
-      }
-    } catch (err) {
-      setVerificationState("error");
-      setErrorMessage("Failed to verify email. Please try again.");
-    }
-  };
 
   const handleResendEmail = async () => {
     setResendState("sending");
@@ -116,7 +150,7 @@ export default function VerifyEmailPage() {
           setResendState("error");
         }
       }
-    } catch (err) {
+    } catch {
       setResendState("error");
     }
   };
