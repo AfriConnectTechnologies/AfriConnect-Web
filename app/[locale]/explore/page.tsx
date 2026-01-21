@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, ShoppingCart, BarChart3, ArrowLeft } from "lucide-react";
+import { Search, Package, ShoppingCart, BarChart3, ArrowLeft, ImageIcon } from "lucide-react";
+import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function ExplorePage() {
@@ -149,14 +150,57 @@ export default function ExplorePage() {
               </p>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {products.map((product) => (
-                  <Card key={product._id} className="flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+                  <Card key={product._id} className="group flex flex-col overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
+                    {/* Product Image */}
+                    <div className="relative aspect-square overflow-hidden bg-muted">
+                      {product.primaryImageUrl ? (
+                        <Image
+                          src={product.primaryImageUrl}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      
+                      {/* Category Badge - Overlay */}
+                      {product.category && (
+                        <Badge 
+                          variant="secondary" 
+                          className="absolute left-3 top-3 bg-background/80 backdrop-blur-sm"
+                        >
+                          {product.category}
+                        </Badge>
+                      )}
+
+                      {/* Country Badge - Overlay */}
+                      {product.country && (
+                        <Badge 
+                          variant="outline" 
+                          className="absolute right-3 top-3 bg-background/80 backdrop-blur-sm"
+                        >
+                          {product.country}
+                        </Badge>
+                      )}
+
+                      {/* Out of Stock Overlay */}
+                      {product.quantity === 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                          <Badge variant="destructive" className="text-sm">
+                            Out of Stock
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
                     <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="line-clamp-1 text-lg">{product.name}</CardTitle>
-                        {product.category && (
-                          <Badge variant="secondary" className="shrink-0">{product.category}</Badge>
-                        )}
-                      </div>
+                      <CardTitle className="line-clamp-1 text-lg group-hover:text-primary transition-colors">
+                        {product.name}
+                      </CardTitle>
                       <CardDescription className="line-clamp-2">
                         {product.description || "No description available"}
                       </CardDescription>
