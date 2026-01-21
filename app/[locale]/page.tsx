@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 
 export default function LandingPage() {
   const t = useTranslations("landing");
@@ -111,7 +112,18 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <>
+      {/* Structured Data for SEO */}
+      <OrganizationJsonLd 
+        sameAs={[
+          'https://twitter.com/africonnect',
+          'https://linkedin.com/company/africonnect',
+          'https://facebook.com/africonnect',
+        ]}
+      />
+      <WebsiteJsonLd />
+      
+      <div className="flex min-h-screen flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -468,5 +480,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
