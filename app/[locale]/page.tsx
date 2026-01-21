@@ -24,8 +24,18 @@ import {
   Sparkles,
   Store,
   Languages,
-  BadgeCheck
+  BadgeCheck,
+  Menu,
+  LogIn,
+  LayoutDashboard,
+  Compass
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
@@ -127,12 +137,14 @@ export default function LandingPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Globe2 className="h-5 w-5 text-primary-foreground" />
+          <Link href="/" className="flex items-center gap-2 cursor-pointer shrink-0">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary">
+              <Globe2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold tracking-tight">AfriConnect</span>
+            <span className="text-lg sm:text-xl font-bold tracking-tight">AfriConnect</span>
           </Link>
+          
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               {t("nav.marketplace")}
@@ -144,7 +156,9 @@ export default function LandingPage() {
               {t("nav.howItWorks")}
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          
+          {/* Desktop Controls */}
+          <div className="hidden sm:flex items-center gap-2 md:gap-3">
             <LanguageSwitcher />
             <ThemeToggle />
             <SignedOut>
@@ -161,6 +175,102 @@ export default function LandingPage() {
               </Link>
               <UserButton />
             </SignedIn>
+          </div>
+          
+          {/* Mobile Controls */}
+          <div className="flex sm:hidden items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64 p-0">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                <div className="flex flex-col h-full">
+                  {/* Header */}
+                  <div className="p-4 border-b">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                        <Globe2 className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                      <span className="text-lg font-bold">AfriConnect</span>
+                    </div>
+                  </div>
+                  
+                  {/* Navigation Links */}
+                  <nav className="flex-1 p-3">
+                    <div className="flex flex-col gap-1">
+                      <Link 
+                        href="/explore" 
+                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+                      >
+                        <Compass className="h-4 w-4 text-muted-foreground" />
+                        {t("nav.marketplace")}
+                      </Link>
+                      <Link 
+                        href="#features" 
+                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+                      >
+                        <Sparkles className="h-4 w-4 text-muted-foreground" />
+                        {t("nav.features")}
+                      </Link>
+                      <Link 
+                        href="#how-it-works" 
+                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+                      >
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        {t("nav.howItWorks")}
+                      </Link>
+                    </div>
+                  </nav>
+                  
+                  {/* Auth Section - Fixed at bottom */}
+                  <div className="p-4 border-t bg-muted/30">
+                    <SignedOut>
+                      <div className="flex flex-col gap-2">
+                        <SignInButton mode="modal">
+                          <Button variant="outline" className="w-full gap-2">
+                            <LogIn className="h-4 w-4" />
+                            Log In
+                          </Button>
+                        </SignInButton>
+                        <SignInButton mode="modal">
+                          <Button className="w-full gap-2">
+                            <Users className="h-4 w-4" />
+                            Sign Up
+                          </Button>
+                        </SignInButton>
+                      </div>
+                    </SignedOut>
+                    <SignedIn>
+                      <div className="flex items-center gap-3 mb-3 pb-3 border-b">
+                        <UserButton 
+                          appearance={{
+                            elements: {
+                              avatarBox: "h-10 w-10"
+                            }
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">My Account</p>
+                          <p className="text-xs text-muted-foreground">Manage profile</p>
+                        </div>
+                      </div>
+                      <Link href="/dashboard">
+                        <Button className="w-full gap-2">
+                          <LayoutDashboard className="h-4 w-4" />
+                          Go to Dashboard
+                        </Button>
+                      </Link>
+                    </SignedIn>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </nav>
       </header>
