@@ -34,6 +34,7 @@
     "marketplace": "Marketplace",
     "directory": "Directory",
     "products": "My Products",
+    "messages": "Messages",
     "cart": "Cart",
     "orders": "Orders",
     "settings": "Settings",
@@ -44,6 +45,23 @@
     "manageBusinesses": "Manage Businesses",
     "toggleMenu": "Toggle menu",
     "toggleSidebar": "Toggle sidebar"
+  },
+  "chat": {
+    "messages": "Messages",
+    "messagesDescription": "View and manage your conversations with buyers and sellers",
+    "conversations": "Conversations",
+    "conversation": "Conversation",
+    "contactSeller": "Contact Seller",
+    "messageBusiness": "Message Business",
+    "noMessages": "No messages yet",
+    "typeMessage": "Type a message...",
+    "startConversation": "Start a conversation by contacting a seller from a product page",
+    "selectConversation": "Select a conversation",
+    "selectConversationDescription": "Choose a conversation from the list to view messages",
+    "loadingConversations": "Loading conversations...",
+    "sendMessage": "Send message",
+    "attachFile": "Attach file",
+    "typing": "typing..."
   },
   "marketplace": {
     "title": "Marketplace",

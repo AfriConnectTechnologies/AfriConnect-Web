@@ -20,7 +20,8 @@ import {
   CheckCircle2,
   Clock,
   Tag,
-  Layers
+  Layers,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -28,12 +29,15 @@ import { Id } from "@/convex/_generated/dataModel";
 import { ImageGallery } from "@/components/products";
 import Image from "next/image";
 import { COMMERCE_ENABLED } from "@/lib/features";
+import { useTranslations } from "next-intl";
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useTranslations("chat");
   const productId = params.id as Id<"products">;
   const [quantity, setQuantity] = useState(1);
+  const [isContactingLoading, setIsContactingLoading] = useState(false);
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const productData = useQuery(api.products.getProductWithImages, { id: productId });
@@ -42,6 +46,30 @@ export default function ProductDetailPage() {
     limit: 4 
   });
   const addToCart = useMutation(api.cart.add);
+  const channelInfo = useQuery(api.chat.getProductChannelInfo, { productId });
+
+  const handleContactSeller = async () => {
+    if (!channelInfo || channelInfo.isOwnProduct) return;
+    
+    setIsContactingLoading(true);
+    try {
+      // Navigate to messages with channel info including members and their names
+      const params = new URLSearchParams({
+        channel: channelInfo.channelId,
+        product: productId,
+        productName: channelInfo.productName || "",
+        members: channelInfo.members.join(","),
+        memberNames: channelInfo.memberNames.join(","),
+        sellerName: channelInfo.sellerName || "",
+      });
+      router.push(`/messages?${params.toString()}`);
+    } catch (error) {
+      console.error("Failed to contact seller:", error);
+      toast.error("Failed to start conversation");
+    } finally {
+      setIsContactingLoading(false);
+    }
+  };
 
   // Check if current user is the owner of this product
   const isOwnProduct = currentUser && productData && productData.sellerId === currentUser._id;
@@ -285,7 +313,7 @@ export default function ProductDetailPage() {
                   Seller Information
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="flex items-start gap-4">
                   {productData.business.logoUrl ? (
                     <div className="relative h-12 w-12 overflow-hidden rounded-lg border">
@@ -318,6 +346,17 @@ export default function ProductDetailPage() {
                     </p>
                   </div>
                 </div>
+                {!isOwnProduct && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleContactSeller}
+                    disabled={isContactingLoading || !channelInfo}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {t("contactSeller")}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

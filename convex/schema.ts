@@ -157,5 +157,17 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_user", ["userId"])
     .index("by_user_type", ["userId", "type"]),
+
+  chatReports: defineTable({
+    channelId: v.string(),
+    reporterId: v.id("users"),
+    reason: v.string(),
+    status: v.union(v.literal("pending"), v.literal("reviewed"), v.literal("resolved")),
+    createdAt: v.number(),
+  })
+    .index("by_channel", ["channelId"])
+    .index("by_reporter", ["reporterId"])
+    .index("by_channel_reporter", ["channelId", "reporterId"])
+    .index("by_status", ["status"]),
 });
 

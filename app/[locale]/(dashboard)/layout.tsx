@@ -7,6 +7,7 @@ import { DashboardHeader } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 import { useWelcomeEmail } from "@/lib/hooks/useWelcomeEmail";
+import { ChatProvider } from "@/components/chat";
 
 function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
@@ -15,14 +16,16 @@ function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
   useWelcomeEmail(locale);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <EmailVerificationBanner />
-        <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+    <ChatProvider>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <EmailVerificationBanner />
+          <DashboardHeader />
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </ChatProvider>
   );
 }
 

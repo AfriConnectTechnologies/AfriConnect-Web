@@ -34,6 +34,7 @@
     "marketplace": "Soko",
     "directory": "Saraka",
     "products": "Bidhaa Zangu",
+    "messages": "Ujumbe",
     "cart": "Kikapu",
     "orders": "Maagizo",
     "settings": "Mipangilio",
@@ -44,6 +45,23 @@
     "manageBusinesses": "Simamia Biashara",
     "toggleMenu": "Badilisha menyu",
     "toggleSidebar": "Badilisha upau wa pembeni"
+  },
+  "chat": {
+    "messages": "Ujumbe",
+    "messagesDescription": "Tazama na simamia mazungumzo yako na wanunuzi na wauzaji",
+    "conversations": "Mazungumzo",
+    "conversation": "Mazungumzo",
+    "contactSeller": "Wasiliana na Muuzaji",
+    "messageBusiness": "Tuma Ujumbe kwa Biashara",
+    "noMessages": "Hakuna ujumbe bado",
+    "typeMessage": "Andika ujumbe...",
+    "startConversation": "Anza mazungumzo kwa kuwasiliana na muuzaji kutoka ukurasa wa bidhaa",
+    "selectConversation": "Chagua mazungumzo",
+    "selectConversationDescription": "Chagua mazungumzo kutoka kwenye orodha ili kutazama ujumbe",
+    "loadingConversations": "Inapakia mazungumzo...",
+    "sendMessage": "Tuma ujumbe",
+    "attachFile": "Ambatisha faili",
+    "typing": "anaandika..."
   },
   "marketplace": {
     "title": "Soko",

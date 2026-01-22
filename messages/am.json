@@ -34,6 +34,7 @@
     "marketplace": "የገበያ ቦታ",
     "directory": "ማውጫ",
     "products": "ምርቶቼ",
+    "messages": "መልዕክቶች",
     "cart": "ጋሪ",
     "orders": "ትዕዛዞች",
     "settings": "ቅንብሮች",
@@ -44,6 +45,23 @@
     "manageBusinesses": "ንግዶችን አስተዳድር",
     "toggleMenu": "ምናሌ ቀያይር",
     "toggleSidebar": "ጎን አሞሌ ቀያይር"
+  },
+  "chat": {
+    "messages": "መልዕክቶች",
+    "messagesDescription": "ከገዢዎች እና ከሻጮች ጋር ያሉ ውይይቶችዎን ይመልከቱ እና ያስተዳድሩ",
+    "conversations": "ውይይቶች",
+    "conversation": "ውይይት",
+    "contactSeller": "ሻጩን ያግኙ",
+    "messageBusiness": "ንግዱን ያሳውቁ",
+    "noMessages": "እስካሁን ምንም መልዕክቶች የሉም",
+    "typeMessage": "መልዕክት ይጻፉ...",
+    "startConversation": "ከምርት ገጽ ሻጭን በማግኘት ውይይት ይጀምሩ",
+    "selectConversation": "ውይይት ይምረጡ",
+    "selectConversationDescription": "መልዕክቶችን ለማየት ከዝርዝሩ ውይይት ይምረጡ",
+    "loadingConversations": "ውይይቶችን በመጫን ላይ...",
+    "sendMessage": "መልዕክት ላክ",
+    "attachFile": "ፋይል አያይዝ",
+    "typing": "በመጻፍ ላይ..."
   },
   "marketplace": {
     "title": "የገበያ ቦታ",

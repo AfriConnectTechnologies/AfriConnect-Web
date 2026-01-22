@@ -37,6 +37,11 @@ const nextConfig: NextConfig = {
       ...(r2AccountId
         ? [{ protocol: "https" as const, hostname: `${r2AccountId}.r2.cloudflarestorage.com` }]
         : []),
+      // Clerk user avatars
+      {
+        protocol: "https",
+        hostname: "img.clerk.com",
+      },
       // Placeholder/fallback image services (optional)
       {
         protocol: "https",

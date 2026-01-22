@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { UserButton } from "@clerk/nextjs";
-import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield } from "lucide-react";
+import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,9 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
+import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses";
 
 type NavItem = {
   href: string;
@@ -28,6 +29,7 @@ const baseNavItems: NavItem[] = [
   { href: "/marketplace", labelKey: "marketplace", icon: Store },
   { href: "/directory", labelKey: "directory", icon: Building },
   { href: "/products", labelKey: "products", icon: Package },
+  { href: "/messages", labelKey: "messages", icon: MessageCircle },
   { href: "/cart", labelKey: "cart", icon: ShoppingCart, showBadge: true, isCommerce: true },
   { href: "/orders", labelKey: "orders", icon: ShoppingBag, isCommerce: true },
   { href: "/settings", labelKey: "settings", icon: Settings },
@@ -114,6 +116,7 @@ function SidebarContent({
   const tCommon = useTranslations("common");
   const cart = useQuery(api.cart.get);
   const currentUser = useQuery(api.users.getCurrentUser);
+  const { unreadCount } = useChatContext();
   const cartItemCount = cart?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
   // Build nav items based on user role
@@ -173,8 +176,12 @@ function SidebarContent({
           const Icon = item.icon;
           const label = t(item.labelKey);
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          const showBadge = item.showBadge && cartItemCount > 0 && COMMERCE_ENABLED;
+          const showCartBadge = item.showBadge && cartItemCount > 0 && COMMERCE_ENABLED;
+          const showMessageBadge = item.labelKey === "messages" && unreadCount > 0;
           const showComingSoon = item.isCommerce && !COMMERCE_ENABLED;
+          const badgeCount = item.labelKey === "messages" ? unreadCount : cartItemCount;
+          const showBadge = showCartBadge || showMessageBadge;
+          
           return (
             <Link
               key={item.href}
@@ -198,18 +205,21 @@ function SidebarContent({
                     </Badge>
                   )}
                   {showBadge && !showComingSoon && (
-                    <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-xs shrink-0">
-                      {cartItemCount}
+                    <Badge 
+                      variant={showMessageBadge ? "destructive" : "secondary"} 
+                      className="ml-auto h-5 min-w-5 px-1.5 text-xs shrink-0"
+                    >
+                      {badgeCount > 99 ? "99+" : badgeCount}
                     </Badge>
                   )}
                 </>
               )}
               {isCollapsed && showBadge && !showComingSoon && (
                 <Badge
-                  variant="secondary"
+                  variant={showMessageBadge ? "destructive" : "secondary"}
                   className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-xs shrink-0"
                 >
-                  {cartItemCount}
+                  {badgeCount > 9 ? "9+" : badgeCount}
                 </Badge>
               )}
               {isCollapsed && showComingSoon && (

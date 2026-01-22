@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "convex/react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,19 +26,25 @@ import {
   ArrowUpDown,
   ShoppingCart,
   ImageIcon,
-  ExternalLink
+  ExternalLink,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 type SortOption = "newest" | "price_asc" | "price_desc";
 
 export default function BusinessProfilePage() {
   const params = useParams();
+  const router = useRouter();
+  const t = useTranslations("chat");
   const businessId = params.businessId as Id<"businesses">;
   
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [isContactingLoading, setIsContactingLoading] = useState(false);
 
   // Fetch business details
   const business = useQuery(api.directory.getBusiness, { businessId });
@@ -48,6 +54,29 @@ export default function BusinessProfilePage() {
     category: categoryFilter || undefined,
     sortBy,
   });
+  const channelInfo = useQuery(api.chat.getBusinessChannelInfo, { businessId });
+
+  const handleContactBusiness = async () => {
+    if (!channelInfo || channelInfo.isOwnBusiness) return;
+    
+    setIsContactingLoading(true);
+    try {
+      const params = new URLSearchParams({
+        channel: channelInfo.channelId,
+        business: businessId,
+        businessName: channelInfo.businessName || "",
+        members: channelInfo.members.join(","),
+        memberNames: channelInfo.memberNames.join(","),
+        ownerName: channelInfo.ownerName || "",
+      });
+      router.push(`/messages?${params.toString()}`);
+    } catch (error) {
+      console.error("Failed to contact business:", error);
+      toast.error("Failed to start conversation");
+    } finally {
+      setIsContactingLoading(false);
+    }
+  };
 
   if (business === undefined || stats === undefined || products === undefined) {
     return (
@@ -160,6 +189,17 @@ export default function BusinessProfilePage() {
                       Website
                       <ExternalLink className="ml-2 h-3 w-3" />
                     </a>
+                  </Button>
+                )}
+                {channelInfo && !channelInfo.isOwnBusiness && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleContactBusiness}
+                    disabled={isContactingLoading}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {t("messageBusiness")}
                   </Button>
                 )}
               </div>
