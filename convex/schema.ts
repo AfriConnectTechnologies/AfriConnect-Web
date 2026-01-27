@@ -184,5 +184,34 @@ export default defineSchema({
     .index("by_business", ["businessId"])
     .index("by_hs_code", ["hsCode"])
     .index("by_business_hs", ["businessId", "hsCode"]),
+
+  // Certificate of Origin - Eligibility Calculations (MaxNOM 60% Rule)
+  originCalculations: defineTable({
+    businessId: v.id("businesses"),
+    productId: v.optional(v.id("businessProducts")), // Link to existing product
+    productName: v.string(),
+
+    // Step 1: EXW components
+    costOfMaterials: v.number(),
+    laborCosts: v.number(),
+    factoryOverheads: v.number(),
+    profitMargin: v.number(),
+    exWorksPrice: v.number(), // Calculated total
+
+    // Step 2: VNM (Value of Non-originating Materials)
+    nonOriginatingMaterials: v.number(),
+    vnmDetails: v.optional(v.string()), // JSON array of individual items
+
+    // Step 3 & 4: Results
+    vnmPercentage: v.number(),
+    isEligible: v.boolean(),
+
+    currency: v.string(), // ETB, USD, etc.
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_product", ["productId"])
+    .index("by_eligibility", ["businessId", "isEligible"]),
 });
 

@@ -7,8 +7,9 @@ import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Shield, ExternalLink, Building2, ArrowRight, Info } from "lucide-react";
-import { BusinessProducts } from "@/components/compliance";
+import { Loader2, Shield, ExternalLink, Building2, ArrowRight, Info, FileCheck } from "lucide-react";
+import { BusinessProducts, OriginEligibilityCalculator } from "@/components/compliance";
+import { Separator } from "@/components/ui/separator";
 
 export default function CompliancePage() {
   const t = useTranslations("compliance");
@@ -159,6 +160,20 @@ export default function CompliancePage() {
 
       {/* Business Products Manager */}
       <BusinessProducts showHeader={true} />
+
+      {/* Section Divider */}
+      <div className="relative py-4">
+        <Separator />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="bg-background px-4 flex items-center gap-2 text-muted-foreground">
+            <FileCheck className="h-4 w-4" />
+            <span className="text-sm font-medium">Rules of Origin</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Certificate of Origin Eligibility Calculator */}
+      <OriginEligibilityCalculator showHeader={true} />
     </div>
   );
 }

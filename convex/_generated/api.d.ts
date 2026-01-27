@@ -15,6 +15,7 @@ import type * as compliance from "../compliance.js";
 import type * as directory from "../directory.js";
 import type * as helpers from "../helpers.js";
 import type * as orders from "../orders.js";
+import type * as originCalculations from "../originCalculations.js";
 import type * as payments from "../payments.js";
 import type * as productImages from "../productImages.js";
 import type * as products from "../products.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   directory: typeof directory;
   helpers: typeof helpers;
   orders: typeof orders;
+  originCalculations: typeof originCalculations;
   payments: typeof payments;
   productImages: typeof productImages;
   products: typeof products;
