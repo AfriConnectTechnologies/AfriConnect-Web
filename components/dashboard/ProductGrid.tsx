@@ -15,7 +15,7 @@ interface Product {
   quantity: number;
   category?: string;
   country?: string;
-  primaryImageUrl?: string;
+  primaryImageUrl?: string | null;
 }
 
 interface ProductGridProps {
