@@ -451,6 +451,7 @@ export const getProductWithImages = query({
       images: sortedImages,
       seller: seller ? {
         _id: seller._id,
+        clerkId: seller.clerkId,
         name: seller.name,
         imageUrl: seller.imageUrl,
       } : null,

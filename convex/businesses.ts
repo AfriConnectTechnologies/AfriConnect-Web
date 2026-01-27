@@ -124,6 +124,7 @@ export const getBusiness = query({
       owner: owner
         ? {
             _id: owner._id,
+            clerkId: owner.clerkId,
             name: owner.name,
             email: owner.email,
             imageUrl: owner.imageUrl,

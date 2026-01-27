@@ -169,5 +169,20 @@ export default defineSchema({
     .index("by_reporter", ["reporterId"])
     .index("by_channel_reporter", ["channelId", "reporterId"])
     .index("by_status", ["status"]),
+
+  // AfCFTA Compliance - Business Products with HS Codes
+  businessProducts: defineTable({
+    businessId: v.id("businesses"),
+    hsCode: v.string(),
+    productName: v.string(),
+    productNameAmharic: v.optional(v.string()),
+    isCompliant: v.boolean(), // Found in Category A
+    currentRate: v.optional(v.string()), // Current year's rate
+    rates: v.optional(v.string()), // JSON string of all rates { "2026": "2", "2027": "1.5", ... }
+    createdAt: v.number(),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_hs_code", ["hsCode"])
+    .index("by_business_hs", ["businessId", "hsCode"]),
 });
 

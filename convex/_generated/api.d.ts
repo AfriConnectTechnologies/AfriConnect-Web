@@ -11,6 +11,7 @@
 import type * as businesses from "../businesses.js";
 import type * as cart from "../cart.js";
 import type * as chat from "../chat.js";
+import type * as compliance from "../compliance.js";
 import type * as directory from "../directory.js";
 import type * as helpers from "../helpers.js";
 import type * as orders from "../orders.js";
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   businesses: typeof businesses;
   cart: typeof cart;
   chat: typeof chat;
+  compliance: typeof compliance;
   directory: typeof directory;
   helpers: typeof helpers;
   orders: typeof orders;

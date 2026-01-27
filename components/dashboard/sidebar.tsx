@@ -14,7 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "compliance";
 
 type NavItem = {
   href: string;
@@ -38,6 +38,7 @@ const baseNavItems: NavItem[] = [
 
 const sellerNavItems: NavItem[] = [
   { href: "/business/profile", labelKey: "myBusiness", icon: Building2 },
+  { href: "/compliance", labelKey: "compliance", icon: Shield },
 ];
 
 const buyerNavItems: NavItem[] = [
