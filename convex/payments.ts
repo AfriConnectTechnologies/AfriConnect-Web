@@ -471,15 +471,8 @@ export const listSubscriptionPayments = query({
     // Get user details for each payment
     const paymentsWithUsers = await Promise.all(
       payments.map(async (payment) => {
-        // userId is stored as Id<"users"> but typed as string in schema
-        // Try to get the user by treating it as an Id
-        let user = null;
-        try {
-          user = await ctx.db.get(payment.userId as Id<"users">);
-        } catch {
-          // If that fails, try querying by string ID
-          user = null;
-        }
+        // userId is stored as string in schema but represents Id<"users">
+        const user = await ctx.db.get(payment.userId as Id<"users">);
         return {
           ...payment,
           user: user ? { 
