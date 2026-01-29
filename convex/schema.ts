@@ -123,6 +123,7 @@ export default defineSchema({
   payments: defineTable({
     userId: v.string(),
     orderId: v.optional(v.id("orders")),
+    subscriptionId: v.optional(v.id("subscriptions")),
     chapaTransactionRef: v.string(), // tx_ref sent to Chapa
     chapaTrxRef: v.optional(v.string()), // trx_ref returned by Chapa
     amount: v.number(),
@@ -138,13 +139,22 @@ export default defineSchema({
       v.literal("subscription")
     ),
     metadata: v.optional(v.string()), // JSON string for additional data
+    idempotencyKey: v.optional(v.string()), // For deduplication
+    // Refund fields
+    refundedAt: v.optional(v.number()),
+    refundAmount: v.optional(v.number()),
+    refundReason: v.optional(v.string()),
+    refundReference: v.optional(v.string()),
+    refundedByUserId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_order", ["orderId"])
+    .index("by_subscription", ["subscriptionId"])
     .index("by_chapa_ref", ["chapaTransactionRef"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_idempotency", ["idempotencyKey"]),
 
   verificationTokens: defineTable({
     userId: v.id("users"),
@@ -157,6 +167,82 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_user", ["userId"])
     .index("by_user_type", ["userId", "type"]),
+
+  // Subscription Plans (static/configurable)
+  subscriptionPlans: defineTable({
+    name: v.string(), // "Starter", "Growth", "Pro", "Enterprise"
+    slug: v.string(), // "starter", "growth", "pro", "enterprise"
+    description: v.optional(v.string()),
+    targetCustomer: v.optional(v.string()), // "Small SMBs", "Growing SMBs", etc.
+    monthlyPrice: v.number(), // In cents (2900 = $29)
+    annualPrice: v.number(), // In cents (27800 = $278)
+    currency: v.string(), // "USD"
+    features: v.string(), // JSON array of feature strings
+    limits: v.string(), // JSON: { maxProducts: 10, maxOrders: 100, ... }
+    isActive: v.boolean(),
+    isPopular: v.optional(v.boolean()), // For "Most Popular" badge
+    sortOrder: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_active", ["isActive"])
+    .index("by_sort", ["sortOrder"]),
+
+  // Active Subscriptions
+  subscriptions: defineTable({
+    businessId: v.id("businesses"),
+    planId: v.id("subscriptionPlans"),
+    status: v.union(
+      v.literal("active"),
+      v.literal("past_due"),
+      v.literal("cancelled"),
+      v.literal("trialing"),
+      v.literal("expired")
+    ),
+    billingCycle: v.union(v.literal("monthly"), v.literal("annual")),
+    currentPeriodStart: v.number(),
+    currentPeriodEnd: v.number(),
+    cancelAtPeriodEnd: v.boolean(),
+    trialEndsAt: v.optional(v.number()),
+    lastPaymentId: v.optional(v.id("payments")),
+    cancelledAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_status", ["status"])
+    .index("by_plan", ["planId"])
+    .index("by_period_end", ["currentPeriodEnd"]),
+
+  // Payment Audit Logs for security tracking
+  paymentAuditLogs: defineTable({
+    paymentId: v.optional(v.id("payments")),
+    userId: v.optional(v.string()),
+    action: v.string(), // "init", "verify", "webhook", "refund", "status_update"
+    status: v.string(), // "success", "failed", "pending"
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    txRef: v.optional(v.string()),
+    metadata: v.optional(v.string()), // JSON string for additional context
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_payment", ["paymentId"])
+    .index("by_user", ["userId"])
+    .index("by_action", ["action"])
+    .index("by_tx_ref", ["txRef"])
+    .index("by_created", ["createdAt"]),
+
+  // Webhook Events for duplicate detection
+  webhookEvents: defineTable({
+    txRef: v.string(),
+    eventType: v.string(), // "payment.success", "payment.failed"
+    processedAt: v.number(),
+    signature: v.optional(v.string()),
+  })
+    .index("by_tx_ref", ["txRef"])
+    .index("by_processed", ["processedAt"]),
 
   chatReports: defineTable({
     channelId: v.string(),

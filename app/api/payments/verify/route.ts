@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { verifyPayment, ChapaError } from "@/lib/chapa";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
+import {
+  checkRateLimit,
+  RateLimits,
+  rateLimitExceededResponse,
+  createRateLimitHeaders,
+} from "@/lib/rate-limiter";
+import { paymentVerifySchema, validatePaymentInput } from "@/lib/validators/payment";
+
+// Security headers for payment endpoints
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "Pragma": "no-cache",
+};
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -11,85 +29,129 @@ export async function GET(request: NextRequest) {
   if (!COMMERCE_ENABLED) {
     return NextResponse.json(
       { error: "Payment features are currently unavailable. Coming soon!" },
-      { status: 503 }
+      { status: 503, headers: SECURITY_HEADERS }
     );
   }
 
   try {
+    // Get userId for rate limiting (optional - allows anonymous verification)
+    const { userId } = await auth();
+    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
+    const rateLimitKey = userId ? `payment_verify:${userId}` : `payment_verify:${clientIp}`;
+
+    // Apply rate limiting
+    const rateLimitResult = checkRateLimit(rateLimitKey, RateLimits.PAYMENT_VERIFY);
+
+    if (!rateLimitResult.success) {
+      return rateLimitExceededResponse(rateLimitResult);
+    }
+
     const { searchParams } = new URL(request.url);
     const txRef = searchParams.get("tx_ref");
 
-    if (!txRef) {
+    // Validate input
+    const validation = validatePaymentInput(paymentVerifySchema, { tx_ref: txRef });
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Transaction reference is required" },
-        { status: 400 }
+        { error: validation.error },
+        { status: 400, headers: SECURITY_HEADERS }
       );
     }
 
     // Verify with Chapa
-    const chapaResponse = await verifyPayment(txRef);
+    const chapaResponse = await verifyPayment(validation.data.tx_ref);
 
     // Update payment status in Convex
     const status = chapaResponse.data.status === "success" ? "success" : "failed";
-    
+
     await convex.mutation(api.payments.updateStatus, {
-      txRef,
+      txRef: validation.data.tx_ref,
       status,
       chapaTrxRef: chapaResponse.data.reference,
     });
 
-    return NextResponse.json({
-      success: true,
-      status,
-      data: {
-        amount: chapaResponse.data.amount,
-        currency: chapaResponse.data.currency,
-        reference: chapaResponse.data.reference,
-        tx_ref: chapaResponse.data.tx_ref,
-        payment_method: chapaResponse.data.method,
-        created_at: chapaResponse.data.created_at,
+    return NextResponse.json(
+      {
+        success: true,
+        status,
+        data: {
+          amount: chapaResponse.data.amount,
+          currency: chapaResponse.data.currency,
+          reference: chapaResponse.data.reference,
+          tx_ref: chapaResponse.data.tx_ref,
+          payment_method: chapaResponse.data.method,
+          created_at: chapaResponse.data.created_at,
+        },
       },
-    });
-
+      {
+        headers: {
+          ...SECURITY_HEADERS,
+          ...createRateLimitHeaders(rateLimitResult),
+        },
+      }
+    );
   } catch (error) {
     console.error("Payment verification error:", error);
 
     if (error instanceof ChapaError) {
+      // Don't expose internal details
       return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.statusCode || 500 }
+        { error: "Unable to verify payment status" },
+        { status: error.statusCode === 404 ? 404 : 503, headers: SECURITY_HEADERS }
       );
     }
 
     return NextResponse.json(
       { error: "Failed to verify payment" },
-      { status: 500 }
+      { status: 500, headers: SECURITY_HEADERS }
     );
   }
 }
 
 export async function POST(request: NextRequest) {
-  // Also support POST for flexibility
-  const body = await request.json();
-  const txRef = body.tx_ref;
-
-  if (!txRef) {
+  // Check if commerce features are enabled
+  if (!COMMERCE_ENABLED) {
     return NextResponse.json(
-      { error: "Transaction reference is required" },
-      { status: 400 }
+      { error: "Payment features are currently unavailable. Coming soon!" },
+      { status: 503, headers: SECURITY_HEADERS }
     );
   }
 
-  // Create a new URL with the tx_ref as query param
-  const url = new URL(request.url);
-  url.searchParams.set("tx_ref", txRef);
-  
-  // Create a new request with the modified URL
-  const newRequest = new NextRequest(url, {
-    method: "GET",
-    headers: request.headers,
-  });
+  try {
+    let body: { tx_ref?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
 
-  return GET(newRequest);
+    const txRef = body.tx_ref;
+
+    if (!txRef) {
+      return NextResponse.json(
+        { error: "Transaction reference is required" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
+
+    // Create a new URL with the tx_ref as query param
+    const url = new URL(request.url);
+    url.searchParams.set("tx_ref", txRef);
+
+    // Create a new request with the modified URL
+    const newRequest = new NextRequest(url, {
+      method: "GET",
+      headers: request.headers,
+    });
+
+    return GET(newRequest);
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to process request" },
+      { status: 500, headers: SECURITY_HEADERS }
+    );
+  }
 }
-

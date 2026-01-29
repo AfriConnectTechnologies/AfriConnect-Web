@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireUser, requireSeller } from "./helpers";
+import { requireUser, requireSeller, checkOriginCalculationLimit, PlanLimitError } from "./helpers";
 
 // Save a new origin calculation
 export const saveOriginCalculation = mutation({
@@ -20,6 +20,16 @@ export const saveOriginCalculation = mutation({
 
     if (!user.businessId) {
       throw new Error("You don't have a registered business");
+    }
+
+    // Check origin calculation limit based on subscription plan
+    const calculationLimit = await checkOriginCalculationLimit(ctx, user.businessId);
+    if (!calculationLimit.allowed) {
+      throw new PlanLimitError(
+        "origin calculations this month",
+        calculationLimit.current,
+        calculationLimit.limit
+      );
     }
 
     // Calculate EXW and VNM percentage

@@ -3,10 +3,12 @@
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "@/i18n/navigation";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CreditCard, Loader2, ExternalLink, Shield } from "lucide-react";
+import { CreditCard, Loader2, ExternalLink, Shield, Sparkles, Settings, Calendar } from "lucide-react";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { ComingSoonPage } from "@/components/ui/coming-soon";
 
@@ -16,6 +18,7 @@ export default function BillingPage() {
   const tOrders = useTranslations("orders");
   
   const payments = useQuery(api.payments.list, COMMERCE_ENABLED ? {} : "skip");
+  const subscription = useQuery(api.subscriptions.getCurrentSubscription);
 
   if (!COMMERCE_ENABLED) {
     return (
@@ -35,6 +38,32 @@ export default function BillingPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const formatShortDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const getSubscriptionStatusBadge = (status: string, cancelAtPeriodEnd: boolean) => {
+    if (cancelAtPeriodEnd) {
+      return <Badge variant="destructive">Cancels Soon</Badge>;
+    }
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-500">Active</Badge>;
+      case "trialing":
+        return <Badge variant="secondary">Trial</Badge>;
+      case "past_due":
+        return <Badge variant="destructive">Past Due</Badge>;
+      case "cancelled":
+        return <Badge variant="outline">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -58,6 +87,72 @@ export default function BillingPage() {
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
+
+      {/* Subscription Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            Current Subscription
+          </CardTitle>
+          <CardDescription>Manage your subscription plan and billing</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {subscription === undefined ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : subscription ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{subscription.plan?.name} Plan</p>
+                    {getSubscriptionStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    <span>
+                      {subscription.billingCycle === "annual" ? "Annual" : "Monthly"} · Renews {formatShortDate(subscription.currentPeriodEnd)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold">
+                  {subscription.plan?.currency === "ETB" 
+                    ? `${((subscription.billingCycle === "annual" ? subscription.plan?.annualPrice : subscription.plan?.monthlyPrice) / 100).toLocaleString()} ETB`
+                    : `$${((subscription.billingCycle === "annual" ? subscription.plan?.annualPrice : subscription.plan?.monthlyPrice) / 100).toFixed(0)}`
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  per {subscription.billingCycle === "annual" ? "year" : "month"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-muted-foreground mb-2">No active subscription</p>
+              <Button asChild size="sm">
+                <Link href="/pricing">View Plans</Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+        {subscription && (
+          <CardFooter className="border-t pt-4">
+            <Button variant="outline" asChild className="w-full">
+              <Link href="/settings/subscription">
+                <Settings className="h-4 w-4 mr-2" />
+                Manage Subscription
+              </Link>
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
 
       {/* Payment Method Card */}
       <Card>

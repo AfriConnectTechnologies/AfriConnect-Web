@@ -16,10 +16,13 @@ import type * as directory from "../directory.js";
 import type * as helpers from "../helpers.js";
 import type * as orders from "../orders.js";
 import type * as originCalculations from "../originCalculations.js";
+import type * as paymentAuditLogs from "../paymentAuditLogs.js";
 import type * as payments from "../payments.js";
 import type * as productImages from "../productImages.js";
 import type * as products from "../products.js";
 import type * as stats from "../stats.js";
+import type * as subscriptionPlans from "../subscriptionPlans.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as users from "../users.js";
 import type * as verification from "../verification.js";
 
@@ -38,10 +41,13 @@ declare const fullApi: ApiFromModules<{
   helpers: typeof helpers;
   orders: typeof orders;
   originCalculations: typeof originCalculations;
+  paymentAuditLogs: typeof paymentAuditLogs;
   payments: typeof payments;
   productImages: typeof productImages;
   products: typeof products;
   stats: typeof stats;
+  subscriptionPlans: typeof subscriptionPlans;
+  subscriptions: typeof subscriptions;
   users: typeof users;
   verification: typeof verification;
 }>;

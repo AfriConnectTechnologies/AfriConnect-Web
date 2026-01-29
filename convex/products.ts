@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getOrCreateUser } from "./helpers";
+import { getOrCreateUser, checkProductLimit, PlanLimitError } from "./helpers";
 
 export const list = query({
   args: {
@@ -72,6 +72,12 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getOrCreateUser(ctx);
+
+    // Check product limit based on subscription plan
+    const productLimit = await checkProductLimit(ctx, user._id);
+    if (!productLimit.allowed) {
+      throw new PlanLimitError("products", productLimit.current, productLimit.limit);
+    }
 
     const now = Date.now();
     const productId = await ctx.db.insert("products", {

@@ -4,41 +4,93 @@ import { initializePayment, getPaymentUrls, ChapaError } from "@/lib/chapa";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
+import {
+  checkRateLimit,
+  RateLimits,
+  rateLimitExceededResponse,
+  createRateLimitHeaders,
+} from "@/lib/rate-limiter";
+import {
+  paymentInitializeSchema,
+  validatePaymentInput,
+  validateAmountForCurrency,
+} from "@/lib/validators/payment";
+
+// Security headers for payment endpoints
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-XSS-Protection": "1; mode=block",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "Pragma": "no-cache",
+};
 
 export async function POST(request: NextRequest) {
   // Check if commerce features are enabled
   if (!COMMERCE_ENABLED) {
     return NextResponse.json(
       { error: "Payment features are currently unavailable. Coming soon!" },
-      { status: 503 }
+      { status: 503, headers: SECURITY_HEADERS }
     );
   }
 
   try {
-    // Check authentication
+    // Check authentication first
     const { userId, getToken } = await auth();
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
-        { status: 401 }
+        { status: 401, headers: SECURITY_HEADERS }
       );
+    }
+
+    // Apply rate limiting
+    const rateLimitResult = checkRateLimit(
+      `payment_init:${userId}`,
+      RateLimits.PAYMENT_INIT
+    );
+
+    if (!rateLimitResult.success) {
+      return rateLimitExceededResponse(rateLimitResult);
     }
 
     const user = await currentUser();
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
-        { status: 401 }
+        { status: 401, headers: SECURITY_HEADERS }
       );
     }
 
-    const body = await request.json();
-    const { amount, currency = "ETB", paymentType = "order", metadata } = body;
-
-    if (!amount || amount <= 0) {
+    // Parse and validate request body
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { error: "Invalid amount" },
-        { status: 400 }
+        { error: "Invalid JSON body" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
+
+    // Validate input with Zod
+    const validation = validatePaymentInput(paymentInitializeSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
+
+    const { amount, currency, paymentType, metadata, idempotencyKey } = validation.data;
+
+    // Validate amount for currency
+    const amountValidation = validateAmountForCurrency(amount, currency);
+    if (!amountValidation.valid) {
+      return NextResponse.json(
+        { error: amountValidation.error },
+        { status: 400, headers: SECURITY_HEADERS }
       );
     }
 
@@ -49,24 +101,52 @@ export async function POST(request: NextRequest) {
       convex.setAuth(token);
     }
 
+    // Check for existing payment with idempotency key
+    if (idempotencyKey) {
+      const existingPayment = await convex.query(api.payments.getByIdempotencyKey, {
+        idempotencyKey,
+        userId,
+      });
+      if (existingPayment) {
+        // Return existing payment if found
+        return NextResponse.json(
+          {
+            success: true,
+            checkoutUrl: existingPayment.checkoutUrl,
+            txRef: existingPayment.chapaTransactionRef,
+            paymentId: existingPayment._id,
+            cached: true,
+          },
+          {
+            headers: {
+              ...SECURITY_HEADERS,
+              ...createRateLimitHeaders(rateLimitResult),
+            },
+          }
+        );
+      }
+    }
+
     // Create payment record in Convex (also snapshots cart for order payments)
     const payment = await convex.mutation(api.payments.create, {
       amount,
       currency,
       paymentType,
       metadata: metadata ? JSON.stringify(metadata) : undefined,
+      idempotencyKey,
     });
 
     if (!payment) {
       return NextResponse.json(
         { error: "Failed to create payment record" },
-        { status: 500 }
+        { status: 500, headers: SECURITY_HEADERS }
       );
     }
 
     // Get base URL for callbacks
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-      request.headers.get("origin") || 
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      request.headers.get("origin") ||
       "http://localhost:3000";
 
     const urls = getPaymentUrls(baseUrl, payment.txRef);
@@ -88,38 +168,46 @@ export async function POST(request: NextRequest) {
       return_url: urls.return_url,
       customization: {
         title: "AfriConnect",
-        description: paymentType === "subscription" 
-          ? "Subscription" 
-          : "Order Payment",
+        description:
+          paymentType === "subscription" ? "Subscription Payment" : "Order Payment",
       },
       meta: {
         payment_id: payment._id?.toString() || "",
         user_id: userId,
         payment_type: paymentType,
+        ...(idempotencyKey && { idempotency_key: idempotencyKey }),
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      checkoutUrl: chapaResponse.data.checkout_url,
-      txRef: payment.txRef,
-      paymentId: payment._id,
-    });
-
+    return NextResponse.json(
+      {
+        success: true,
+        checkoutUrl: chapaResponse.data.checkout_url,
+        txRef: payment.txRef,
+        paymentId: payment._id,
+      },
+      {
+        headers: {
+          ...SECURITY_HEADERS,
+          ...createRateLimitHeaders(rateLimitResult),
+        },
+      }
+    );
   } catch (error) {
     console.error("Payment initialization error:", error);
 
     if (error instanceof ChapaError) {
+      // Don't expose internal Chapa error details to client
       return NextResponse.json(
-        { error: error.message, details: error.response },
-        { status: error.statusCode || 500 }
+        { error: "Payment service temporarily unavailable" },
+        { status: error.statusCode === 400 ? 400 : 503, headers: SECURITY_HEADERS }
       );
     }
 
+    // Generic error - don't expose internal details
     return NextResponse.json(
       { error: "Failed to initialize payment" },
-      { status: 500 }
+      { status: 500, headers: SECURITY_HEADERS }
     );
   }
 }
-

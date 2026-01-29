@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { UserButton } from "@clerk/nextjs";
-import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle } from "lucide-react";
+import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "compliance";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageRefunds" | "compliance";
 
 type NavItem = {
   href: string;
@@ -48,6 +48,7 @@ const buyerNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { href: "/admin/users", labelKey: "manageUsers", icon: Users },
   { href: "/admin/businesses", labelKey: "manageBusinesses", icon: Building },
+  { href: "/admin/refunds", labelKey: "manageRefunds", icon: RefreshCw },
 ];
 
 export function MobileSidebarTrigger() {
