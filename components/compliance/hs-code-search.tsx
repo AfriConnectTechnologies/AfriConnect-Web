@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Search, Loader2, Plus, X } from "lucide-react";
+import { Search, Loader2, Plus } from "lucide-react";
+import type { TariffCountry } from "./country-selector";
 
 export interface HSCodeResult {
   hsCode: string;
@@ -21,15 +21,18 @@ export interface HSCodeResult {
     "2030": string;
   };
   currentRate: string;
+  baseRate?: string;
+  unit?: string;
 }
 
 interface HSCodeSearchProps {
   onSelect: (result: HSCodeResult) => void;
+  country: TariffCountry;
   disabled?: boolean;
   placeholder?: string;
 }
 
-export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchProps) {
+export function HSCodeSearch({ onSelect, country, disabled, placeholder }: HSCodeSearchProps) {
   const t = useTranslations("compliance");
   const locale = useLocale();
   
@@ -47,6 +50,14 @@ export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchPr
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Reset results when country changes
+  useEffect(() => {
+    setResults([]);
+    setIsOpen(false);
+    setManualLookupResult(null);
+    setManualNotFound(false);
+  }, [country]);
+
   // Debounced search
   useEffect(() => {
     if (mode !== "search" || query.length < 2) {
@@ -58,7 +69,9 @@ export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchPr
     const timeoutId = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/compliance/search?q=${encodeURIComponent(query)}&limit=10`);
+        const response = await fetch(
+          `/api/compliance/search?q=${encodeURIComponent(query)}&limit=10&country=${country}`
+        );
         const data = await response.json();
         if (data.success && data.results) {
           setResults(data.results);
@@ -73,7 +86,7 @@ export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchPr
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [query, mode]);
+  }, [query, mode, country]);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -133,17 +146,21 @@ export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchPr
     setManualLookupResult(null);
 
     try {
-      const response = await fetch(`/api/compliance/search?hs_code=${encodeURIComponent(manualHsCode)}`);
+      const response = await fetch(
+        `/api/compliance/search?hs_code=${encodeURIComponent(manualHsCode)}&country=${country}`
+      );
       const data = await response.json();
       
       if (data.success && data.data) {
         const result: HSCodeResult = {
           hsCode: data.data.hs_code,
           englishName: data.data.english_name,
-          amharicName: data.data.amharic_name,
+          amharicName: data.data.amharic_name || "",
           category: data.data.category,
           rates: data.data.rates,
           currentRate: data.data.rates["2026"],
+          baseRate: data.data.base_rate,
+          unit: data.data.unit,
         };
         setManualLookupResult(result);
       } else {
@@ -178,9 +195,11 @@ export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchPr
   };
 
   const getDisplayName = (result: HSCodeResult) => {
-    return locale === "am" && result.amharicName 
-      ? result.amharicName 
-      : result.englishName;
+    // Only show Amharic name for Ethiopia and if available
+    if (country === "ethiopia" && locale === "am" && result.amharicName) {
+      return result.amharicName;
+    }
+    return result.englishName;
   };
 
   return (
@@ -281,7 +300,7 @@ export function HSCodeSearch({ onSelect, disabled, placeholder }: HSCodeSearchPr
                   setManualLookupResult(null);
                 }}
                 disabled={disabled}
-                maxLength={10}
+                maxLength={12}
               />
             </div>
             <Button

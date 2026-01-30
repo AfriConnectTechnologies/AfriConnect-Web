@@ -11,6 +11,7 @@ export const addBusinessProduct = mutation({
     isCompliant: v.boolean(),
     currentRate: v.optional(v.string()),
     rates: v.optional(v.string()), // JSON string of rates
+    country: v.optional(v.string()), // "ethiopia" or "kenya" (EAC)
   },
   handler: async (ctx, args) => {
     const user = await requireSeller(ctx);
@@ -19,16 +20,17 @@ export const addBusinessProduct = mutation({
       throw new Error("You don't have a registered business");
     }
 
-    // Check if this HS code already exists for this business
+    // Check if this HS code already exists for this business (same country)
     const existingProduct = await ctx.db
       .query("businessProducts")
       .withIndex("by_business_hs", (q) =>
         q.eq("businessId", user.businessId!).eq("hsCode", args.hsCode)
       )
+      .filter((q) => q.eq(q.field("country"), args.country || "ethiopia"))
       .first();
 
     if (existingProduct) {
-      throw new Error("This HS code is already added to your business");
+      throw new Error("This HS code is already added to your business for this country");
     }
 
     const productId = await ctx.db.insert("businessProducts", {
@@ -39,6 +41,7 @@ export const addBusinessProduct = mutation({
       isCompliant: args.isCompliant,
       currentRate: args.currentRate,
       rates: args.rates,
+      country: args.country || "ethiopia", // Default to ethiopia for backward compatibility
       createdAt: Date.now(),
     });
 

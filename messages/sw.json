@@ -620,7 +620,11 @@
     "afcftaComplianceDescription": "Angalia kama bidhaa zako zinastahiki faida za Eneo la Biashara Huru la Bara la Afrika",
     "noComplianceCheckYet": "Bado hujaongeza bidhaa yoyote kwa ukaguzi wa uzingatiaji.",
     "startComplianceCheck": "Anza Ukaguzi wa Uzingatiaji",
-    "manageProducts": "Simamia Bidhaa"
+    "manageProducts": "Simamia Bidhaa",
+    "selectCountry": "Chagua Nchi/Eneo",
+    "ethiopia": "Ethiopia",
+    "kenyaEac": "Kenya (EAC)",
+    "countryDescription": "Chagua nchi kutafuta ratiba za ushuru"
   },
   "originEligibility": {
     "title": "Ustahiki wa Cheti cha Asili",

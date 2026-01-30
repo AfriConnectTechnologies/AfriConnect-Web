@@ -28,10 +28,16 @@ interface ComplianceCardProps {
   isCompliant: boolean;
   currentRate?: string;
   rates?: Rates | string;
+  country?: string; // "ethiopia" or "kenya"
   onRemove?: () => void;
   showRemove?: boolean;
   compact?: boolean;
 }
+
+const countryFlags: Record<string, string> = {
+  ethiopia: "🇪🇹",
+  kenya: "🇰🇪",
+};
 
 export function ComplianceCard({
   hsCode,
@@ -40,6 +46,7 @@ export function ComplianceCard({
   isCompliant,
   currentRate,
   rates,
+  country,
   onRemove,
   showRemove = true,
   compact = false,
@@ -47,6 +54,7 @@ export function ComplianceCard({
   const t = useTranslations("compliance");
   const locale = useLocale();
   const currentYear = new Date().getFullYear();
+  const countryFlag = country ? countryFlags[country] : countryFlags.ethiopia;
 
   // Parse rates if it's a JSON string
   const parsedRates: Rates | null = rates
@@ -72,7 +80,10 @@ export function ComplianceCard({
           )}
           <div className="min-w-0">
             <div className="font-medium text-sm truncate">{displayName}</div>
-            <div className="text-xs text-muted-foreground">HS: {hsCode}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <span>{countryFlag}</span>
+              <span>HS: {hsCode}</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -114,8 +125,9 @@ export function ComplianceCard({
               )}
               {displayName}
             </CardTitle>
-            <CardDescription>
-              HS Code: {hsCode}
+            <CardDescription className="flex items-center gap-2">
+              <span>{countryFlag}</span>
+              <span>HS Code: {hsCode}</span>
             </CardDescription>
           </div>
           <Badge 
