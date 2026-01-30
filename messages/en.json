@@ -43,6 +43,7 @@
     "registerBusiness": "Register Business",
     "manageUsers": "Manage Users",
     "manageBusinesses": "Manage Businesses",
+    "manageRefunds": "Manage Refunds",
     "compliance": "AfCFTA Compliance",
     "toggleMenu": "Toggle menu",
     "toggleSidebar": "Toggle sidebar"
@@ -264,6 +265,119 @@
     "amount": "Amount",
     "failed": "Failed"
   },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "description": "Choose the plan that best fits your business needs. All plans include access to our B2B marketplace and AfCFTA compliance tools.",
+    "subtitle": "Choose the plan that best fits your business needs. All plans include access to our B2B marketplace and AfCFTA compliance tools.",
+    "backToHome": "Back to Home",
+    "loadingPlans": "Loading plans...",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "savePercent": "Save {percent}%",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "billedAnnually": "{amount}/mo billed annually",
+    "mostPopular": "Most Popular",
+    "currentPlan": "Current Plan",
+    "getStarted": "Get Started",
+    "contactSales": "Contact Sales",
+    "custom": "Custom",
+    "compareFeatures": "Compare All Features",
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "changePlan": {
+        "question": "Can I change my plan later?",
+        "answer": "Yes, you can upgrade or downgrade your plan at any time. When upgrading, you'll get immediate access to new features. When downgrading, the change will take effect at your next billing cycle."
+      },
+      "paymentMethods": {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept payments via Chapa, which supports Mobile Money, bank transfers, and card payments. All payments are processed securely."
+      },
+      "freeTrial": {
+        "question": "Is there a free trial?",
+        "answer": "New businesses can start with our Starter plan to explore the platform. Contact us for enterprise trial options."
+      },
+      "limits": {
+        "question": "What happens when I reach my limits?",
+        "answer": "You'll receive notifications as you approach your plan limits. When you reach a limit, you can upgrade your plan to continue using that feature."
+      }
+    },
+    "cta": {
+      "title": "Need a Custom Solution?",
+      "description": "Our Enterprise plan offers custom features, dedicated support, and tailored integrations for large organizations."
+    },
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "target": "Small SMBs",
+        "description": "Perfect for small businesses just getting started"
+      },
+      "growth": {
+        "name": "Growth",
+        "target": "Growing SMBs",
+        "description": "For growing businesses ready to scale"
+      },
+      "pro": {
+        "name": "Pro",
+        "target": "Mid-Market",
+        "description": "Full-featured plan for established businesses"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "target": "Large orgs",
+        "description": "Custom solutions for large organizations"
+      }
+    },
+    "features": {
+      "products": "Products",
+      "monthlyOrders": "Monthly Orders",
+      "originCalculations": "Origin Calculations",
+      "hsCodeLookups": "HS Code Lookups",
+      "teamMembers": "Team Members",
+      "prioritySupport": "Priority Support",
+      "analytics": "Analytics",
+      "apiAccess": "API Access",
+      "unlimited": "Unlimited"
+    }
+  },
+  "subscription": {
+    "title": "Subscription",
+    "description": "Manage your subscription and billing",
+    "businessRequired": "Business Required",
+    "businessRequiredDescription": "You need to register a business before you can subscribe to a plan.",
+    "registerBusiness": "Register Your Business",
+    "noActiveSubscription": "No Active Subscription",
+    "noSubscriptionDescription": "You're currently on the free tier with limited features. Upgrade to unlock more products, orders, and compliance tools.",
+    "viewPlans": "View Plans",
+    "currentPlan": "Current Plan",
+    "billedMonthly": "Billed monthly",
+    "billedAnnually": "Billed annually",
+    "currentPeriod": "Current period",
+    "cancelsSoon": "Cancels Soon",
+    "active": "Active",
+    "trial": "Trial",
+    "pastDue": "Past Due",
+    "cancelled": "Cancelled",
+    "cancellationNotice": "Your subscription will end on {date}",
+    "trialNotice": "Your trial ends on {date}",
+    "changePlan": "Change Plan",
+    "reactivate": "Reactivate Subscription",
+    "reactivating": "Reactivating...",
+    "cancel": "Cancel Subscription",
+    "cancelling": "Cancelling...",
+    "usageThisMonth": "Usage This Month",
+    "usageDescription": "Track your usage against your plan limits",
+    "planFeatures": "Plan Features",
+    "planFeaturesDescription": "Features included in your {plan} plan",
+    "paymentSuccessful": "Payment Successful!",
+    "subscriptionActivated": "Your subscription has been activated.",
+    "subscriptionCancelled": "Subscription Cancelled",
+    "subscriptionCancelledDescription": "Your subscription will remain active until the end of the billing period.",
+    "subscriptionReactivated": "Subscription Reactivated",
+    "subscriptionReactivatedDescription": "Your subscription will continue at the end of the billing period.",
+    "failedToCancel": "Failed to cancel subscription",
+    "failedToReactivate": "Failed to reactivate subscription"
+  },
   "validation": {
     "required": "This field is required",
     "invalidEmail": "Invalid email address",
@@ -379,6 +493,7 @@
     },
     "nav": {
       "marketplace": "Marketplace",
+      "pricing": "Pricing",
       "categories": "Categories",
       "howItWorks": "How It Works",
       "features": "Features",

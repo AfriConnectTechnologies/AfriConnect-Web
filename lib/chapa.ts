@@ -183,3 +183,91 @@ export function getPaymentUrls(baseUrl: string, txRef: string) {
   };
 }
 
+/**
+ * Refund payload interface
+ */
+interface ChapaRefundPayload {
+  reason?: string;
+  amount?: string; // If not provided, full amount is refunded
+  meta?: Record<string, string>;
+  reference?: string; // Unique identifier for this refund
+}
+
+/**
+ * Refund response interface
+ */
+interface ChapaRefundResponse {
+  message: string;
+  status: string;
+  data: {
+    refund_reference: string;
+    amount: number;
+    currency: string;
+    status: string;
+    created_at: string;
+  } | null;
+}
+
+/**
+ * Process a refund for a transaction
+ * @param txRef - The Chapa transaction reference (from successful payment)
+ * @param payload - Optional refund details (reason, partial amount, metadata)
+ */
+export async function processRefund(
+  txRef: string,
+  payload?: ChapaRefundPayload
+): Promise<ChapaRefundResponse> {
+  const secretKey = getSecretKey();
+
+  // Build form data (Chapa expects form-urlencoded for refunds)
+  const formData = new URLSearchParams();
+  
+  if (payload?.reason) {
+    formData.append("reason", payload.reason);
+  }
+  if (payload?.amount) {
+    formData.append("amount", payload.amount);
+  }
+  if (payload?.reference) {
+    formData.append("reference", payload.reference);
+  }
+  if (payload?.meta) {
+    // Chapa expects bracket notation for nested meta fields in form-urlencoded
+    // Per docs: meta[customer_id]=123&meta[reference]=REF123
+    // See: https://developer.chapa.co/refund
+    Object.entries(payload.meta).forEach(([key, value]) => {
+      formData.append(`meta[${key}]`, value);
+    });
+  }
+
+  const response = await fetch(`${CHAPA_BASE_URL}/refund/${txRef}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formData.toString(),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.status !== "success") {
+    let errorMessage = "Failed to process refund";
+    if (data.message) {
+      errorMessage = typeof data.message === "string"
+        ? data.message
+        : JSON.stringify(data.message);
+    }
+    
+    console.error("Chapa refund failed:", JSON.stringify(data, null, 2));
+    
+    throw new ChapaError(
+      errorMessage,
+      response.status,
+      data
+    );
+  }
+
+  return data as ChapaRefundResponse;
+}
+

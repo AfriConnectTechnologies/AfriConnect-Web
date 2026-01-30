@@ -6,6 +6,7 @@ import ConvexClientProvider from '../ConvexClientProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
+import { PostHogProvider } from '@/components/providers/posthog-provider';
 import { locales, type Locale } from '@/i18n/config';
 
 const geistSans = Geist({
@@ -49,9 +50,11 @@ export default async function LocaleLayout({
           >
             <ClerkProvider>
               <ConvexClientProvider>
-                {children}
-                <Toaster />
-                <CookieConsentBanner />
+                <PostHogProvider>
+                  {children}
+                  <Toaster />
+                  <CookieConsentBanner />
+                </PostHogProvider>
               </ConvexClientProvider>
             </ClerkProvider>
           </ThemeProvider>

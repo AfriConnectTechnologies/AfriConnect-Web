@@ -43,6 +43,7 @@
     "registerBusiness": "ንግድ መዝግብ",
     "manageUsers": "ተጠቃሚዎችን አስተዳድር",
     "manageBusinesses": "ንግዶችን አስተዳድር",
+    "manageRefunds": "ተመላሾችን አስተዳድር",
     "compliance": "የAfCFTA ተገዢነት",
     "toggleMenu": "ምናሌ ቀያይር",
     "toggleSidebar": "ጎን አሞሌ ቀያይር"
@@ -220,6 +221,7 @@
   "dashboard": {
     "title": "ዳሽቦርድ",
     "welcome": "እንኳን ደህና ተመለሱ! የትዕዛዞችዎ አጠቃላይ እይታ ይኸውና።",
+    "welcomeBack": "እንኳን ደህና ተመለሱ፣",
     "overview": "አጠቃላይ እይታ",
     "recentOrders": "የቅርብ ጊዜ ትዕዛዞች",
     "recentProducts": "የቅርብ ጊዜ ምርቶች",
@@ -227,7 +229,9 @@
     "totalRevenue": "ጠቅላላ ገቢ",
     "totalOrders": "ጠቅላላ ትዕዛዞች",
     "totalProducts": "ጠቅላላ ምርቶች",
-    "pendingOrders": "በመጠባበቅ ላይ ያሉ ትዕዛዞች"
+    "pendingOrders": "በመጠባበቅ ላይ ያሉ ትዕዛዞች",
+    "discoverProducts": "ምርቶችን ያስሱ",
+    "browseDescription": "በአፍሪካ ያሉ ንግዶች ምርቶችን ያስሱ"
   },
   "settings": {
     "title": "ቅንብሮች",
@@ -260,6 +264,119 @@
     "type": "ዓይነት",
     "amount": "መጠን",
     "failed": "ያልተሳካ"
+  },
+  "pricing": {
+    "title": "ቀላል፣ ግልጽ ዋጋ",
+    "description": "ለንግድዎ ፍላጎቶች የሚስማማውን እቅድ ይምረጡ። ሁሉም እቅዶች የB2B ገበያ እና የAfCFTA ተገዢነት መሳሪያዎችን ያካትታሉ።",
+    "subtitle": "ለንግድዎ ፍላጎቶች የሚስማማውን እቅድ ይምረጡ። ሁሉም እቅዶች የB2B ገበያ እና የAfCFTA ተገዢነት መሳሪያዎችን ያካትታሉ።",
+    "backToHome": "ወደ መነሻ ተመለስ",
+    "loadingPlans": "እቅዶች በመጫን ላይ...",
+    "monthly": "ወርሃዊ",
+    "annual": "ዓመታዊ",
+    "savePercent": "{percent}% ይቆጥቡ",
+    "perMonth": "/ወር",
+    "perYear": "/ዓመት",
+    "billedAnnually": "{amount}/ወር በዓመታዊ ክፍያ",
+    "mostPopular": "በጣም ተወዳጅ",
+    "currentPlan": "ያሁኑ እቅድ",
+    "getStarted": "ጀምር",
+    "contactSales": "ሽያጭን ያነጋግሩ",
+    "custom": "ብጁ",
+    "compareFeatures": "ሁሉንም ባህሪያት አወዳድር",
+    "faq": {
+      "title": "ተደጋጋሚ ጥያቄዎች",
+      "changePlan": {
+        "question": "እቅዴን በኋላ መቀየር እችላለሁ?",
+        "answer": "አዎ፣ እቅድዎን በማንኛውም ጊዜ ማሻሻል ወይም መቀነስ ይችላሉ። ሲያሻሽሉ፣ ወዲያውኑ አዳዲስ ባህሪያትን ያገኛሉ። ሲቀንሱ፣ ለውጡ በሚቀጥለው የክፍያ ዑደትዎ ላይ ተግባራዊ ይሆናል።"
+      },
+      "paymentMethods": {
+        "question": "ምን ዓይነት የክፍያ ዘዴዎችን ይቀበላሉ?",
+        "answer": "በChapa በኩል ክፍያዎችን እንቀበላለን፣ ይህም ሞባይል ገንዘብ፣ የባንክ ዝውውሮች እና የካርድ ክፍያዎችን ይደግፋል። ሁሉም ክፍያዎች በደህንነት ይከናወናሉ።"
+      },
+      "freeTrial": {
+        "question": "ነጻ ሙከራ አለ?",
+        "answer": "አዳዲስ ንግዶች መድረኩን ለመመርመር በStarter እቅዳችን መጀመር ይችላሉ። ለድርጅት ሙከራ አማራጮች ያነጋግሩን።"
+      },
+      "limits": {
+        "question": "ገደቦቼን ሲደርሱ ምን ይሆናል?",
+        "answer": "የእቅድ ገደቦችዎ ሲቃረቡ ማሳወቂያዎች ያገኛሉ። ገደብ ሲደርሱ፣ ያንን ባህሪ መጠቀም ለመቀጠል እቅድዎን ማሻሻል ይችላሉ።"
+      }
+    },
+    "cta": {
+      "title": "ብጁ መፍትሄ ያስፈልግዎታል?",
+      "description": "የድርጅት እቅዳችን ብጁ ባህሪያት፣ የተሰጠ ድጋፍ እና ለትላልቅ ድርጅቶች የተበጁ ውህደቶችን ያቀርባል።"
+    },
+    "plans": {
+      "starter": {
+        "name": "ጀማሪ",
+        "target": "ትናንሽ SMBs",
+        "description": "ለጀማሪ ትናንሽ ንግዶች ተስማሚ"
+      },
+      "growth": {
+        "name": "እድገት",
+        "target": "እያደጉ ያሉ SMBs",
+        "description": "ለማደግ ዝግጁ ለሆኑ ንግዶች"
+      },
+      "pro": {
+        "name": "ፕሮ",
+        "target": "መካከለኛ ገበያ",
+        "description": "ለተቋቋሙ ንግዶች ሙሉ ባህሪ ያለው እቅድ"
+      },
+      "enterprise": {
+        "name": "ድርጅት",
+        "target": "ትላልቅ ድርጅቶች",
+        "description": "ለትላልቅ ድርጅቶች ብጁ መፍትሄዎች"
+      }
+    },
+    "features": {
+      "products": "ምርቶች",
+      "monthlyOrders": "ወርሃዊ ትዕዛዞች",
+      "originCalculations": "የመነሻ ስሌቶች",
+      "hsCodeLookups": "የHS ኮድ ፍለጋዎች",
+      "teamMembers": "የቡድን አባላት",
+      "prioritySupport": "ቅድሚያ ድጋፍ",
+      "analytics": "ትንታኔዎች",
+      "apiAccess": "API መዳረሻ",
+      "unlimited": "ያልተወሰነ"
+    }
+  },
+  "subscription": {
+    "title": "ደንበኝነት",
+    "description": "ደንበኝነትዎን እና ክፍያዎን ያስተዳድሩ",
+    "businessRequired": "ንግድ ያስፈልጋል",
+    "businessRequiredDescription": "ለእቅድ ከመመዝገብዎ በፊት ንግድ መመዝገብ ያስፈልግዎታል።",
+    "registerBusiness": "ንግድዎን ይመዝግቡ",
+    "noActiveSubscription": "ንቁ ደንበኝነት የለም",
+    "noSubscriptionDescription": "አሁን በገደብ ባህሪያት ባለው ነጻ ደረጃ ላይ ነዎት። ተጨማሪ ምርቶችን፣ ትዕዛዞችን እና ተገዢነት መሳሪያዎችን ለመክፈት ያሻሽሉ።",
+    "viewPlans": "እቅዶችን ይመልከቱ",
+    "currentPlan": "ያሁኑ እቅድ",
+    "billedMonthly": "በወር ክፍያ",
+    "billedAnnually": "በዓመት ክፍያ",
+    "currentPeriod": "ያሁኑ ጊዜ",
+    "cancelsSoon": "በቅርቡ ይሰረዛል",
+    "active": "ንቁ",
+    "trial": "ሙከራ",
+    "pastDue": "ያለፈ ጊዜ",
+    "cancelled": "ተሰርዟል",
+    "cancellationNotice": "ደንበኝነትዎ በ{date} ያበቃል",
+    "trialNotice": "ሙከራዎ በ{date} ያበቃል",
+    "changePlan": "እቅድ ቀይር",
+    "reactivate": "ደንበኝነትን እንደገና አግብር",
+    "reactivating": "እየተነቃቃ...",
+    "cancel": "ደንበኝነትን ሰርዝ",
+    "cancelling": "እየተሰረዘ...",
+    "usageThisMonth": "በዚህ ወር አጠቃቀም",
+    "usageDescription": "አጠቃቀምዎን ከእቅድ ገደቦችዎ ጋር ይከታተሉ",
+    "planFeatures": "የእቅድ ባህሪያት",
+    "planFeaturesDescription": "በ{plan} እቅድዎ ውስጥ የተካተቱ ባህሪያት",
+    "paymentSuccessful": "ክፍያ ተሳክቷል!",
+    "subscriptionActivated": "ደንበኝነትዎ ነቅቷል።",
+    "subscriptionCancelled": "ደንበኝነት ተሰርዟል",
+    "subscriptionCancelledDescription": "ደንበኝነትዎ እስከ የክፍያ ጊዜው መጨረሻ ድረስ ንቁ ሆኖ ይቆያል።",
+    "subscriptionReactivated": "ደንበኝነት እንደገና ነቅቷል",
+    "subscriptionReactivatedDescription": "ደንበኝነትዎ በክፍያ ጊዜው መጨረሻ ይቀጥላል።",
+    "failedToCancel": "ደንበኝነትን መሰረዝ አልተሳካም",
+    "failedToReactivate": "ደንበኝነትን እንደገና ማግበር አልተሳካም"
   },
   "validation": {
     "required": "ይህ መስክ ያስፈልጋል",
@@ -376,6 +493,7 @@
     },
     "nav": {
       "marketplace": "ገበያ ቦታ",
+      "pricing": "ዋጋ",
       "categories": "ምድቦች",
       "howItWorks": "እንዴት እንደሚሰራ",
       "features": "ባህሪያት",

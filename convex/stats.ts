@@ -1,12 +1,19 @@
 import { query } from "./_generated/server";
+import { createLogger, flushLogs } from "./lib/logger";
 
 export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
+    const log = createLogger("stats.getDashboardStats");
+    
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
+      log.debug("Dashboard stats requested - not authenticated");
+      await flushLogs();
       throw new Error("Not authenticated");
     }
+
+    log.setContext({ userId: identity.subject });
 
     const user = await ctx.db
       .query("users")
@@ -14,6 +21,8 @@ export const getDashboardStats = query({
       .first();
 
     if (!user) {
+      log.debug("Dashboard stats - user not found, returning defaults");
+      await flushLogs();
       return {
         totalOrders: 0,
         totalRevenue: 0,
@@ -36,6 +45,14 @@ export const getDashboardStats = query({
     ).length;
     const completedOrders = orders.filter((o) => o.status === "completed").length;
 
+    log.debug("Dashboard stats retrieved", {
+      totalOrders,
+      totalRevenue,
+      pendingOrders,
+      completedOrders,
+    });
+
+    await flushLogs();
     return {
       totalOrders,
       totalRevenue,

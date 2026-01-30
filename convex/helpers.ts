@@ -1,7 +1,35 @@
 import { MutationCtx, QueryCtx } from "./_generated/server";
-import { Doc } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 
 export type UserRole = "buyer" | "seller" | "admin";
+
+/**
+ * Plan limits interface for feature gating
+ */
+export interface PlanLimits {
+  maxProducts: number;
+  maxMonthlyOrders: number;
+  maxOriginCalculations: number;
+  maxHsCodeLookups: number;
+  maxTeamMembers: number;
+  prioritySupport: "none" | "email" | "chat" | "dedicated";
+  analytics: "basic" | "advanced" | "full" | "custom";
+  apiAccess: "none" | "limited" | "full";
+}
+
+/**
+ * Default (starter) plan limits - used when no subscription exists
+ */
+export const DEFAULT_PLAN_LIMITS: PlanLimits = {
+  maxProducts: 10,
+  maxMonthlyOrders: 50,
+  maxOriginCalculations: 5,
+  maxHsCodeLookups: 10,
+  maxTeamMembers: 1,
+  prioritySupport: "none",
+  analytics: "basic",
+  apiAccess: "none",
+};
 
 /**
  * Gets the current authenticated user, creating them if they don't exist.
@@ -92,5 +120,164 @@ export async function requireRole(ctx: QueryCtx, allowedRoles: UserRole[]): Prom
     throw new Error(`Unauthorized: Required role: ${allowedRoles.join(" or ")}`);
   }
   return user;
+}
+
+/**
+ * Get the subscription limits for a business
+ */
+export async function getBusinessPlanLimits(
+  ctx: QueryCtx,
+  businessId: Id<"businesses">
+): Promise<PlanLimits> {
+  const subscription = await ctx.db
+    .query("subscriptions")
+    .withIndex("by_business", (q) => q.eq("businessId", businessId))
+    .first();
+
+  // No subscription or inactive - use default limits
+  if (!subscription || subscription.status === "cancelled" || subscription.status === "expired") {
+    return DEFAULT_PLAN_LIMITS;
+  }
+
+  const plan = await ctx.db.get(subscription.planId);
+  if (!plan) {
+    return DEFAULT_PLAN_LIMITS;
+  }
+
+  try {
+    const parsed = JSON.parse(plan.limits);
+    // Validate and merge with defaults to ensure all fields exist
+    const validated: PlanLimits = {
+      maxProducts: typeof parsed.maxProducts === "number" ? parsed.maxProducts : DEFAULT_PLAN_LIMITS.maxProducts,
+      maxMonthlyOrders: typeof parsed.maxMonthlyOrders === "number" ? parsed.maxMonthlyOrders : DEFAULT_PLAN_LIMITS.maxMonthlyOrders,
+      maxOriginCalculations: typeof parsed.maxOriginCalculations === "number" ? parsed.maxOriginCalculations : DEFAULT_PLAN_LIMITS.maxOriginCalculations,
+      maxHsCodeLookups: typeof parsed.maxHsCodeLookups === "number" ? parsed.maxHsCodeLookups : DEFAULT_PLAN_LIMITS.maxHsCodeLookups,
+      maxTeamMembers: typeof parsed.maxTeamMembers === "number" ? parsed.maxTeamMembers : DEFAULT_PLAN_LIMITS.maxTeamMembers,
+      prioritySupport: ["none", "email", "chat", "dedicated"].includes(parsed.prioritySupport) ? parsed.prioritySupport : DEFAULT_PLAN_LIMITS.prioritySupport,
+      analytics: ["basic", "advanced", "full", "custom"].includes(parsed.analytics) ? parsed.analytics : DEFAULT_PLAN_LIMITS.analytics,
+      apiAccess: ["none", "limited", "full"].includes(parsed.apiAccess) ? parsed.apiAccess : DEFAULT_PLAN_LIMITS.apiAccess,
+    };
+    return validated;
+  } catch {
+    return DEFAULT_PLAN_LIMITS;
+  }
+}
+
+/**
+ * Check if a numeric limit allows the operation
+ * Returns true if within limit, false if exceeded
+ * -1 means unlimited
+ */
+export function isWithinLimit(current: number, limit: number): boolean {
+  if (limit === -1) return true; // Unlimited
+  return current < limit;
+}
+
+/**
+ * Check product creation limit for a user
+ */
+export async function checkProductLimit(
+  ctx: QueryCtx,
+  userId: Id<"users">
+): Promise<{ allowed: boolean; current: number; limit: number; unlimited: boolean }> {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    return { allowed: false, current: 0, limit: 0, unlimited: false };
+  }
+
+  // Count current products
+  const products = await ctx.db
+    .query("products")
+    .withIndex("by_seller", (q) => q.eq("sellerId", userId))
+    .collect();
+  const current = products.length;
+
+  // Get limits based on subscription
+  let limits = DEFAULT_PLAN_LIMITS;
+  if (user.businessId) {
+    limits = await getBusinessPlanLimits(ctx, user.businessId);
+  }
+
+  const unlimited = limits.maxProducts === -1;
+  const allowed = isWithinLimit(current, limits.maxProducts);
+
+  return { allowed, current, limit: limits.maxProducts, unlimited };
+}
+
+/**
+ * Check monthly origin calculation limit
+ */
+export async function checkOriginCalculationLimit(
+  ctx: QueryCtx,
+  businessId: Id<"businesses">
+): Promise<{ allowed: boolean; current: number; limit: number; unlimited: boolean }> {
+  // Get this month's calculations
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const monthStartMs = monthStart.getTime();
+
+  const calculations = await ctx.db
+    .query("originCalculations")
+    .withIndex("by_business", (q) => q.eq("businessId", businessId))
+    .filter((q) => q.gte(q.field("createdAt"), monthStartMs))
+    .collect();
+  const current = calculations.length;
+
+  // Get limits
+  const limits = await getBusinessPlanLimits(ctx, businessId);
+  const unlimited = limits.maxOriginCalculations === -1;
+  const allowed = isWithinLimit(current, limits.maxOriginCalculations);
+
+  return { allowed, current, limit: limits.maxOriginCalculations, unlimited };
+}
+
+/**
+ * Check monthly order limit
+ */
+export async function checkOrderLimit(
+  ctx: QueryCtx,
+  sellerId: Id<"users">
+): Promise<{ allowed: boolean; current: number; limit: number; unlimited: boolean }> {
+  // Get seller's business using direct lookup
+  const seller = await ctx.db.get(sellerId);
+
+  if (!seller || !seller.businessId) {
+    return { allowed: true, current: 0, limit: DEFAULT_PLAN_LIMITS.maxMonthlyOrders, unlimited: false };
+  }
+
+  // Get this month's orders
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const monthStartMs = monthStart.getTime();
+
+  const orders = await ctx.db
+    .query("orders")
+    .withIndex("by_seller", (q) => q.eq("sellerId", sellerId))
+    .filter((q) => q.gte(q.field("createdAt"), monthStartMs))
+    .collect();
+  const current = orders.length;
+
+  // Get limits
+  const limits = await getBusinessPlanLimits(ctx, seller.businessId);
+  const unlimited = limits.maxMonthlyOrders === -1;
+  const allowed = isWithinLimit(current, limits.maxMonthlyOrders);
+
+  return { allowed, current, limit: limits.maxMonthlyOrders, unlimited };
+}
+
+/**
+ * Feature gating error with upgrade suggestion
+ */
+export class PlanLimitError extends Error {
+  constructor(
+    public feature: string,
+    public current: number,
+    public limit: number
+  ) {
+    super(`You've reached your ${feature} limit (${current}/${limit}). Please upgrade your plan to continue.`);
+    this.name = "PlanLimitError";
+  }
 }
 

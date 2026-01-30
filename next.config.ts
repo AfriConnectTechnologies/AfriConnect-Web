@@ -53,6 +53,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // PostHog reverse proxy to bypass ad blockers (using /api path to skip i18n middleware)
+  async rewrites() {
+    return [
+      {
+        source: "/api/ph/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/api/ph/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
+    ];
+  },
+  // Required for PostHog proxy to work correctly
+  skipTrailingSlashRedirect: true,
 };
 
 export default withNextIntl(nextConfig);

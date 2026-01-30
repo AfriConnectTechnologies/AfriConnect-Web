@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, ShoppingCart, BarChart3, ArrowLeft, ImageIcon } from "lucide-react";
+import { Search, Package, ShoppingCart, Globe2, ArrowLeft, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -37,7 +37,9 @@ export default function ExplorePage() {
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <BarChart3 className="h-6 w-6" />
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary">
+              <Globe2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
+            </div>
             <span className="text-xl font-bold">AfriConnect</span>
           </Link>
           <nav className="flex items-center gap-4">
@@ -251,7 +253,9 @@ export default function ExplorePage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <Link href="/" className="flex items-center gap-2 cursor-pointer">
-              <BarChart3 className="h-5 w-5" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <Globe2 className="h-4 w-4 text-primary-foreground" />
+              </div>
               <span className="font-semibold">AfriConnect</span>
             </Link>
             <div className="flex gap-6 text-sm text-muted-foreground">

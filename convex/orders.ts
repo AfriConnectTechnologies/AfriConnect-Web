@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getOrCreateUser } from "./helpers";
+import { createLogger, flushLogs } from "./lib/logger";
 
 export const list = query({
   args: {
@@ -115,21 +116,48 @@ export const create = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getOrCreateUser(ctx);
+    const log = createLogger("orders.create");
+    
+    try {
+      log.info("Order creation initiated", {
+        title: args.title,
+        customer: args.customer,
+        amount: args.amount,
+        status: args.status ?? "pending",
+      });
 
-    const now = Date.now();
-    const orderId = await ctx.db.insert("orders", {
-      userId: user._id,
-      title: args.title,
-      customer: args.customer,
-      amount: args.amount,
-      status: args.status ?? "pending",
-      description: args.description,
-      createdAt: now,
-      updatedAt: now,
-    });
+      const user = await getOrCreateUser(ctx);
+      log.setContext({ userId: user.clerkId });
 
-    return await ctx.db.get(orderId);
+      const now = Date.now();
+      const orderId = await ctx.db.insert("orders", {
+        userId: user._id,
+        title: args.title,
+        customer: args.customer,
+        amount: args.amount,
+        status: args.status ?? "pending",
+        description: args.description,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      log.info("Order created successfully", {
+        orderId,
+        title: args.title,
+        amount: args.amount,
+        status: args.status ?? "pending",
+      });
+
+      await flushLogs();
+      return await ctx.db.get(orderId);
+    } catch (error) {
+      log.error("Order creation failed", error, {
+        title: args.title,
+        amount: args.amount,
+      });
+      await flushLogs();
+      throw error;
+    }
   },
 });
 
@@ -150,73 +178,145 @@ export const update = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
+    const log = createLogger("orders.update");
+    
+    try {
+      log.info("Order update initiated", {
+        orderId: args.id,
+        updates: {
+          title: args.title,
+          customer: args.customer,
+          amount: args.amount,
+          status: args.status,
+        },
+      });
+
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity === null) {
+        log.warn("Order update failed - not authenticated", { orderId: args.id });
+        await flushLogs();
+        throw new Error("Not authenticated");
+      }
+
+      log.setContext({ userId: identity.subject });
+
+      const order = await ctx.db.get(args.id);
+      if (!order) {
+        log.error("Order update failed - order not found", undefined, { orderId: args.id });
+        await flushLogs();
+        throw new Error("Order not found");
+      }
+
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+
+      if (!user || order.userId !== user._id) {
+        log.warn("Order update failed - unauthorized", {
+          orderId: args.id,
+          orderOwnerId: order.userId,
+          requestingUserId: user?._id,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      const previousStatus = order.status;
+      
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, ...updates } = args;
+      await ctx.db.patch(args.id, {
+        ...updates,
+        updatedAt: Date.now(),
+      });
+
+      log.info("Order updated successfully", {
+        orderId: args.id,
+        previousStatus,
+        newStatus: args.status || previousStatus,
+        fieldsUpdated: Object.keys(updates).filter(k => updates[k as keyof typeof updates] !== undefined),
+      });
+
+      await flushLogs();
+      return await ctx.db.get(args.id);
+    } catch (error) {
+      log.error("Order update failed", error, { orderId: args.id });
+      await flushLogs();
+      throw error;
     }
-
-    const order = await ctx.db.get(args.id);
-    if (!order) {
-      throw new Error("Order not found");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user || order.userId !== user._id) {
-      throw new Error("Unauthorized");
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _id, ...updates } = args;
-    await ctx.db.patch(args.id, {
-      ...updates,
-      updatedAt: Date.now(),
-    });
-
-    return await ctx.db.get(args.id);
   },
 });
 
 export const remove = mutation({
   args: { id: v.id("orders") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
+    const log = createLogger("orders.remove");
+    
+    try {
+      log.info("Order removal initiated", { orderId: args.id });
+
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity === null) {
+        log.warn("Order removal failed - not authenticated", { orderId: args.id });
+        await flushLogs();
+        throw new Error("Not authenticated");
+      }
+
+      log.setContext({ userId: identity.subject });
+
+      const order = await ctx.db.get(args.id);
+      if (!order) {
+        log.error("Order removal failed - order not found", undefined, { orderId: args.id });
+        await flushLogs();
+        throw new Error("Order not found");
+      }
+
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+
+      if (!user) {
+        log.warn("Order removal failed - user not found");
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      // Only buyer can delete their order (and only if pending)
+      const isBuyer = order.userId === user._id || order.buyerId === user._id;
+      if (!isBuyer || order.status !== "pending") {
+        log.warn("Order removal failed - unauthorized or wrong status", {
+          orderId: args.id,
+          isBuyer,
+          orderStatus: order.status,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      // Delete order items first
+      const orderItems = await ctx.db
+        .query("orderItems")
+        .withIndex("by_order", (q) => q.eq("orderId", args.id))
+        .collect();
+
+      await Promise.all(orderItems.map((item) => ctx.db.delete(item._id)));
+
+      await ctx.db.delete(args.id);
+
+      log.info("Order removed successfully", {
+        orderId: args.id,
+        orderAmount: order.amount,
+        itemsDeleted: orderItems.length,
+      });
+
+      await flushLogs();
+    } catch (error) {
+      log.error("Order removal failed", error, { orderId: args.id });
+      await flushLogs();
+      throw error;
     }
-
-    const order = await ctx.db.get(args.id);
-    if (!order) {
-      throw new Error("Order not found");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("Unauthorized");
-    }
-
-    // Only buyer can delete their order (and only if pending)
-    const isBuyer = order.userId === user._id || order.buyerId === user._id;
-    if (!isBuyer || order.status !== "pending") {
-      throw new Error("Unauthorized");
-    }
-
-    // Delete order items first
-    const orderItems = await ctx.db
-      .query("orderItems")
-      .withIndex("by_order", (q) => q.eq("orderId", args.id))
-      .collect();
-
-    await Promise.all(orderItems.map((item) => ctx.db.delete(item._id)));
-
-    await ctx.db.delete(args.id);
   },
 });
 
@@ -314,113 +414,175 @@ export const sales = query({
 
 export const checkout = mutation({
   handler: async (ctx) => {
-    const user = await getOrCreateUser(ctx);
+    const log = createLogger("orders.checkout");
+    
+    try {
+      log.info("Checkout initiated");
 
-    // Get cart items
-    const cartItems = await ctx.db
-      .query("cartItems")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .collect();
+      const user = await getOrCreateUser(ctx);
+      log.setContext({ userId: user.clerkId });
 
-    if (cartItems.length === 0) {
-      throw new Error("Cart is empty");
-    }
+      // Get cart items
+      const cartItems = await ctx.db
+        .query("cartItems")
+        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .collect();
 
-    // Group cart items by seller
-    const itemsBySeller = new Map<string, typeof cartItems>();
-    for (const cartItem of cartItems) {
-      const product = await ctx.db.get(cartItem.productId);
-      if (!product) {
-        throw new Error("Product not found");
-      }
-      if (product.status !== "active") {
-        throw new Error(`Product ${product.name} is no longer available`);
-      }
-      if (cartItem.quantity > product.quantity) {
-        throw new Error(`Insufficient stock for ${product.name}`);
+      log.debug("Cart items retrieved", { itemCount: cartItems.length });
+
+      if (cartItems.length === 0) {
+        log.warn("Checkout failed - empty cart");
+        await flushLogs();
+        throw new Error("Cart is empty");
       }
 
-      const sellerId = product.sellerId;
-      if (!itemsBySeller.has(sellerId)) {
-        itemsBySeller.set(sellerId, []);
-      }
-      itemsBySeller.get(sellerId)!.push(cartItem);
-    }
-
-    const now = Date.now();
-    const createdOrders = [];
-
-    // Create one order per seller
-    for (const [sellerId, items] of itemsBySeller.entries()) {
-      let totalAmount = 0;
-      const orderItems = [];
-
-      // Calculate total and prepare order items
-      for (const cartItem of items) {
+      // Group cart items by seller
+      const itemsBySeller = new Map<string, typeof cartItems>();
+      for (const cartItem of cartItems) {
         const product = await ctx.db.get(cartItem.productId);
-        if (!product) continue;
+        if (!product) {
+          log.error("Checkout failed - product not found", undefined, {
+            productId: cartItem.productId,
+          });
+          await flushLogs();
+          throw new Error("Product not found");
+        }
+        if (product.status !== "active") {
+          log.warn("Checkout failed - inactive product", {
+            productId: cartItem.productId,
+            productName: product.name,
+            productStatus: product.status,
+          });
+          await flushLogs();
+          throw new Error(`Product ${product.name} is no longer available`);
+        }
+        if (cartItem.quantity > product.quantity) {
+          log.warn("Checkout failed - insufficient stock", {
+            productId: cartItem.productId,
+            productName: product.name,
+            requestedQty: cartItem.quantity,
+            availableQty: product.quantity,
+          });
+          await flushLogs();
+          throw new Error(`Insufficient stock for ${product.name}`);
+        }
 
-        const itemTotal = product.price * cartItem.quantity;
-        totalAmount += itemTotal;
-
-        orderItems.push({
-          productId: cartItem.productId,
-          quantity: cartItem.quantity,
-          price: product.price,
-        });
+        const sellerId = product.sellerId;
+        if (!itemsBySeller.has(sellerId)) {
+          itemsBySeller.set(sellerId, []);
+        }
+        itemsBySeller.get(sellerId)!.push(cartItem);
       }
 
-      // Get seller info for order title
-      const seller = await ctx.db
-        .query("users")
-        .filter((q) => q.eq(q.field("_id"), sellerId))
-        .first();
-      const sellerName = seller?.name || seller?.email || "Unknown Seller";
-
-      // Create order
-      const orderId = await ctx.db.insert("orders", {
-        userId: user._id,
-        buyerId: user._id,
-        sellerId: sellerId,
-        title: `Order from ${sellerName}`,
-        customer: user.name || user.email,
-        amount: totalAmount,
-        status: "pending",
-        description: `Order containing ${items.length} item(s)`,
-        createdAt: now,
-        updatedAt: now,
+      log.debug("Cart items grouped by seller", {
+        sellerCount: itemsBySeller.size,
+        totalItems: cartItems.length,
       });
 
-      // Create order items and update product quantities
-      for (const item of orderItems) {
-        await ctx.db.insert("orderItems", {
-          orderId,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-          createdAt: now,
-        });
+      const now = Date.now();
+      const createdOrders = [];
+      let totalOrderValue = 0;
 
-        // Update product quantity
-        const product = await ctx.db.get(item.productId);
-        if (product) {
-          await ctx.db.patch(item.productId, {
-            quantity: product.quantity - item.quantity,
-            updatedAt: now,
+      // Create one order per seller
+      for (const [sellerId, items] of itemsBySeller.entries()) {
+        let totalAmount = 0;
+        const orderItems = [];
+
+        // Calculate total and prepare order items
+        for (const cartItem of items) {
+          const product = await ctx.db.get(cartItem.productId);
+          if (!product) continue;
+
+          const itemTotal = product.price * cartItem.quantity;
+          totalAmount += itemTotal;
+
+          orderItems.push({
+            productId: cartItem.productId,
+            quantity: cartItem.quantity,
+            price: product.price,
           });
         }
+
+        // Get seller info for order title
+        const seller = await ctx.db
+          .query("users")
+          .filter((q) => q.eq(q.field("_id"), sellerId))
+          .first();
+        const sellerName = seller?.name || seller?.email || "Unknown Seller";
+
+        // Create order
+        const orderId = await ctx.db.insert("orders", {
+          userId: user._id,
+          buyerId: user._id,
+          sellerId: sellerId,
+          title: `Order from ${sellerName}`,
+          customer: user.name || user.email,
+          amount: totalAmount,
+          status: "pending",
+          description: `Order containing ${items.length} item(s)`,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        log.info("Order created during checkout", {
+          orderId,
+          sellerId,
+          sellerName,
+          itemCount: items.length,
+          totalAmount,
+        });
+
+        // Create order items and update product quantities
+        for (const item of orderItems) {
+          await ctx.db.insert("orderItems", {
+            orderId,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            createdAt: now,
+          });
+
+          // Update product quantity
+          const product = await ctx.db.get(item.productId);
+          if (product) {
+            await ctx.db.patch(item.productId, {
+              quantity: product.quantity - item.quantity,
+              updatedAt: now,
+            });
+
+            log.debug("Product quantity updated", {
+              productId: item.productId,
+              previousQty: product.quantity,
+              soldQty: item.quantity,
+              newQty: product.quantity - item.quantity,
+            });
+          }
+        }
+
+        // Delete cart items
+        for (const cartItem of items) {
+          await ctx.db.delete(cartItem._id);
+        }
+
+        const order = await ctx.db.get(orderId);
+        createdOrders.push(order);
+        totalOrderValue += totalAmount;
       }
 
-      // Delete cart items
-      for (const cartItem of items) {
-        await ctx.db.delete(cartItem._id);
-      }
+      log.info("Checkout completed successfully", {
+        ordersCreated: createdOrders.length,
+        totalOrderValue,
+        itemsProcessed: cartItems.length,
+        sellersInvolved: itemsBySeller.size,
+      });
 
-      const order = await ctx.db.get(orderId);
-      createdOrders.push(order);
+      await flushLogs();
+      return createdOrders;
+    } catch (error) {
+      log.error("Checkout failed", error);
+      await flushLogs();
+      throw error;
     }
-
-    return createdOrders;
   },
 });
 
