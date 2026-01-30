@@ -56,7 +56,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
           distinctId = undefined;
         }
       }
-      }
+    }
     }
 
     // Capture the exception with context
