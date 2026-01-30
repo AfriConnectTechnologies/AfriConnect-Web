@@ -41,8 +41,6 @@ export const onRequestError: Instrumentation.onRequestError = async (
       );
 
       if (postHogCookieMatch && postHogCookieMatch[1]) {
-        try {
-          const decodedCookie = decodeURIComponent(postHogCookieMatch[1]);
           const postHogData = JSON.parse(decodedCookie);
           distinctId = postHogData.distinct_id;
         } catch (e) {
@@ -52,8 +50,9 @@ export const onRequestError: Instrumentation.onRequestError = async (
             cookieLength: postHogCookieMatch[1].length,
             cookiePreview: postHogCookieMatch[1].substring(0, 50) + "...",
           });
-          // Use a fallback ID to group anonymous errors
-          distinctId = "anonymous_parse_error";
+          // Use undefined to indicate parse failure (better than grouping all as "anonymous_parse_error")
+          distinctId = undefined;
+        }
         }
       }
     }
