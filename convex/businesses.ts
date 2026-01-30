@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin, requireUser, getOrCreateUser } from "./helpers";
+import { createLogger, flushLogs } from "./lib/logger";
 
 // Create a new business (user becomes a seller)
 export const createBusiness = mutation({
@@ -15,43 +16,80 @@ export const createBusiness = mutation({
     category: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getOrCreateUser(ctx);
-
-    // Check if user already has a business
-    if (user.businessId) {
-      throw new Error("You already have a registered business");
-    }
-
-    const now = Date.now();
-    const businessId = await ctx.db.insert("businesses", {
-      ownerId: user._id,
-      name: args.name,
-      description: args.description,
-      country: args.country,
-      city: args.city,
-      address: args.address,
-      phone: args.phone,
-      website: args.website,
-      category: args.category,
-      verificationStatus: "pending",
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // Update user to seller role and link business
-    await ctx.db.patch(user._id, {
-      role: "seller",
-      businessId: businessId,
-    });
-
-    const business = await ctx.db.get(businessId);
+    const log = createLogger("businesses.createBusiness");
     
-    // Return business with owner info for email notifications
-    return {
-      ...business,
-      ownerEmail: user.email,
-      ownerName: user.name,
-    };
+    try {
+      log.info("Business creation initiated", {
+        name: args.name,
+        country: args.country,
+        city: args.city,
+        category: args.category,
+      });
+
+      const user = await getOrCreateUser(ctx);
+      log.setContext({ userId: user.clerkId });
+
+      // Check if user already has a business
+      if (user.businessId) {
+        log.warn("Business creation failed - user already has a business", {
+          existingBusinessId: user.businessId,
+        });
+        await flushLogs();
+        throw new Error("You already have a registered business");
+      }
+
+      const now = Date.now();
+      const businessId = await ctx.db.insert("businesses", {
+        ownerId: user._id,
+        name: args.name,
+        description: args.description,
+        country: args.country,
+        city: args.city,
+        address: args.address,
+        phone: args.phone,
+        website: args.website,
+        category: args.category,
+        verificationStatus: "pending",
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      log.setContext({ businessId });
+
+      // Update user to seller role and link business
+      await ctx.db.patch(user._id, {
+        role: "seller",
+        businessId: businessId,
+      });
+
+      log.info("Business created successfully", {
+        businessId,
+        businessName: args.name,
+        country: args.country,
+        category: args.category,
+        ownerRole: "seller",
+        verificationStatus: "pending",
+      });
+
+      const business = await ctx.db.get(businessId);
+      
+      await flushLogs();
+      
+      // Return business with owner info for email notifications
+      return {
+        ...business,
+        ownerEmail: user.email,
+        ownerName: user.name,
+      };
+    } catch (error) {
+      log.error("Business creation failed", error, {
+        name: args.name,
+        country: args.country,
+        category: args.category,
+      });
+      await flushLogs();
+      throw error;
+    }
   },
 });
 
@@ -69,39 +107,72 @@ export const updateBusiness = mutation({
     logoUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const log = createLogger("businesses.updateBusiness");
+    
+    try {
+      log.info("Business update initiated", {
+        fieldsToUpdate: Object.keys(args).filter(k => args[k as keyof typeof args] !== undefined),
+      });
 
-    if (!user.businessId) {
-      throw new Error("You don't have a registered business");
+      const user = await requireUser(ctx);
+      log.setContext({ userId: user.clerkId });
+
+      if (!user.businessId) {
+        log.warn("Business update failed - no business registered");
+        await flushLogs();
+        throw new Error("You don't have a registered business");
+      }
+
+      log.setContext({ businessId: user.businessId });
+
+      const business = await ctx.db.get(user.businessId);
+      if (!business) {
+        log.error("Business update failed - not found", undefined, {
+          businessId: user.businessId,
+        });
+        await flushLogs();
+        throw new Error("Business not found");
+      }
+
+      // Only owner can update their business
+      if (business.ownerId !== user._id) {
+        log.warn("Business update failed - unauthorized", {
+          businessOwnerId: business.ownerId,
+          requestingUserId: user._id,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized: You can only update your own business");
+      }
+
+      const updates: Partial<typeof args & { updatedAt: number }> = {
+        updatedAt: Date.now(),
+      };
+
+      if (args.name !== undefined) updates.name = args.name;
+      if (args.description !== undefined) updates.description = args.description;
+      if (args.country !== undefined) updates.country = args.country;
+      if (args.city !== undefined) updates.city = args.city;
+      if (args.address !== undefined) updates.address = args.address;
+      if (args.phone !== undefined) updates.phone = args.phone;
+      if (args.website !== undefined) updates.website = args.website;
+      if (args.category !== undefined) updates.category = args.category;
+      if (args.logoUrl !== undefined) updates.logoUrl = args.logoUrl;
+
+      await ctx.db.patch(user.businessId, updates);
+
+      log.info("Business updated successfully", {
+        businessId: user.businessId,
+        businessName: updates.name || business.name,
+        fieldsUpdated: Object.keys(updates).filter(k => k !== "updatedAt"),
+      });
+
+      await flushLogs();
+      return await ctx.db.get(user.businessId);
+    } catch (error) {
+      log.error("Business update failed", error);
+      await flushLogs();
+      throw error;
     }
-
-    const business = await ctx.db.get(user.businessId);
-    if (!business) {
-      throw new Error("Business not found");
-    }
-
-    // Only owner can update their business
-    if (business.ownerId !== user._id) {
-      throw new Error("Unauthorized: You can only update your own business");
-    }
-
-    const updates: Partial<typeof args & { updatedAt: number }> = {
-      updatedAt: Date.now(),
-    };
-
-    if (args.name !== undefined) updates.name = args.name;
-    if (args.description !== undefined) updates.description = args.description;
-    if (args.country !== undefined) updates.country = args.country;
-    if (args.city !== undefined) updates.city = args.city;
-    if (args.address !== undefined) updates.address = args.address;
-    if (args.phone !== undefined) updates.phone = args.phone;
-    if (args.website !== undefined) updates.website = args.website;
-    if (args.category !== undefined) updates.category = args.category;
-    if (args.logoUrl !== undefined) updates.logoUrl = args.logoUrl;
-
-    await ctx.db.patch(user.businessId, updates);
-
-    return await ctx.db.get(user.businessId);
   },
 });
 
@@ -218,28 +289,63 @@ export const verifyBusiness = mutation({
     status: v.union(v.literal("verified"), v.literal("rejected")),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    const log = createLogger("businesses.verifyBusiness");
+    
+    try {
+      log.info("Business verification initiated", {
+        businessId: args.businessId,
+        newStatus: args.status,
+      });
 
-    const business = await ctx.db.get(args.businessId);
-    if (!business) {
-      throw new Error("Business not found");
+      const admin = await requireAdmin(ctx);
+      log.setContext({ userId: admin.clerkId, businessId: args.businessId });
+
+      const business = await ctx.db.get(args.businessId);
+      if (!business) {
+        log.error("Business verification failed - not found", undefined, {
+          businessId: args.businessId,
+        });
+        await flushLogs();
+        throw new Error("Business not found");
+      }
+
+      const previousStatus = business.verificationStatus;
+
+      await ctx.db.patch(args.businessId, {
+        verificationStatus: args.status,
+        updatedAt: Date.now(),
+      });
+
+      const updatedBusiness = await ctx.db.get(args.businessId);
+      
+      // Get owner info for email notification
+      const owner = await ctx.db.get(business.ownerId);
+
+      log.info("Business verification completed", {
+        businessId: args.businessId,
+        businessName: business.name,
+        previousStatus,
+        newStatus: args.status,
+        ownerId: business.ownerId,
+        ownerEmail: owner?.email,
+        adminId: admin._id,
+      });
+
+      await flushLogs();
+      
+      return {
+        ...updatedBusiness,
+        ownerEmail: owner?.email,
+        ownerName: owner?.name,
+      };
+    } catch (error) {
+      log.error("Business verification failed", error, {
+        businessId: args.businessId,
+        newStatus: args.status,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    await ctx.db.patch(args.businessId, {
-      verificationStatus: args.status,
-      updatedAt: Date.now(),
-    });
-
-    const updatedBusiness = await ctx.db.get(args.businessId);
-    
-    // Get owner info for email notification
-    const owner = await ctx.db.get(business.ownerId);
-    
-    return {
-      ...updatedBusiness,
-      ownerEmail: owner?.email,
-      ownerName: owner?.name,
-    };
   },
 });
 

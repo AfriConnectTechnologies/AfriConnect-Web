@@ -9,6 +9,7 @@ import {
   rateLimitExceededResponse,
 } from "@/lib/rate-limiter";
 import { webhookPayloadSchema, validatePaymentInput } from "@/lib/validators/payment";
+import { createApiLogger, PaymentLogEvents, flushLogs } from "@/lib/axiom";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -89,11 +90,17 @@ function getClientIP(request: NextRequest): string {
 export async function POST(request: NextRequest) {
   const ipAddress = getClientIP(request);
   const userAgent = request.headers.get("user-agent") || undefined;
+  const log = createApiLogger(request, "/api/payments/webhook");
 
   try {
+    log.info(PaymentLogEvents.PAYMENT_WEBHOOK_RECEIVED, {
+      ip: ipAddress,
+    });
+
     // Rate limiting for webhooks
     const rateLimitResult = checkRateLimit(`webhook:${ipAddress}`, RateLimits.WEBHOOK);
     if (!rateLimitResult.success) {
+      log.warn("Webhook rate limited", { ip: ipAddress });
       await logAuditEvent(
         "webhook",
         "rate_limited",
@@ -103,12 +110,13 @@ export async function POST(request: NextRequest) {
         ipAddress,
         userAgent
       );
+      await flushLogs();
       return rateLimitExceededResponse(rateLimitResult);
     }
 
     // IP allowlist check (if configured)
     if (CHAPA_ALLOWED_IPS.length > 0 && !CHAPA_ALLOWED_IPS.includes(ipAddress)) {
-      console.error(`Webhook from unauthorized IP: ${ipAddress}`);
+      log.warn("Webhook from unauthorized IP", { ip: ipAddress });
       await logAuditEvent(
         "webhook",
         "unauthorized_ip",
@@ -118,6 +126,7 @@ export async function POST(request: NextRequest) {
         ipAddress,
         userAgent
       );
+      await flushLogs();
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403, headers: SECURITY_HEADERS }
@@ -331,14 +340,22 @@ export async function POST(request: NextRequest) {
       userAgent
     );
 
-    console.log(`Payment ${tx_ref} updated to status: ${paymentStatus}`);
+    log.info(PaymentLogEvents.PAYMENT_WEBHOOK_PROCESSED, {
+      txRef: tx_ref,
+      webhookStatus: status,
+      verifiedStatus,
+      finalStatus: paymentStatus,
+      chapaTrxRef: trx_ref,
+    });
+
+    await flushLogs();
 
     return NextResponse.json(
       { success: true, message: "Webhook processed successfully" },
       { headers: SECURITY_HEADERS }
     );
   } catch (error) {
-    console.error("Webhook processing error:", error);
+    log.error("Webhook processing failed", error);
 
     await logAuditEvent(
       "webhook",
@@ -349,6 +366,8 @@ export async function POST(request: NextRequest) {
       ipAddress,
       userAgent
     );
+
+    await flushLogs();
 
     return NextResponse.json(
       { error: "Webhook processing failed" },

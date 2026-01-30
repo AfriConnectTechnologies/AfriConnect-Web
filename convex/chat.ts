@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUser, getCurrentUser } from "./helpers";
+import { createLogger, flushLogs } from "./lib/logger";
 
 /**
  * Generate a short hash from a string for use in channel IDs.
@@ -155,29 +156,57 @@ export const reportConversation = mutation({
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const log = createLogger("chat.reportConversation");
+    
+    try {
+      log.info("Chat report initiated", {
+        channelId: args.channelId,
+        reasonLength: args.reason.length,
+      });
 
-    // Check if already reported by this user
-    const existingReport = await ctx.db
-      .query("chatReports")
-      .withIndex("by_channel_reporter", (q) => 
-        q.eq("channelId", args.channelId).eq("reporterId", user._id)
-      )
-      .first();
+      const user = await requireUser(ctx);
+      log.setContext({ userId: user.clerkId });
 
-    if (existingReport && existingReport.status === "pending") {
-      throw new Error("You have already reported this conversation");
+      // Check if already reported by this user
+      const existingReport = await ctx.db
+        .query("chatReports")
+        .withIndex("by_channel_reporter", (q) => 
+          q.eq("channelId", args.channelId).eq("reporterId", user._id)
+        )
+        .first();
+
+      if (existingReport && existingReport.status === "pending") {
+        log.warn("Chat report failed - already reported", {
+          channelId: args.channelId,
+          existingReportId: existingReport._id,
+        });
+        await flushLogs();
+        throw new Error("You have already reported this conversation");
+      }
+
+      const reportId = await ctx.db.insert("chatReports", {
+        channelId: args.channelId,
+        reporterId: user._id,
+        reason: args.reason,
+        status: "pending",
+        createdAt: Date.now(),
+      });
+
+      log.info("Chat report created", {
+        reportId,
+        channelId: args.channelId,
+        reporterId: user._id,
+      });
+
+      await flushLogs();
+      return reportId;
+    } catch (error) {
+      log.error("Chat report failed", error, {
+        channelId: args.channelId,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    const reportId = await ctx.db.insert("chatReports", {
-      channelId: args.channelId,
-      reporterId: user._id,
-      reason: args.reason,
-      status: "pending",
-      createdAt: Date.now(),
-    });
-
-    return reportId;
   },
 });
 

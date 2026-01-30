@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUser, requireAdmin, getCurrentUser } from "./helpers";
 import { PlanLimits, DEFAULT_PLAN_LIMITS } from "./subscriptionPlans";
+import { createLogger, flushLogs } from "./lib/logger";
 
 /**
  * Get the current user's business subscription
@@ -83,58 +84,110 @@ export const create = mutation({
     startTrial: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    const log = createLogger("subscriptions.create");
+    
+    try {
+      log.info("Subscription creation initiated", {
+        businessId: args.businessId,
+        planId: args.planId,
+        billingCycle: args.billingCycle,
+        startTrial: args.startTrial,
+        hasPaymentId: !!args.paymentId,
+      });
 
-    // Verify user owns this business
-    const business = await ctx.db.get(args.businessId);
-    if (!business || business.ownerId !== user._id) {
-      throw new Error("Unauthorized: You can only create subscriptions for your own business");
+      const user = await requireUser(ctx);
+      log.setContext({ userId: user.clerkId, businessId: args.businessId });
+
+      // Verify user owns this business
+      const business = await ctx.db.get(args.businessId);
+      if (!business || business.ownerId !== user._id) {
+        log.warn("Subscription creation failed - unauthorized", {
+          businessId: args.businessId,
+          businessOwnerId: business?.ownerId,
+          requestingUserId: user._id,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized: You can only create subscriptions for your own business");
+      }
+
+      // Check for existing active subscription
+      const existing = await ctx.db
+        .query("subscriptions")
+        .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
+        .first();
+
+      if (existing && (existing.status === "active" || existing.status === "trialing")) {
+        log.warn("Subscription creation failed - already has active subscription", {
+          businessId: args.businessId,
+          existingSubscriptionId: existing._id,
+          existingStatus: existing.status,
+        });
+        await flushLogs();
+        throw new Error("Business already has an active subscription");
+      }
+
+      // Get plan details
+      const plan = await ctx.db.get(args.planId);
+      if (!plan || !plan.isActive) {
+        log.error("Subscription creation failed - invalid plan", undefined, {
+          planId: args.planId,
+          planExists: !!plan,
+          planActive: plan?.isActive,
+        });
+        await flushLogs();
+        throw new Error("Invalid or inactive plan");
+      }
+
+      log.debug("Plan validated", { planId: args.planId, planName: plan.name });
+
+      const now = Date.now();
+      const periodDays = args.billingCycle === "annual" ? 365 : 30;
+      const periodMs = periodDays * 24 * 60 * 60 * 1000;
+
+      // Trial period (14 days)
+      const trialDays = 14;
+      const trialMs = trialDays * 24 * 60 * 60 * 1000;
+
+      const subscriptionId = await ctx.db.insert("subscriptions", {
+        businessId: args.businessId,
+        planId: args.planId,
+        status: args.startTrial ? "trialing" : "active",
+        billingCycle: args.billingCycle,
+        currentPeriodStart: now,
+        currentPeriodEnd: args.startTrial ? now + trialMs : now + periodMs,
+        cancelAtPeriodEnd: false,
+        trialEndsAt: args.startTrial ? now + trialMs : undefined,
+        lastPaymentId: args.paymentId,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // If there was an existing cancelled subscription, delete it
+      if (existing) {
+        await ctx.db.delete(existing._id);
+        log.debug("Deleted previous cancelled subscription", { previousSubId: existing._id });
+      }
+
+      log.info("Subscription created successfully", {
+        subscriptionId,
+        businessId: args.businessId,
+        planId: args.planId,
+        planName: plan.name,
+        billingCycle: args.billingCycle,
+        status: args.startTrial ? "trialing" : "active",
+        periodEnd: new Date(args.startTrial ? now + trialMs : now + periodMs).toISOString(),
+      });
+
+      await flushLogs();
+      return subscriptionId;
+    } catch (error) {
+      log.error("Subscription creation failed", error, {
+        businessId: args.businessId,
+        planId: args.planId,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    // Check for existing active subscription
-    const existing = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
-      .first();
-
-    if (existing && (existing.status === "active" || existing.status === "trialing")) {
-      throw new Error("Business already has an active subscription");
-    }
-
-    // Get plan details
-    const plan = await ctx.db.get(args.planId);
-    if (!plan || !plan.isActive) {
-      throw new Error("Invalid or inactive plan");
-    }
-
-    const now = Date.now();
-    const periodDays = args.billingCycle === "annual" ? 365 : 30;
-    const periodMs = periodDays * 24 * 60 * 60 * 1000;
-
-    // Trial period (14 days)
-    const trialDays = 14;
-    const trialMs = trialDays * 24 * 60 * 60 * 1000;
-
-    const subscriptionId = await ctx.db.insert("subscriptions", {
-      businessId: args.businessId,
-      planId: args.planId,
-      status: args.startTrial ? "trialing" : "active",
-      billingCycle: args.billingCycle,
-      currentPeriodStart: now,
-      currentPeriodEnd: args.startTrial ? now + trialMs : now + periodMs,
-      cancelAtPeriodEnd: false,
-      trialEndsAt: args.startTrial ? now + trialMs : undefined,
-      lastPaymentId: args.paymentId,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // If there was an existing cancelled subscription, delete it
-    if (existing) {
-      await ctx.db.delete(existing._id);
-    }
-
-    return subscriptionId;
   },
 });
 
@@ -177,30 +230,73 @@ export const cancel = mutation({
     subscriptionId: v.id("subscriptions"),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
-    const subscription = await ctx.db.get(args.subscriptionId);
+    const log = createLogger("subscriptions.cancel");
+    
+    try {
+      log.info("Subscription cancellation initiated", { subscriptionId: args.subscriptionId });
 
-    if (!subscription) {
-      throw new Error("Subscription not found");
+      const user = await requireUser(ctx);
+      log.setContext({ userId: user.clerkId });
+      
+      const subscription = await ctx.db.get(args.subscriptionId);
+
+      if (!subscription) {
+        log.error("Subscription cancellation failed - not found", undefined, {
+          subscriptionId: args.subscriptionId,
+        });
+        await flushLogs();
+        throw new Error("Subscription not found");
+      }
+
+      log.setContext({ businessId: subscription.businessId });
+
+      // Verify ownership
+      const business = await ctx.db.get(subscription.businessId);
+      if (!business || business.ownerId !== user._id) {
+        log.warn("Subscription cancellation failed - unauthorized", {
+          subscriptionId: args.subscriptionId,
+          businessOwnerId: business?.ownerId,
+          requestingUserId: user._id,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      if (subscription.status === "cancelled") {
+        log.warn("Subscription cancellation failed - already cancelled", {
+          subscriptionId: args.subscriptionId,
+        });
+        await flushLogs();
+        throw new Error("Subscription is already cancelled");
+      }
+
+      const plan = await ctx.db.get(subscription.planId);
+
+      await ctx.db.patch(args.subscriptionId, {
+        cancelAtPeriodEnd: true,
+        cancelledAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      log.info("Subscription cancelled successfully", {
+        subscriptionId: args.subscriptionId,
+        businessId: subscription.businessId,
+        planId: subscription.planId,
+        planName: plan?.name,
+        previousStatus: subscription.status,
+        cancelAtPeriodEnd: true,
+        periodEnd: new Date(subscription.currentPeriodEnd).toISOString(),
+      });
+
+      await flushLogs();
+      return await ctx.db.get(args.subscriptionId);
+    } catch (error) {
+      log.error("Subscription cancellation failed", error, {
+        subscriptionId: args.subscriptionId,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    // Verify ownership
-    const business = await ctx.db.get(subscription.businessId);
-    if (!business || business.ownerId !== user._id) {
-      throw new Error("Unauthorized");
-    }
-
-    if (subscription.status === "cancelled") {
-      throw new Error("Subscription is already cancelled");
-    }
-
-    await ctx.db.patch(args.subscriptionId, {
-      cancelAtPeriodEnd: true,
-      cancelledAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-
-    return await ctx.db.get(args.subscriptionId);
   },
 });
 
@@ -252,36 +348,91 @@ export const changePlan = mutation({
     newPlanId: v.id("subscriptionPlans"),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
-    const subscription = await ctx.db.get(args.subscriptionId);
+    const log = createLogger("subscriptions.changePlan");
+    
+    try {
+      log.info("Subscription plan change initiated", {
+        subscriptionId: args.subscriptionId,
+        newPlanId: args.newPlanId,
+      });
 
-    if (!subscription) {
-      throw new Error("Subscription not found");
+      const user = await requireUser(ctx);
+      log.setContext({ userId: user.clerkId });
+      
+      const subscription = await ctx.db.get(args.subscriptionId);
+
+      if (!subscription) {
+        log.error("Plan change failed - subscription not found", undefined, {
+          subscriptionId: args.subscriptionId,
+        });
+        await flushLogs();
+        throw new Error("Subscription not found");
+      }
+
+      log.setContext({ businessId: subscription.businessId });
+
+      // Verify ownership
+      const business = await ctx.db.get(subscription.businessId);
+      if (!business || business.ownerId !== user._id) {
+        log.warn("Plan change failed - unauthorized", {
+          subscriptionId: args.subscriptionId,
+          businessOwnerId: business?.ownerId,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      if (subscription.status !== "active" && subscription.status !== "trialing") {
+        log.warn("Plan change failed - invalid subscription status", {
+          subscriptionId: args.subscriptionId,
+          currentStatus: subscription.status,
+        });
+        await flushLogs();
+        throw new Error("Can only change plan on active subscriptions");
+      }
+
+      // Get current and new plan
+      const currentPlan = await ctx.db.get(subscription.planId);
+      const newPlan = await ctx.db.get(args.newPlanId);
+      
+      if (!newPlan || !newPlan.isActive) {
+        log.error("Plan change failed - invalid new plan", undefined, {
+          newPlanId: args.newPlanId,
+          planExists: !!newPlan,
+          planActive: newPlan?.isActive,
+        });
+        await flushLogs();
+        throw new Error("Invalid or inactive plan");
+      }
+
+      const isUpgrade = newPlan.monthlyPrice > (currentPlan?.monthlyPrice || 0);
+
+      // For now, just update the plan (in production, you'd handle prorations)
+      await ctx.db.patch(args.subscriptionId, {
+        planId: args.newPlanId,
+        updatedAt: Date.now(),
+      });
+
+      log.info("Subscription plan changed successfully", {
+        subscriptionId: args.subscriptionId,
+        businessId: subscription.businessId,
+        previousPlanId: subscription.planId,
+        previousPlanName: currentPlan?.name,
+        newPlanId: args.newPlanId,
+        newPlanName: newPlan.name,
+        changeType: isUpgrade ? "upgrade" : "downgrade",
+      });
+
+      await flushLogs();
+      return await ctx.db.get(args.subscriptionId);
+    } catch (error) {
+      log.error("Plan change failed", error, {
+        subscriptionId: args.subscriptionId,
+        newPlanId: args.newPlanId,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    // Verify ownership
-    const business = await ctx.db.get(subscription.businessId);
-    if (!business || business.ownerId !== user._id) {
-      throw new Error("Unauthorized");
-    }
-
-    if (subscription.status !== "active" && subscription.status !== "trialing") {
-      throw new Error("Can only change plan on active subscriptions");
-    }
-
-    // Get new plan
-    const newPlan = await ctx.db.get(args.newPlanId);
-    if (!newPlan || !newPlan.isActive) {
-      throw new Error("Invalid or inactive plan");
-    }
-
-    // For now, just update the plan (in production, you'd handle prorations)
-    await ctx.db.patch(args.subscriptionId, {
-      planId: args.newPlanId,
-      updatedAt: Date.now(),
-    });
-
-    return await ctx.db.get(args.subscriptionId);
   },
 });
 
@@ -413,47 +564,87 @@ export const listAll = query({
 export const processExpiredSubscriptions = mutation({
   args: {},
   handler: async (ctx) => {
-    const now = Date.now();
+    const log = createLogger("subscriptions.processExpiredSubscriptions");
+    
+    try {
+      log.info("Processing expired subscriptions - cron job started");
+      
+      const now = Date.now();
 
-    // Find subscriptions past their period end that should be expired
-    const expiredTrials = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_status", (q) => q.eq("status", "trialing"))
-      .filter((q) => q.lt(q.field("currentPeriodEnd"), now))
-      .collect();
+      // Find subscriptions past their period end that should be expired
+      const expiredTrials = await ctx.db
+        .query("subscriptions")
+        .withIndex("by_status", (q) => q.eq("status", "trialing"))
+        .filter((q) => q.lt(q.field("currentPeriodEnd"), now))
+        .collect();
 
-    const cancelledAtEnd = await ctx.db
-      .query("subscriptions")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("cancelAtPeriodEnd"), true),
-          q.lt(q.field("currentPeriodEnd"), now),
-          q.neq(q.field("status"), "cancelled")
+      const cancelledAtEnd = await ctx.db
+        .query("subscriptions")
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("cancelAtPeriodEnd"), true),
+            q.lt(q.field("currentPeriodEnd"), now),
+            q.neq(q.field("status"), "cancelled")
+          )
         )
-      )
-      .collect();
+        .collect();
 
-    let processed = 0;
-
-    // Expire trials
-    for (const sub of expiredTrials) {
-      await ctx.db.patch(sub._id, {
-        status: "expired",
-        updatedAt: now,
+      log.debug("Found subscriptions to process", {
+        expiredTrials: expiredTrials.length,
+        cancelledAtEnd: cancelledAtEnd.length,
       });
-      processed++;
-    }
 
-    // Cancel subscriptions that were set to cancel at period end
-    for (const sub of cancelledAtEnd) {
-      await ctx.db.patch(sub._id, {
-        status: "cancelled",
-        updatedAt: now,
+      let processed = 0;
+      const expiredTrialIds: string[] = [];
+      const cancelledSubIds: string[] = [];
+
+      // Expire trials
+      for (const sub of expiredTrials) {
+        await ctx.db.patch(sub._id, {
+          status: "expired",
+          updatedAt: now,
+        });
+        processed++;
+        expiredTrialIds.push(sub._id);
+        
+        log.info("Trial subscription expired", {
+          subscriptionId: sub._id,
+          businessId: sub.businessId,
+          planId: sub.planId,
+          trialEndedAt: new Date(sub.currentPeriodEnd).toISOString(),
+        });
+      }
+
+      // Cancel subscriptions that were set to cancel at period end
+      for (const sub of cancelledAtEnd) {
+        await ctx.db.patch(sub._id, {
+          status: "cancelled",
+          updatedAt: now,
+        });
+        processed++;
+        cancelledSubIds.push(sub._id);
+        
+        log.info("Subscription cancelled at period end", {
+          subscriptionId: sub._id,
+          businessId: sub.businessId,
+          planId: sub.planId,
+          periodEndedAt: new Date(sub.currentPeriodEnd).toISOString(),
+        });
+      }
+
+      log.info("Expired subscriptions processing completed", {
+        totalProcessed: processed,
+        expiredTrials: expiredTrialIds.length,
+        cancelledSubscriptions: cancelledSubIds.length,
       });
-      processed++;
-    }
 
-    return { processed };
+      await flushLogs();
+      return { processed };
+    } catch (error) {
+      log.error("Failed to process expired subscriptions", error);
+      await flushLogs();
+      throw error;
+    }
   },
 });
 

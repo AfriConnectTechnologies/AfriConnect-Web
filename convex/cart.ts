@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getOrCreateUser } from "./helpers";
+import { createLogger, flushLogs } from "./lib/logger";
 
 export const get = query({
   handler: async (ctx) => {
@@ -44,54 +45,119 @@ export const add = mutation({
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
-    const user = await getOrCreateUser(ctx);
-
-    const product = await ctx.db.get(args.productId);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    if (product.sellerId === user._id) {
-      throw new Error("You can't purchase your own products. This item belongs to you!");
-    }
-
-    if (product.status !== "active") {
-      throw new Error("Sorry, this product is no longer available for purchase");
-    }
-
-    if (args.quantity > product.quantity) {
-      throw new Error(`Only ${product.quantity} items available in stock`);
-    }
-
-    // Check if item already exists in cart
-    const existingItem = await ctx.db
-      .query("cartItems")
-      .withIndex("by_user_product", (q) =>
-        q.eq("userId", user._id).eq("productId", args.productId)
-      )
-      .first();
-
-    const now = Date.now();
-
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + args.quantity;
-      if (newQuantity > product.quantity) {
-        throw new Error(`Only ${product.quantity} items available in stock`);
-      }
-      await ctx.db.patch(existingItem._id, {
-        quantity: newQuantity,
-        updatedAt: now,
-      });
-      return await ctx.db.get(existingItem._id);
-    } else {
-      const cartItemId = await ctx.db.insert("cartItems", {
-        userId: user._id,
+    const log = createLogger("cart.add");
+    
+    try {
+      log.info("Add to cart initiated", {
         productId: args.productId,
         quantity: args.quantity,
-        createdAt: now,
-        updatedAt: now,
       });
-      return await ctx.db.get(cartItemId);
+
+      const user = await getOrCreateUser(ctx);
+      log.setContext({ userId: user.clerkId });
+
+      const product = await ctx.db.get(args.productId);
+      if (!product) {
+        log.error("Add to cart failed - product not found", undefined, {
+          productId: args.productId,
+        });
+        await flushLogs();
+        throw new Error("Product not found");
+      }
+
+      if (product.sellerId === user._id) {
+        log.warn("Add to cart failed - user tried to buy own product", {
+          productId: args.productId,
+          productName: product.name,
+        });
+        await flushLogs();
+        throw new Error("You can't purchase your own products. This item belongs to you!");
+      }
+
+      if (product.status !== "active") {
+        log.warn("Add to cart failed - product not active", {
+          productId: args.productId,
+          productName: product.name,
+          productStatus: product.status,
+        });
+        await flushLogs();
+        throw new Error("Sorry, this product is no longer available for purchase");
+      }
+
+      if (args.quantity > product.quantity) {
+        log.warn("Add to cart failed - insufficient stock", {
+          productId: args.productId,
+          requestedQty: args.quantity,
+          availableQty: product.quantity,
+        });
+        await flushLogs();
+        throw new Error(`Only ${product.quantity} items available in stock`);
+      }
+
+      // Check if item already exists in cart
+      const existingItem = await ctx.db
+        .query("cartItems")
+        .withIndex("by_user_product", (q) =>
+          q.eq("userId", user._id).eq("productId", args.productId)
+        )
+        .first();
+
+      const now = Date.now();
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + args.quantity;
+        if (newQuantity > product.quantity) {
+          log.warn("Add to cart failed - total quantity exceeds stock", {
+            productId: args.productId,
+            existingQty: existingItem.quantity,
+            additionalQty: args.quantity,
+            availableQty: product.quantity,
+          });
+          await flushLogs();
+          throw new Error(`Only ${product.quantity} items available in stock`);
+        }
+        await ctx.db.patch(existingItem._id, {
+          quantity: newQuantity,
+          updatedAt: now,
+        });
+
+        log.info("Cart item quantity updated", {
+          cartItemId: existingItem._id,
+          productId: args.productId,
+          productName: product.name,
+          previousQty: existingItem.quantity,
+          newQty: newQuantity,
+        });
+
+        await flushLogs();
+        return await ctx.db.get(existingItem._id);
+      } else {
+        const cartItemId = await ctx.db.insert("cartItems", {
+          userId: user._id,
+          productId: args.productId,
+          quantity: args.quantity,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        log.info("New item added to cart", {
+          cartItemId,
+          productId: args.productId,
+          productName: product.name,
+          quantity: args.quantity,
+          price: product.price,
+        });
+
+        await flushLogs();
+        return await ctx.db.get(cartItemId);
+      }
+    } catch (error) {
+      log.error("Add to cart failed", error, {
+        productId: args.productId,
+        quantity: args.quantity,
+      });
+      await flushLogs();
+      throw error;
     }
   },
 });

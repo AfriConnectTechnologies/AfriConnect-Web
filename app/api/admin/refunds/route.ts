@@ -5,6 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { z } from "zod";
 import { Id } from "@/convex/_generated/dataModel";
+import { createApiLogger, PaymentLogEvents, flushLogs } from "@/lib/axiom";
 
 // Security headers
 const SECURITY_HEADERS = {
@@ -22,15 +23,23 @@ const refundSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const log = createApiLogger(request, "/api/admin/refunds");
+  
   try {
+    log.info(PaymentLogEvents.PAYMENT_REFUND_INITIATED);
+
     // Check authentication
     const { userId, getToken } = await auth();
     if (!userId) {
+      log.warn("Refund request - not authenticated");
+      await flushLogs();
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401, headers: SECURITY_HEADERS }
       );
     }
+
+    log.setUserId(userId);
 
     // Create authenticated Convex client
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -42,6 +51,8 @@ export async function POST(request: NextRequest) {
     // Check if user is admin
     const currentUser = await convex.query(api.users.getCurrentUser);
     if (!currentUser || currentUser.role !== "admin") {
+      log.warn("Refund request - not admin", { userRole: currentUser?.role });
+      await flushLogs();
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403, headers: SECURITY_HEADERS }
@@ -159,6 +170,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    log.info(PaymentLogEvents.PAYMENT_REFUND_COMPLETED, {
+      paymentId,
+      refundReference,
+      refundAmount: amount || payment.amount,
+      currency: payment.currency,
+      originalAmount: payment.amount,
+      adminUserId: userId,
+    });
+
+    await flushLogs();
+
     return NextResponse.json(
       {
         success: true,
@@ -173,7 +195,8 @@ export async function POST(request: NextRequest) {
       { headers: SECURITY_HEADERS }
     );
   } catch (error) {
-    console.error("Refund error:", error);
+    log.error(PaymentLogEvents.PAYMENT_REFUND_FAILED, error);
+    await flushLogs();
 
     if (error instanceof ChapaError) {
       return NextResponse.json(

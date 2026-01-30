@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getOrCreateUser } from "./helpers";
 import { Id } from "./_generated/dataModel";
+import { createLogger, flushLogs } from "./lib/logger";
 
 // Generate a unique transaction reference
 function generateTxRef(): string {
@@ -20,66 +21,122 @@ export const create = mutation({
     idempotencyKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getOrCreateUser(ctx);
-    const now = Date.now();
-    const txRef = generateTxRef();
+    const log = createLogger("payments.create");
+    
+    try {
+      log.info("Payment creation initiated", {
+        amount: args.amount,
+        currency: args.currency,
+        paymentType: args.paymentType,
+        hasIdempotencyKey: !!args.idempotencyKey,
+      });
 
-    // For order payments, snapshot the cart items
-    let cartSnapshot: string | undefined;
-    if (args.paymentType === "order") {
-      const cartItems = await ctx.db
-        .query("cartItems")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
-        .collect();
+      const user = await getOrCreateUser(ctx);
+      log.setContext({ userId: user.clerkId });
+      
+      const now = Date.now();
+      const txRef = generateTxRef();
 
-      if (cartItems.length === 0) {
-        throw new Error("Cart is empty");
-      }
+      log.debug("Generated transaction reference", { txRef });
 
-      // Build cart snapshot with product details
-      const cartData = [];
-      for (const item of cartItems) {
-        const product = await ctx.db.get(item.productId);
-        if (!product) continue;
-        if (product.status !== "active") {
-          throw new Error(`Product ${product.name} is no longer available`);
+      // For order payments, snapshot the cart items
+      let cartSnapshot: string | undefined;
+      if (args.paymentType === "order") {
+        const cartItems = await ctx.db
+          .query("cartItems")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect();
+
+        log.debug("Retrieved cart items", { cartItemCount: cartItems.length });
+
+        if (cartItems.length === 0) {
+          log.warn("Payment creation failed - empty cart", { userId: user.clerkId });
+          await flushLogs();
+          throw new Error("Cart is empty");
         }
-        if (item.quantity > product.quantity) {
-          throw new Error(`Insufficient stock for ${product.name}`);
+
+        // Build cart snapshot with product details
+        const cartData = [];
+        for (const item of cartItems) {
+          const product = await ctx.db.get(item.productId);
+          if (!product) continue;
+          if (product.status !== "active") {
+            log.warn("Payment creation failed - inactive product", {
+              productId: item.productId,
+              productName: product.name,
+              productStatus: product.status,
+            });
+            await flushLogs();
+            throw new Error(`Product ${product.name} is no longer available`);
+          }
+          if (item.quantity > product.quantity) {
+            log.warn("Payment creation failed - insufficient stock", {
+              productId: item.productId,
+              productName: product.name,
+              requestedQty: item.quantity,
+              availableQty: product.quantity,
+            });
+            await flushLogs();
+            throw new Error(`Insufficient stock for ${product.name}`);
+          }
+          cartData.push({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: product.price,
+            sellerId: product.sellerId,
+            productName: product.name,
+          });
         }
-        cartData.push({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: product.price,
-          sellerId: product.sellerId,
-          productName: product.name,
+        cartSnapshot = JSON.stringify(cartData);
+
+        log.debug("Cart snapshot created", {
+          itemCount: cartData.length,
+          totalProducts: cartData.reduce((sum, item) => sum + item.quantity, 0),
         });
       }
-      cartSnapshot = JSON.stringify(cartData);
+
+      const paymentId = await ctx.db.insert("payments", {
+        userId: user._id,
+        chapaTransactionRef: txRef,
+        amount: args.amount,
+        currency: args.currency,
+        status: "pending",
+        paymentType: args.paymentType,
+        metadata: cartSnapshot || args.metadata,
+        idempotencyKey: args.idempotencyKey,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const payment = await ctx.db.get(paymentId);
+
+      log.info("Payment created successfully", {
+        paymentId: paymentId,
+        txRef,
+        amount: args.amount,
+        currency: args.currency,
+        paymentType: args.paymentType,
+      });
+
+      await flushLogs();
+
+      return {
+        ...payment,
+        txRef,
+        user: {
+          email: user.email,
+          name: user.name,
+        },
+      };
+    } catch (error) {
+      log.error("Payment creation failed", error, {
+        amount: args.amount,
+        currency: args.currency,
+        paymentType: args.paymentType,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    const paymentId = await ctx.db.insert("payments", {
-      userId: user._id,
-      chapaTransactionRef: txRef,
-      amount: args.amount,
-      currency: args.currency,
-      status: "pending",
-      paymentType: args.paymentType,
-      metadata: cartSnapshot || args.metadata,
-      idempotencyKey: args.idempotencyKey,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    const payment = await ctx.db.get(paymentId);
-    return {
-      ...payment,
-      txRef,
-      user: {
-        email: user.email,
-        name: user.name,
-      },
-    };
   },
 });
 
@@ -96,204 +153,304 @@ export const updateStatus = mutation({
     chapaTrxRef: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const payment = await ctx.db
-      .query("payments")
-      .withIndex("by_chapa_ref", (q) => q.eq("chapaTransactionRef", args.txRef))
-      .first();
+    const log = createLogger("payments.updateStatus");
+    
+    try {
+      log.info("Payment status update initiated", {
+        txRef: args.txRef,
+        newStatus: args.status,
+        chapaTrxRef: args.chapaTrxRef,
+      });
 
-    if (!payment) {
-      throw new Error("Payment not found");
-    }
+      const payment = await ctx.db
+        .query("payments")
+        .withIndex("by_chapa_ref", (q) => q.eq("chapaTransactionRef", args.txRef))
+        .first();
 
-    // Don't re-process if already successful
-    if (payment.status === "success") {
-      return await ctx.db.get(payment._id);
-    }
-
-    await ctx.db.patch(payment._id, {
-      status: args.status,
-      chapaTrxRef: args.chapaTrxRef,
-      updatedAt: Date.now(),
-    });
-
-    // If payment successful, handle based on payment type
-    if (args.status === "success") {
-      // Handle subscription payments
-      if (payment.paymentType === "subscription" && payment.metadata) {
-        try {
-          const metadata = JSON.parse(payment.metadata);
-          const { planId, billingCycle, businessId } = metadata;
-          
-          if (planId && businessId) {
-            // Check for existing subscription
-            const existingSub = await ctx.db
-              .query("subscriptions")
-              .withIndex("by_business", (q) => q.eq("businessId", businessId))
-              .first();
-            
-            const now = Date.now();
-            const periodDays = billingCycle === "annual" ? 365 : 30;
-            const periodMs = periodDays * 24 * 60 * 60 * 1000;
-            
-            if (existingSub) {
-              // Update existing subscription
-              await ctx.db.patch(existingSub._id, {
-                planId: planId,
-                status: "active",
-                billingCycle: billingCycle || "monthly",
-                currentPeriodStart: now,
-                currentPeriodEnd: now + periodMs,
-                lastPaymentId: payment._id,
-                cancelAtPeriodEnd: false,
-                trialEndsAt: undefined,
-                updatedAt: now,
-              });
-            } else {
-              // Create new subscription
-              await ctx.db.insert("subscriptions", {
-                businessId: businessId,
-                planId: planId,
-                status: "active",
-                billingCycle: billingCycle || "monthly",
-                currentPeriodStart: now,
-                currentPeriodEnd: now + periodMs,
-                cancelAtPeriodEnd: false,
-                lastPaymentId: payment._id,
-                createdAt: now,
-                updatedAt: now,
-              });
-            }
-          }
-        } catch (subError) {
-          console.error("Failed to process subscription payment:", subError);
-        }
+      if (!payment) {
+        log.error("Payment not found for status update", undefined, { txRef: args.txRef });
+        await flushLogs();
+        throw new Error("Payment not found");
       }
-      
-      // Handle order payments
-      if (payment.paymentType === "order" && payment.metadata) {
-        const now = Date.now();
 
-        // Parse cart snapshot
-        let cartData: Array<{
-          productId: string;
-          quantity: number;
-          price: number;
-          sellerId: string;
-          productName: string;
-        }>;
+      log.setContext({ userId: payment.userId as string });
+      log.debug("Payment found", {
+        paymentId: payment._id,
+        currentStatus: payment.status,
+        paymentType: payment.paymentType,
+      });
 
-        try {
-          cartData = JSON.parse(payment.metadata);
-        } catch {
-          console.error("Failed to parse cart snapshot");
-          return await ctx.db.get(payment._id);
-        }
+      // Don't re-process if already successful
+      if (payment.status === "success") {
+        log.info("Payment already successful, skipping re-processing", {
+          paymentId: payment._id,
+          txRef: args.txRef,
+        });
+        await flushLogs();
+        return await ctx.db.get(payment._id);
+      }
 
-        // Get user info
-        const user = await ctx.db
-          .query("users")
-          .filter((q) => q.eq(q.field("_id"), payment.userId))
-          .first();
+      await ctx.db.patch(payment._id, {
+        status: args.status,
+        chapaTrxRef: args.chapaTrxRef,
+        updatedAt: Date.now(),
+      });
 
-        if (!user) {
-          console.error("User not found for payment");
-          return await ctx.db.get(payment._id);
-        }
+      log.info("Payment status updated", {
+        paymentId: payment._id,
+        previousStatus: payment.status,
+        newStatus: args.status,
+      });
 
-        // Group items by seller
-        const itemsBySeller = new Map<string, typeof cartData>();
-        for (const item of cartData) {
-          if (!itemsBySeller.has(item.sellerId)) {
-            itemsBySeller.set(item.sellerId, []);
-          }
-          itemsBySeller.get(item.sellerId)!.push(item);
-        }
+      // If payment successful, handle based on payment type
+      if (args.status === "success") {
+        // Handle subscription payments
+        if (payment.paymentType === "subscription" && payment.metadata) {
+          try {
+            const metadata = JSON.parse(payment.metadata);
+            const { planId, billingCycle, businessId } = metadata;
 
-        const createdOrderIds: Id<"orders">[] = [];
+            log.info("Processing subscription payment", {
+              paymentId: payment._id,
+              planId,
+              billingCycle,
+              businessId,
+            });
+            
+            if (planId && businessId) {
+              // Check for existing subscription
+              const existingSub = await ctx.db
+                .query("subscriptions")
+                .withIndex("by_business", (q) => q.eq("businessId", businessId))
+                .first();
+              
+              const now = Date.now();
+              const periodDays = billingCycle === "annual" ? 365 : 30;
+              const periodMs = periodDays * 24 * 60 * 60 * 1000;
+              
+              if (existingSub) {
+                // Update existing subscription
+                await ctx.db.patch(existingSub._id, {
+                  planId: planId,
+                  status: "active",
+                  billingCycle: billingCycle || "monthly",
+                  currentPeriodStart: now,
+                  currentPeriodEnd: now + periodMs,
+                  lastPaymentId: payment._id,
+                  cancelAtPeriodEnd: false,
+                  trialEndsAt: undefined,
+                  updatedAt: now,
+                });
 
-        // Create one order per seller
-        for (const [sellerId, items] of itemsBySeller.entries()) {
-          let totalAmount = 0;
-          const orderItems = [];
+                log.info("Existing subscription updated", {
+                  subscriptionId: existingSub._id,
+                  businessId,
+                  planId,
+                  periodEnd: new Date(now + periodMs).toISOString(),
+                });
+              } else {
+                // Create new subscription
+                const newSubId = await ctx.db.insert("subscriptions", {
+                  businessId: businessId,
+                  planId: planId,
+                  status: "active",
+                  billingCycle: billingCycle || "monthly",
+                  currentPeriodStart: now,
+                  currentPeriodEnd: now + periodMs,
+                  cancelAtPeriodEnd: false,
+                  lastPaymentId: payment._id,
+                  createdAt: now,
+                  updatedAt: now,
+                });
 
-          for (const item of items) {
-            const itemTotal = item.price * item.quantity;
-            totalAmount += itemTotal;
-            orderItems.push({
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
+                log.info("New subscription created", {
+                  subscriptionId: newSubId,
+                  businessId,
+                  planId,
+                  billingCycle: billingCycle || "monthly",
+                });
+              }
+            }
+          } catch (subError) {
+            log.error("Failed to process subscription payment", subError, {
+              paymentId: payment._id,
+              txRef: args.txRef,
             });
           }
+        }
+        
+        // Handle order payments
+        if (payment.paymentType === "order" && payment.metadata) {
+          const now = Date.now();
 
-          // Get seller info
-          const seller = await ctx.db
+          // Parse cart snapshot
+          let cartData: Array<{
+            productId: string;
+            quantity: number;
+            price: number;
+            sellerId: string;
+            productName: string;
+          }>;
+
+          try {
+            cartData = JSON.parse(payment.metadata);
+            log.debug("Cart snapshot parsed", { itemCount: cartData.length });
+          } catch (parseError) {
+            log.error("Failed to parse cart snapshot", parseError, { paymentId: payment._id });
+            await flushLogs();
+            return await ctx.db.get(payment._id);
+          }
+
+          // Get user info
+          const user = await ctx.db
             .query("users")
-            .filter((q) => q.eq(q.field("_id"), sellerId))
+            .filter((q) => q.eq(q.field("_id"), payment.userId))
             .first();
-          const sellerName = seller?.name || seller?.email || "Unknown Seller";
 
-          // Create order
-          const orderId = await ctx.db.insert("orders", {
-            userId: user._id,
-            buyerId: user._id,
-            sellerId: sellerId,
-            title: `Order from ${sellerName}`,
-            customer: user.name || user.email,
-            amount: totalAmount,
-            status: "processing", // Already paid
-            description: `Order containing ${items.length} item(s) - Payment ref: ${payment.chapaTransactionRef}`,
-            createdAt: now,
-            updatedAt: now,
+          if (!user) {
+            log.error("User not found for payment", undefined, {
+              paymentId: payment._id,
+              userId: payment.userId,
+            });
+            await flushLogs();
+            return await ctx.db.get(payment._id);
+          }
+
+          // Group items by seller
+          const itemsBySeller = new Map<string, typeof cartData>();
+          for (const item of cartData) {
+            if (!itemsBySeller.has(item.sellerId)) {
+              itemsBySeller.set(item.sellerId, []);
+            }
+            itemsBySeller.get(item.sellerId)!.push(item);
+          }
+
+          log.debug("Cart items grouped by seller", {
+            sellerCount: itemsBySeller.size,
+            totalItems: cartData.length,
           });
 
-          createdOrderIds.push(orderId);
+          const createdOrderIds: Id<"orders">[] = [];
 
-          // Create order items and update product quantities
-          for (const item of orderItems) {
-            const productId = item.productId as Id<"products">;
+          // Create one order per seller
+          for (const [sellerId, items] of itemsBySeller.entries()) {
+            let totalAmount = 0;
+            const orderItems = [];
 
-            await ctx.db.insert("orderItems", {
-              orderId,
-              productId,
-              quantity: item.quantity,
-              price: item.price,
-              createdAt: now,
-            });
-
-            // Update product quantity
-            const product = await ctx.db.get(productId);
-            if (product) {
-              const newQuantity = Math.max(0, product.quantity - item.quantity);
-              await ctx.db.patch(productId, {
-                quantity: newQuantity,
-                updatedAt: now,
+            for (const item of items) {
+              const itemTotal = item.price * item.quantity;
+              totalAmount += itemTotal;
+              orderItems.push({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
               });
             }
+
+            // Get seller info
+            const seller = await ctx.db
+              .query("users")
+              .filter((q) => q.eq(q.field("_id"), sellerId))
+              .first();
+            const sellerName = seller?.name || seller?.email || "Unknown Seller";
+
+            // Create order
+            const orderId = await ctx.db.insert("orders", {
+              userId: user._id,
+              buyerId: user._id,
+              sellerId: sellerId,
+              title: `Order from ${sellerName}`,
+              customer: user.name || user.email,
+              amount: totalAmount,
+              status: "processing", // Already paid
+              description: `Order containing ${items.length} item(s) - Payment ref: ${payment.chapaTransactionRef}`,
+              createdAt: now,
+              updatedAt: now,
+            });
+
+            createdOrderIds.push(orderId);
+
+            log.info("Order created from payment", {
+              orderId,
+              sellerId,
+              sellerName,
+              itemCount: items.length,
+              totalAmount,
+              paymentRef: payment.chapaTransactionRef,
+            });
+
+            // Create order items and update product quantities
+            for (const item of orderItems) {
+              const productId = item.productId as Id<"products">;
+
+              await ctx.db.insert("orderItems", {
+                orderId,
+                productId,
+                quantity: item.quantity,
+                price: item.price,
+                createdAt: now,
+              });
+
+              // Update product quantity
+              const product = await ctx.db.get(productId);
+              if (product) {
+                const newQuantity = Math.max(0, product.quantity - item.quantity);
+                await ctx.db.patch(productId, {
+                  quantity: newQuantity,
+                  updatedAt: now,
+                });
+
+                log.debug("Product quantity updated", {
+                  productId,
+                  previousQty: product.quantity,
+                  newQty: newQuantity,
+                  soldQty: item.quantity,
+                });
+              }
+            }
+          }
+
+          // Clear user's cart
+          const cartItems = await ctx.db
+            .query("cartItems")
+            .withIndex("by_user", (q) => q.eq("userId", user._id))
+            .collect();
+
+          for (const cartItem of cartItems) {
+            await ctx.db.delete(cartItem._id);
+          }
+
+          log.info("User cart cleared after successful payment", {
+            userId: user._id,
+            clearedItems: cartItems.length,
+          });
+
+          // Update payment with first order ID for reference
+          if (createdOrderIds.length > 0) {
+            await ctx.db.patch(payment._id, {
+              orderId: createdOrderIds[0],
+              updatedAt: Date.now(),
+            });
+
+            log.info("Payment linked to order", {
+              paymentId: payment._id,
+              orderId: createdOrderIds[0],
+              totalOrdersCreated: createdOrderIds.length,
+            });
           }
         }
-
-        // Clear user's cart
-        const cartItems = await ctx.db
-          .query("cartItems")
-          .withIndex("by_user", (q) => q.eq("userId", user._id))
-          .collect();
-
-        for (const cartItem of cartItems) {
-          await ctx.db.delete(cartItem._id);
-        }
-
-        // Update payment with first order ID for reference
-        if (createdOrderIds.length > 0) {
-          await ctx.db.patch(payment._id, {
-            orderId: createdOrderIds[0],
-            updatedAt: Date.now(),
-          });
-        }
       }
-    }
 
-    return await ctx.db.get(payment._id);
+      await flushLogs();
+      return await ctx.db.get(payment._id);
+    } catch (error) {
+      log.error("Payment status update failed", error, {
+        txRef: args.txRef,
+        newStatus: args.status,
+      });
+      await flushLogs();
+      throw error;
+    }
   },
 });
 
@@ -301,11 +458,23 @@ export const updateStatus = mutation({
 export const getByTxRef = query({
   args: { txRef: v.string() },
   handler: async (ctx, args) => {
+    const log = createLogger("payments.getByTxRef");
+    
+    log.debug("Fetching payment by txRef", { txRef: args.txRef });
+
     const payment = await ctx.db
       .query("payments")
       .withIndex("by_chapa_ref", (q) => q.eq("chapaTransactionRef", args.txRef))
       .first();
 
+    log.info("Payment lookup completed", {
+      txRef: args.txRef,
+      found: !!payment,
+      paymentId: payment?._id,
+      status: payment?.status,
+    });
+
+    await flushLogs();
     return payment;
   },
 });
@@ -436,21 +605,59 @@ export const recordRefund = mutation({
     adminUserId: v.string(),
   },
   handler: async (ctx, args) => {
-    const payment = await ctx.db.get(args.paymentId);
-    if (!payment) {
-      throw new Error("Payment not found");
+    const log = createLogger("payments.recordRefund");
+    
+    try {
+      log.info("Refund recording initiated", {
+        paymentId: args.paymentId,
+        refundAmount: args.refundAmount,
+        refundReason: args.refundReason,
+        refundReference: args.refundReference,
+        adminUserId: args.adminUserId,
+      });
+
+      const payment = await ctx.db.get(args.paymentId);
+      if (!payment) {
+        log.error("Refund failed - payment not found", undefined, { paymentId: args.paymentId });
+        await flushLogs();
+        throw new Error("Payment not found");
+      }
+
+      log.debug("Payment found for refund", {
+        paymentId: args.paymentId,
+        originalAmount: payment.amount,
+        paymentStatus: payment.status,
+        paymentType: payment.paymentType,
+      });
+
+      // Update payment with refund info
+      await ctx.db.patch(args.paymentId, {
+        refundedAt: Date.now(),
+        refundAmount: args.refundAmount,
+        refundReason: args.refundReason,
+        refundReference: args.refundReference,
+        refundedByUserId: args.adminUserId,
+      });
+
+      log.info("Refund recorded successfully", {
+        paymentId: args.paymentId,
+        originalAmount: payment.amount,
+        refundAmount: args.refundAmount,
+        refundReference: args.refundReference,
+        adminUserId: args.adminUserId,
+        txRef: payment.chapaTransactionRef,
+      });
+
+      await flushLogs();
+      return { success: true };
+    } catch (error) {
+      log.error("Refund recording failed", error, {
+        paymentId: args.paymentId,
+        refundAmount: args.refundAmount,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    // Update payment with refund info
-    await ctx.db.patch(args.paymentId, {
-      refundedAt: Date.now(),
-      refundAmount: args.refundAmount,
-      refundReason: args.refundReason,
-      refundReference: args.refundReference,
-      refundedByUserId: args.adminUserId,
-    });
-
-    return { success: true };
   },
 });
 
