@@ -232,6 +232,8 @@ function initializePostHog() {
     disable_session_recording: !hasConsent,
     // Autocapture settings
     autocapture: hasConsent,
+    // Exception tracking - capture uncaught errors automatically
+    capture_exceptions: true,
     // Bootstrap with feature flags if needed
     bootstrap: {
       featureFlags: {},
