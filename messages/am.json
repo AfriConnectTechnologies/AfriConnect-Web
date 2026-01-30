@@ -221,6 +221,7 @@
   "dashboard": {
     "title": "ዳሽቦርድ",
     "welcome": "እንኳን ደህና ተመለሱ! የትዕዛዞችዎ አጠቃላይ እይታ ይኸውና።",
+    "welcomeBack": "እንኳን ደህና ተመለሱ፣",
     "overview": "አጠቃላይ እይታ",
     "recentOrders": "የቅርብ ጊዜ ትዕዛዞች",
     "recentProducts": "የቅርብ ጊዜ ምርቶች",
@@ -228,7 +229,9 @@
     "totalRevenue": "ጠቅላላ ገቢ",
     "totalOrders": "ጠቅላላ ትዕዛዞች",
     "totalProducts": "ጠቅላላ ምርቶች",
-    "pendingOrders": "በመጠባበቅ ላይ ያሉ ትዕዛዞች"
+    "pendingOrders": "በመጠባበቅ ላይ ያሉ ትዕዛዞች",
+    "discoverProducts": "ምርቶችን ያስሱ",
+    "browseDescription": "በአፍሪካ ያሉ ንግዶች ምርቶችን ያስሱ"
   },
   "settings": {
     "title": "ቅንብሮች",

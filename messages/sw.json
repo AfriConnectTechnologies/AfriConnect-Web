@@ -221,6 +221,7 @@
   "dashboard": {
     "title": "Dashibodi",
     "welcome": "Karibu tena! Hapa kuna muhtasari wa maagizo yako.",
+    "welcomeBack": "Karibu tena,",
     "overview": "Muhtasari",
     "recentOrders": "Maagizo ya Hivi Karibuni",
     "recentProducts": "Bidhaa za Hivi Karibuni",
@@ -228,7 +229,9 @@
     "totalRevenue": "Mapato Yote",
     "totalOrders": "Maagizo Yote",
     "totalProducts": "Bidhaa Zote",
-    "pendingOrders": "Maagizo Yanayosubiri"
+    "pendingOrders": "Maagizo Yanayosubiri",
+    "discoverProducts": "Gundua Bidhaa",
+    "browseDescription": "Vinjari bidhaa kutoka biashara Afrika nzima"
   },
   "settings": {
     "title": "Mipangilio",
