@@ -57,7 +57,6 @@ export const onRequestError: Instrumentation.onRequestError = async (
         }
       }
     }
-    }
 
     // Capture the exception with context
     await posthog.captureException(err, distinctId, {
