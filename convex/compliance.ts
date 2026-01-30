@@ -26,10 +26,10 @@ export const addBusinessProduct = mutation({
       .withIndex("by_business_hs", (q) =>
         q.eq("businessId", user.businessId!).eq("hsCode", args.hsCode)
       )
+      .filter((q) => q.eq(q.field("country"), args.country || "ethiopia"))
       .first();
 
-    // Allow same HS code for different countries
-    if (existingProduct && existingProduct.country === args.country) {
+    if (existingProduct) {
       throw new Error("This HS code is already added to your business for this country");
     }
 
