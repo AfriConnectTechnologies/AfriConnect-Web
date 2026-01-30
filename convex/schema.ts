@@ -239,9 +239,10 @@ export default defineSchema({
 
   // Webhook Events for duplicate detection
   // Note: txRef should be unique per webhook, but Convex doesn't support unique constraints.
-  // Race conditions are handled via check-after-insert pattern in markWebhookProcessed mutation.
+  // Uniqueness is enforced via check-after-insert pattern in markWebhookProcessed mutation
+  // (see convex/paymentAuditLogs.ts:76-97) which handles race conditions deterministically.
   webhookEvents: defineTable({
-    txRef: v.string(), // Uniqueness enforced at application level
+    txRef: v.string(), // Uniqueness enforced at application level via markWebhookProcessed
     eventType: v.string(), // "payment.success", "payment.failed"
     processedAt: v.number(),
     signature: v.optional(v.string()),
