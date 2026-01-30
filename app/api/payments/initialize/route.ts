@@ -108,30 +108,43 @@ export async function POST(request: NextRequest) {
         userId,
       });
       if (existingPayment) {
-        // Validate freshness - only return cached if within 30 minutes and still pending
-        const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-        const isStale = existingPayment.createdAt && (Date.now() - existingPayment.createdAt > CACHE_TTL_MS);
-        const isCompleted = existingPayment.status !== "pending";
+        // TTL varies by status: completed payments cached longer to prevent double-charging
+        const PENDING_TTL_MS = 30 * 60 * 1000; // 30 minutes for pending
+        const COMPLETED_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours for completed
+        const ttl = existingPayment.status === "pending" ? PENDING_TTL_MS : COMPLETED_TTL_MS;
+        const isStale = existingPayment.createdAt && (Date.now() - existingPayment.createdAt > ttl);
         
-        if (!isStale && !isCompleted && existingPayment.checkoutUrl) {
-          // Return existing payment if found and fresh
-          return NextResponse.json(
-            {
-              success: true,
-              checkoutUrl: existingPayment.checkoutUrl,
-              txRef: existingPayment.chapaTransactionRef,
-              paymentId: existingPayment._id,
-              cached: true,
-            },
-            {
-              headers: {
-                ...SECURITY_HEADERS,
-                ...createRateLimitHeaders(rateLimitResult),
+        if (!isStale) {
+          // Return existing payment regardless of status to ensure idempotency
+          if (existingPayment.status === "success") {
+            // Already paid - prevent double-charging
+            return NextResponse.json(
+              {
+                success: true,
+                message: "Payment already completed",
+                txRef: existingPayment.chapaTransactionRef,
+                paymentId: existingPayment._id,
+                status: existingPayment.status,
+                cached: true,
               },
-            }
-          );
+              { headers: { ...SECURITY_HEADERS, ...createRateLimitHeaders(rateLimitResult) } }
+            );
+          }
+          if (existingPayment.status === "pending" && existingPayment.checkoutUrl) {
+            // Still pending - return checkout URL
+            return NextResponse.json(
+              {
+                success: true,
+                checkoutUrl: existingPayment.checkoutUrl,
+                txRef: existingPayment.chapaTransactionRef,
+                paymentId: existingPayment._id,
+                cached: true,
+              },
+              { headers: { ...SECURITY_HEADERS, ...createRateLimitHeaders(rateLimitResult) } }
+            );
+          }
+          // Failed payments within TTL - allow retry with new idempotency key
         }
-        // If stale or completed, fall through to create a new payment
       }
     }
 

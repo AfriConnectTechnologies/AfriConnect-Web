@@ -108,6 +108,40 @@ export const create = mutation({
         updatedAt: now,
       });
 
+      // Race-safe idempotency: verify we're the only payment with this key
+      if (args.idempotencyKey) {
+        const duplicates = await ctx.db
+          .query("payments")
+          .withIndex("by_idempotency", (q) => q.eq("idempotencyKey", args.idempotencyKey))
+          .filter((q) => q.eq(q.field("userId"), user._id))
+          .collect();
+
+        if (duplicates.length > 1) {
+          // Use _id as deterministic tiebreaker (lexicographically smallest wins)
+          duplicates.sort((a, b) => (a._id < b._id ? -1 : 1));
+          const winner = duplicates[0];
+
+          if (winner._id !== paymentId) {
+            // We lost the race - delete our entry and return the existing payment
+            await ctx.db.delete(paymentId);
+            log.info("Idempotency race resolved - returning existing payment", {
+              existingPaymentId: winner._id,
+              duplicatePaymentId: paymentId,
+            });
+            return {
+              ...winner,
+              txRef: winner.chapaTransactionRef,
+              user: { email: user.email, name: user.name },
+            };
+          }
+
+          // We won - clean up duplicates
+          for (const dup of duplicates.slice(1)) {
+            await ctx.db.delete(dup._id);
+          }
+        }
+      }
+
       const payment = await ctx.db.get(paymentId);
 
       log.info("Payment created successfully", {

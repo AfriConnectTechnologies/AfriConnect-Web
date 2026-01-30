@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,10 +30,7 @@ export default function BillingPage() {
     );
   }
 
-  // Get locale from next-intl (fallback to en-US if not available)
-  const locale = typeof window !== "undefined" 
-    ? (document.documentElement.lang || "en-US") 
-    : "en-US";
+  const locale = useLocale();
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(locale, {

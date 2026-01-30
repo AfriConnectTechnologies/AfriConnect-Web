@@ -55,38 +55,45 @@ export const markWebhookProcessed = mutation({
     signature: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Race-safe deduplication: insert first, then check if we're the winner
-    // This handles concurrent webhooks without requiring unique constraints
-    const processedAt = Date.now();
+    // Check if already processed - creates read dependency for Convex OCC
+    const existing = await ctx.db
+      .query("webhookEvents")
+      .withIndex("by_tx_ref", (q) => q.eq("txRef", args.txRef))
+      .first();
+
+    if (existing) {
+      return { alreadyProcessed: true, eventId: existing._id };
+    }
+
+    // Insert the event
     const eventId = await ctx.db.insert("webhookEvents", {
       txRef: args.txRef,
       eventType: args.eventType,
       signature: args.signature,
-      processedAt,
+      processedAt: Date.now(),
     });
 
-    // Check all events for this txRef - the earliest one wins
+    // Post-insert verification: handle any edge case where duplicates slipped through
     const allEvents = await ctx.db
       .query("webhookEvents")
       .withIndex("by_tx_ref", (q) => q.eq("txRef", args.txRef))
       .collect();
 
-    // Sort by processedAt, then by _creationTime as tiebreaker
-    allEvents.sort((a, b) => 
-      a.processedAt - b.processedAt || a._creationTime - b._creationTime
-    );
+    if (allEvents.length > 1) {
+      // Use _id as deterministic tiebreaker (lexicographically smallest wins)
+      // _id is guaranteed unique and consistent across all nodes
+      allEvents.sort((a, b) => (a._id < b._id ? -1 : 1));
+      const winner = allEvents[0];
 
-    const winner = allEvents[0];
-    
-    if (winner._id !== eventId) {
-      // We lost the race - delete our entry and report as duplicate
-      await ctx.db.delete(eventId);
-      return { alreadyProcessed: true, eventId: winner._id };
-    }
+      if (winner._id !== eventId) {
+        await ctx.db.delete(eventId);
+        return { alreadyProcessed: true, eventId: winner._id };
+      }
 
-    // We won - clean up any other duplicate entries (from concurrent inserts)
-    for (const event of allEvents.slice(1)) {
-      await ctx.db.delete(event._id);
+      // Clean up duplicates
+      for (const event of allEvents.slice(1)) {
+        await ctx.db.delete(event._id);
+      }
     }
 
     return { alreadyProcessed: false, eventId };

@@ -392,6 +392,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Rate limit per tx_ref to prevent abuse (5 requests per minute per tx_ref)
+  const txRefRateLimit = await checkRateLimit(`webhook_get:${txRef}`, {
+    windowMs: 60 * 1000,
+    maxRequests: 5,
+  });
+  if (!txRefRateLimit.success) {
+    await logAuditEvent(
+      "webhook_get",
+      "rate_limited",
+      txRef,
+      { retryAfter: txRefRateLimit.retryAfter },
+      "Rate limit exceeded for tx_ref",
+      ipAddress,
+      userAgent
+    );
+    return rateLimitExceededResponse(txRefRateLimit);
+  }
+
   // Log GET callback
   await logAuditEvent(
     "webhook_get",
@@ -403,7 +421,7 @@ export async function GET(request: NextRequest) {
     userAgent
   );
 
-  // Verify and update payment
+  // Verify and update payment (always verify with Chapa API, ignore query params)
   try {
     const verification = await verifyPayment(txRef);
     const paymentStatus = verification.data.status === "success" ? "success" : "failed";

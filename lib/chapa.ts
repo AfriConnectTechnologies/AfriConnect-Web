@@ -232,6 +232,9 @@ export async function processRefund(
     formData.append("reference", payload.reference);
   }
   if (payload?.meta) {
+    // Chapa expects bracket notation for nested meta fields in form-urlencoded
+    // Per docs: meta[customer_id]=123&meta[reference]=REF123
+    // See: https://developer.chapa.co/refund
     Object.entries(payload.meta).forEach(([key, value]) => {
       formData.append(`meta[${key}]`, value);
     });
