@@ -620,7 +620,11 @@
     "afcftaComplianceDescription": "ምርቶችዎ ለአፍሪካ አህጉራዊ ነጻ ንግድ ቀጠና ጥቅሞች ብቁ መሆናቸውን ያረጋግጡ",
     "noComplianceCheckYet": "እስካሁን ለተገዢነት ፍተሻ ምንም ምርቶች አልጨመሩም።",
     "startComplianceCheck": "የተገዢነት ፍተሻ ጀምር",
-    "manageProducts": "ምርቶችን ያስተዳድሩ"
+    "manageProducts": "ምርቶችን ያስተዳድሩ",
+    "selectCountry": "ሀገር/ክልል ይምረጡ",
+    "ethiopia": "ኢትዮጵያ",
+    "kenyaEac": "ኬንያ (EAC)",
+    "countryDescription": "የታሪፍ መርሐግብሮችን ለመፈለግ ሀገር ይምረጡ"
   },
   "originEligibility": {
     "title": "የመነሻ ሰርተፊኬት ብቁነት",

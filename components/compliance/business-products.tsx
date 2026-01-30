@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Package, Plus, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { HSCodeSearch, type HSCodeResult } from "./hs-code-search";
 import { ComplianceCard } from "./compliance-card";
+import { CountrySelector, type TariffCountry } from "./country-selector";
 
 interface BusinessProductsProps {
   showHeader?: boolean;
@@ -30,6 +31,7 @@ export function BusinessProducts({
   const t = useTranslations("compliance");
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<TariffCountry>("ethiopia");
 
   const products = useQuery(api.compliance.getMyBusinessProducts);
   const summary = useQuery(api.compliance.getComplianceSummary);
@@ -46,6 +48,7 @@ export function BusinessProducts({
         isCompliant: result.category === "A",
         currentRate: result.currentRate,
         rates: JSON.stringify(result.rates),
+        country: selectedCountry,
       });
       toast.success(t("productAdded"));
       setShowSearch(false);
@@ -157,8 +160,19 @@ export function BusinessProducts({
                   {t("cancel")}
                 </Button>
               </div>
+              
+              {/* Country Selector */}
+              <div className="mb-4 pb-4 border-b">
+                <CountrySelector
+                  value={selectedCountry}
+                  onChange={setSelectedCountry}
+                  disabled={isAddingProduct}
+                />
+              </div>
+              
               <HSCodeSearch
                 onSelect={handleAddProduct}
+                country={selectedCountry}
                 disabled={isAddingProduct}
               />
               {isAddingProduct && (
@@ -186,6 +200,7 @@ export function BusinessProducts({
                   isCompliant={product.isCompliant}
                   currentRate={product.currentRate}
                   rates={product.rates}
+                  country={product.country}
                   onRemove={() => handleRemoveProduct(product._id)}
                   compact
                 />
