@@ -41,6 +41,8 @@ export const onRequestError: Instrumentation.onRequestError = async (
       );
 
       if (postHogCookieMatch && postHogCookieMatch[1]) {
+        try {
+          const decodedCookie = decodeURIComponent(postHogCookieMatch[1]);
           const postHogData = JSON.parse(decodedCookie);
           distinctId = postHogData.distinct_id;
         } catch (e) {
@@ -53,7 +55,7 @@ export const onRequestError: Instrumentation.onRequestError = async (
           // Use undefined to indicate parse failure (better than grouping all as "anonymous_parse_error")
           distinctId = undefined;
         }
-        }
+      }
       }
     }
 
