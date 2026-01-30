@@ -268,7 +268,9 @@
   "pricing": {
     "title": "ቀላል፣ ግልጽ ዋጋ",
     "description": "ለንግድዎ ፍላጎቶች የሚስማማውን እቅድ ይምረጡ። ሁሉም እቅዶች የB2B ገበያ እና የAfCFTA ተገዢነት መሳሪያዎችን ያካትታሉ።",
+    "subtitle": "ለንግድዎ ፍላጎቶች የሚስማማውን እቅድ ይምረጡ። ሁሉም እቅዶች የB2B ገበያ እና የAfCFTA ተገዢነት መሳሪያዎችን ያካትታሉ።",
     "backToHome": "ወደ መነሻ ተመለስ",
+    "loadingPlans": "እቅዶች በመጫን ላይ...",
     "monthly": "ወርሃዊ",
     "annual": "ዓመታዊ",
     "savePercent": "{percent}% ይቆጥቡ",

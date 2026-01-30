@@ -268,7 +268,9 @@
   "pricing": {
     "title": "Simple, Transparent Pricing",
     "description": "Choose the plan that best fits your business needs. All plans include access to our B2B marketplace and AfCFTA compliance tools.",
+    "subtitle": "Choose the plan that best fits your business needs. All plans include access to our B2B marketplace and AfCFTA compliance tools.",
     "backToHome": "Back to Home",
+    "loadingPlans": "Loading plans...",
     "monthly": "Monthly",
     "annual": "Annual",
     "savePercent": "Save {percent}%",

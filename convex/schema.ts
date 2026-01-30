@@ -142,6 +142,7 @@ export default defineSchema({
     ),
     metadata: v.optional(v.string()), // JSON string for additional data
     idempotencyKey: v.optional(v.string()), // For deduplication
+    checkoutUrl: v.optional(v.string()), // Chapa checkout URL for pending payments
     // Refund fields
     refundedAt: v.optional(v.number()),
     refundAmount: v.optional(v.number()),
@@ -156,7 +157,7 @@ export default defineSchema({
     .index("by_subscription", ["subscriptionId"])
     .index("by_chapa_ref", ["chapaTransactionRef"])
     .index("by_status", ["status"])
-    .index("by_idempotency", ["idempotencyKey"]),
+    .index("by_idempotency", ["userId", "idempotencyKey"]),
 
   verificationTokens: defineTable({
     userId: v.id("users"),
@@ -237,8 +238,10 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   // Webhook Events for duplicate detection
+  // Note: txRef should be unique per webhook, but Convex doesn't support unique constraints.
+  // Race conditions are handled via check-after-insert pattern in markWebhookProcessed mutation.
   webhookEvents: defineTable({
-    txRef: v.string(),
+    txRef: v.string(), // Uniqueness enforced at application level
     eventType: v.string(), // "payment.success", "payment.failed"
     processedAt: v.number(),
     signature: v.optional(v.string()),

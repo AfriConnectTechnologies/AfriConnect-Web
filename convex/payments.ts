@@ -112,8 +112,9 @@ export const create = mutation({
       if (args.idempotencyKey) {
         const duplicates = await ctx.db
           .query("payments")
-          .withIndex("by_idempotency", (q) => q.eq("idempotencyKey", args.idempotencyKey))
-          .filter((q) => q.eq(q.field("userId"), user._id))
+          .withIndex("by_idempotency", (q) => 
+            q.eq("userId", user._id).eq("idempotencyKey", args.idempotencyKey)
+          )
           .collect();
 
         if (duplicates.length > 1) {
@@ -531,17 +532,35 @@ export const getByIdempotencyKey = query({
     // Find payment with matching idempotency key for this user
     const payments = await ctx.db
       .query("payments")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .filter((q) => q.eq(q.field("idempotencyKey"), args.idempotencyKey))
+      .withIndex("by_idempotency", (q) => 
+        q.eq("userId", user._id).eq("idempotencyKey", args.idempotencyKey)
+      )
       .first();
 
     if (!payments) return null;
 
-    // Return payment with checkout URL placeholder (actual URL would be from Chapa)
-    return {
-      ...payments,
-      checkoutUrl: null, // This would need to be stored if we want to return it
-    };
+    return payments;
+  },
+});
+
+// Update checkout URL after Chapa initialization
+export const updateCheckoutUrl = mutation({
+  args: {
+    paymentId: v.id("payments"),
+    checkoutUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const payment = await ctx.db.get(args.paymentId);
+    if (!payment) {
+      throw new Error("Payment not found");
+    }
+    
+    await ctx.db.patch(args.paymentId, {
+      checkoutUrl: args.checkoutUrl,
+      updatedAt: Date.now(),
+    });
+    
+    return { success: true };
   },
 });
 

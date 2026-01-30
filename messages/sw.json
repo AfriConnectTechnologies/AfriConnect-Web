@@ -268,7 +268,9 @@
   "pricing": {
     "title": "Bei Rahisi, Wazi",
     "description": "Chagua mpango unaofaa mahitaji ya biashara yako. Mipango yote inajumuisha ufikiaji wa soko la B2B na zana za ulinganifu wa AfCFTA.",
+    "subtitle": "Chagua mpango unaofaa mahitaji ya biashara yako. Mipango yote inajumuisha ufikiaji wa soko la B2B na zana za ulinganifu wa AfCFTA.",
     "backToHome": "Rudi Nyumbani",
+    "loadingPlans": "Inapakia mipango...",
     "monthly": "Kila Mwezi",
     "annual": "Kila Mwaka",
     "savePercent": "Okoa {percent}%",

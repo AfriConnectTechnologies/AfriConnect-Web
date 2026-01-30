@@ -26,6 +26,16 @@ const isRedisConfigured = !!(
   process.env.UPSTASH_REDIS_REST_TOKEN
 );
 
+// Warn in production if Redis is not configured (rate limiting won't be distributed)
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction && !isRedisConfigured) {
+  console.warn(
+    "[RateLimiter] WARNING: Running in production without Upstash Redis configured. " +
+    "Rate limiting will use in-memory storage which does NOT work across multiple server instances. " +
+    "Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for distributed rate limiting."
+  );
+}
+
 // Lazy-init Redis client
 let redis: Redis | null = null;
 function getRedis(): Redis {

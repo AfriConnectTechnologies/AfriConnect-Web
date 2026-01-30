@@ -18,6 +18,7 @@ import { toast } from "sonner";
 export default function PricingPage() {
   const router = useRouter();
   const t = useTranslations("landing");
+  const tPricing = useTranslations("pricing");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
@@ -181,16 +182,16 @@ export default function PricingPage() {
             className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            {t("pricing.backToHome")}
+            {tPricing("backToHome")}
           </Link>
 
           {/* Page Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold tracking-tight mb-4">
-              {t("pricing.title")}
+              {tPricing("title")}
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-              {t("pricing.subtitle")}
+              {tPricing("subtitle")}
             </p>
 
             {/* Billing Toggle */}
@@ -204,7 +205,7 @@ export default function PricingPage() {
           {/* Pricing Cards */}
           {plans.length === 0 ? (
             <div className="flex items-center justify-center py-24">
-              <div className="text-muted-foreground">{t("pricing.loadingPlans")}</div>
+              <div className="text-muted-foreground">{tPricing("loadingPlans")}</div>
             </div>
           ) : (
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto mb-16">

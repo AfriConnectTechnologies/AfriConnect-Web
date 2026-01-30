@@ -208,6 +208,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Store checkout URL for idempotency cache
+    if (payment._id && chapaResponse.data.checkout_url) {
+      await convex.mutation(api.payments.updateCheckoutUrl, {
+        paymentId: payment._id,
+        checkoutUrl: chapaResponse.data.checkout_url,
+      });
+    }
+
     return NextResponse.json(
       {
         success: true,
