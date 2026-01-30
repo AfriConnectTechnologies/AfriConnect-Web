@@ -29,9 +29,12 @@ export function UpgradePrompt({
 }: UpgradePromptProps) {
   if (metric.unlimited) return null;
 
-  const usagePercent = Math.round((metric.used / metric.limit) * 100);
+  // Guard against division by zero
+  const usagePercent = metric.limit > 0 
+    ? Math.round((metric.used / metric.limit) * 100) 
+    : 0;
   const isNearLimit = usagePercent >= 80;
-  const isAtLimit = metric.used >= metric.limit;
+  const isAtLimit = metric.limit > 0 ? metric.used >= metric.limit : false;
 
   if (variant === "card") {
     return (

@@ -84,26 +84,62 @@ export function generateRequestId(): string {
 }
 
 /**
- * Sanitize sensitive data from metadata
+ * Sanitize sensitive data from metadata recursively
  */
 function sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, unknown> | undefined {
   if (!metadata) return undefined;
 
   const sensitiveKeys = ["password", "secret", "token", "key", "authorization", "cookie", "credit_card", "card_number", "cvv", "ssn"];
-  const sanitized: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(metadata)) {
-    const lowerKey = key.toLowerCase();
-    if (sensitiveKeys.some((sk) => lowerKey.includes(sk))) {
-      sanitized[key] = "[REDACTED]";
-    } else if (typeof value === "string" && value.length > 500) {
-      sanitized[key] = value.substring(0, 500) + "...[truncated]";
-    } else {
-      sanitized[key] = value;
+  
+  function sanitizeValue(value: unknown, key?: string, seen = new WeakSet()): unknown {
+    // Check if key contains sensitive data
+    if (key) {
+      const lowerKey = key.toLowerCase();
+      if (sensitiveKeys.some((sk) => lowerKey.includes(sk))) {
+        return "[REDACTED]";
+      }
     }
+    
+    // Handle null/undefined
+    if (value === null || value === undefined) {
+      return value;
+    }
+    
+    // Handle special objects (Date, RegExp) - return as-is
+    if (value instanceof Date || value instanceof RegExp) {
+      return value;
+    }
+    
+    // Handle strings
+    if (typeof value === "string") {
+      return value.length > 500 ? value.substring(0, 500) + "...[truncated]" : value;
+    }
+    
+    // Handle primitives
+    if (typeof value !== "object") {
+      return value;
+    }
+    
+    // Check for circular references
+    if (seen.has(value as object)) {
+      return "[Circular]";
+    }
+    seen.add(value as object);
+    
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.map((item, index) => sanitizeValue(item, undefined, seen));
+    }
+    
+    // Handle objects - recurse
+    const sanitizedObj: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      sanitizedObj[k] = sanitizeValue(v, k, seen);
+    }
+    return sanitizedObj;
   }
-
-  return sanitized;
+  
+  return sanitizeValue(metadata) as Record<string, unknown>;
 }
 
 /**
@@ -262,8 +298,12 @@ export function withLogging<TCtx, TArgs, TResult>(
 /**
  * Create a child logger with additional context
  */
-export function createChildLogger(parent: Logger, additionalContext: { businessId?: string; userId?: string }): Logger {
-  const newLogger = createLogger(parent.getRequestId());
+export function createChildLogger(
+  parent: Logger, 
+  functionName: string,
+  additionalContext: { businessId?: string; userId?: string }
+): Logger {
+  const newLogger = createLogger(functionName, { requestId: parent.getRequestId() });
   newLogger.setContext(additionalContext);
   return newLogger;
 }

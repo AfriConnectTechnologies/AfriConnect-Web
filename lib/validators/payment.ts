@@ -17,13 +17,12 @@ export const BILLING_CYCLES = ["monthly", "annual"] as const;
 export type BillingCycle = (typeof BILLING_CYCLES)[number];
 
 /**
- * Schema for payment initialization
+ * Schema for payment initialization with currency-specific validation
  */
 export const paymentInitializeSchema = z.object({
   amount: z
     .number({ message: "Amount must be a number" })
-    .positive("Amount must be greater than 0")
-    .max(10000000, "Amount exceeds maximum limit"), // 10 million limit
+    .positive("Amount must be greater than 0"),
   currency: z
     .enum(SUPPORTED_CURRENCIES, {
       message: `Currency must be one of: ${SUPPORTED_CURRENCIES.join(", ")}`,
@@ -40,6 +39,30 @@ export const paymentInitializeSchema = z.object({
     .max(64, "Idempotency key too long")
     .regex(/^[a-zA-Z0-9_-]+$/, "Idempotency key contains invalid characters")
     .optional(),
+}).superRefine((data, ctx) => {
+  // Apply currency-specific limits consistent with validateAmountForCurrency
+  const limits: Record<SupportedCurrency, { min: number; max: number }> = {
+    ETB: { min: 1, max: 10000000 }, // 1 ETB to 10 million ETB
+    USD: { min: 1, max: 100000 }, // 1 USD to 100,000 USD
+  };
+  
+  const limit = limits[data.currency as SupportedCurrency];
+  if (limit) {
+    if (data.amount < limit.min) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Minimum amount for ${data.currency} is ${limit.min}`,
+        path: ["amount"],
+      });
+    }
+    if (data.amount > limit.max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Maximum amount for ${data.currency} is ${limit.max}`,
+        path: ["amount"],
+      });
+    }
+  }
 });
 
 export type PaymentInitializeInput = z.infer<typeof paymentInitializeSchema>;
@@ -81,10 +104,10 @@ export type SubscriptionCheckoutInput = z.infer<typeof subscriptionCheckoutSchem
  */
 export const webhookPayloadSchema = z.object({
   tx_ref: z.string().min(1, "Transaction reference is required"),
-  status: z.string().optional(),
+  status: z.string().min(1, "Status is required"), // Required - fail fast on incomplete webhooks
   trx_ref: z.string().optional(),
   amount: z.number().optional(),
-  currency: z.string().optional(),
+  currency: z.enum(SUPPORTED_CURRENCIES).optional(), // Validate against supported currencies
   created_at: z.string().optional(),
 });
 

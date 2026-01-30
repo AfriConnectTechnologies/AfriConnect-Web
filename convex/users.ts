@@ -236,16 +236,17 @@ export const setUserRole = mutation({
     role: v.union(v.literal("buyer"), v.literal("seller"), v.literal("admin")),
   },
   handler: async (ctx, args) => {
+    // Require admin FIRST before any logging to prevent unauthenticated log entries
+    const admin = await requireAdmin(ctx);
+    
     const log = createLogger("users.setUserRole");
+    log.setContext({ userId: admin.clerkId });
     
     try {
       log.info("User role change initiated", {
         targetUserId: args.userId,
         newRole: args.role,
       });
-
-      const admin = await requireAdmin(ctx);
-      log.setContext({ userId: admin.clerkId });
 
       // Prevent admin from demoting themselves
       if (admin._id === args.userId && args.role !== "admin") {

@@ -109,19 +109,28 @@ async function sendToAxiom(logs: ApiLogEntry[]): Promise<void> {
 
 /**
  * Flush the log buffer to Axiom
+ * Logs are only removed from buffer on successful send
  */
 async function flushLogs(): Promise<void> {
   if (logBuffer.length === 0) return;
 
   const logsToSend = [...logBuffer];
-  logBuffer.length = 0;
 
   if (flushTimeout) {
     clearTimeout(flushTimeout);
     flushTimeout = null;
   }
 
-  await sendToAxiom(logsToSend);
+  try {
+    await sendToAxiom(logsToSend);
+    // Only clear buffer on success
+    logBuffer.length = 0;
+  } catch (error) {
+    // On failure, logs remain in buffer for retry
+    console.error("[Axiom] Flush failed, logs retained for retry:", error);
+    // Re-schedule flush for retry
+    scheduleFlush();
+  }
 }
 
 /**
@@ -158,26 +167,62 @@ export function generateRequestId(): string {
 }
 
 /**
- * Sanitize sensitive data from metadata
+ * Sanitize sensitive data from metadata recursively
  */
 function sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, unknown> | undefined {
   if (!metadata) return undefined;
 
-  const sensitiveKeys = ["password", "secret", "token", "key", "authorization", "cookie", "credit_card", "card_number", "cvv", "ssn", "api_key"];
-  const sanitized: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(metadata)) {
-    const lowerKey = key.toLowerCase();
-    if (sensitiveKeys.some((sk) => lowerKey.includes(sk))) {
-      sanitized[key] = "[REDACTED]";
-    } else if (typeof value === "string" && value.length > 500) {
-      sanitized[key] = value.substring(0, 500) + "...[truncated]";
-    } else {
-      sanitized[key] = value;
+  const sensitiveKeys = ["password", "secret", "token", "key", "authorization", "cookie", "credit_card", "card_number", "cvv", "ssn", "api_key", "access_token", "auth"];
+  
+  function sanitizeValue(value: unknown, key?: string, seen = new WeakSet()): unknown {
+    // Check if key contains sensitive data
+    if (key) {
+      const lowerKey = key.toLowerCase();
+      if (sensitiveKeys.some((sk) => lowerKey.includes(sk))) {
+        return "[REDACTED]";
+      }
     }
+    
+    // Handle null/undefined
+    if (value === null || value === undefined) {
+      return value;
+    }
+    
+    // Handle special objects (Date, RegExp) - return as-is
+    if (value instanceof Date || value instanceof RegExp) {
+      return value;
+    }
+    
+    // Handle strings
+    if (typeof value === "string") {
+      return value.length > 500 ? value.substring(0, 500) + "...[truncated]" : value;
+    }
+    
+    // Handle primitives
+    if (typeof value !== "object") {
+      return value;
+    }
+    
+    // Check for circular references
+    if (seen.has(value as object)) {
+      return "[Circular]";
+    }
+    seen.add(value as object);
+    
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.map((item) => sanitizeValue(item, undefined, seen));
+    }
+    
+    // Handle objects - recurse
+    const sanitizedObj: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      sanitizedObj[k] = sanitizeValue(v, k, seen);
+    }
+    return sanitizedObj;
   }
-
-  return sanitized;
+  
+  return sanitizeValue(metadata) as Record<string, unknown>;
 }
 
 /**
@@ -350,8 +395,24 @@ export function withApiLogging<T extends Response>(
   return async (request: Request): Promise<T> => {
     const log = createApiLogger(request, route);
 
+    // Sanitize URL to remove sensitive query parameters
+    const sensitiveParams = ["token", "api_key", "access_token", "password", "auth", "key", "secret"];
+    let sanitizedUrl = request.url;
+    try {
+      const urlObj = new URL(request.url);
+      sensitiveParams.forEach(param => {
+        if (urlObj.searchParams.has(param)) {
+          urlObj.searchParams.set(param, "[REDACTED]");
+        }
+      });
+      sanitizedUrl = urlObj.pathname + (urlObj.search || "");
+    } catch {
+      // If URL parsing fails, just use pathname-like portion
+      sanitizedUrl = request.url.split("?")[0];
+    }
+
     log.info("Request received", {
-      url: request.url,
+      url: sanitizedUrl,
       method: request.method,
     });
 

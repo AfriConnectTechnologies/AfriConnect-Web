@@ -4,6 +4,18 @@ import { requireUser, getCurrentUser } from "./helpers";
 import { createLogger, flushLogs } from "./lib/logger";
 
 /**
+ * Custom error class for expected validation failures.
+ * These errors should not be logged as errors since they represent
+ * expected validation conditions.
+ */
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+/**
  * Generate a short hash from a string for use in channel IDs.
  * Stream Chat channel IDs must be max 64 characters.
  */
@@ -181,7 +193,7 @@ export const reportConversation = mutation({
           existingReportId: existingReport._id,
         });
         await flushLogs();
-        throw new Error("You have already reported this conversation");
+        throw new ValidationError("You have already reported this conversation");
       }
 
       const reportId = await ctx.db.insert("chatReports", {
@@ -201,6 +213,10 @@ export const reportConversation = mutation({
       await flushLogs();
       return reportId;
     } catch (error) {
+      // Skip error logging for expected validation failures
+      if (error instanceof ValidationError) {
+        throw error;
+      }
       log.error("Chat report failed", error, {
         channelId: args.channelId,
       });

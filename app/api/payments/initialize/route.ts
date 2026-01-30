@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResult = checkRateLimit(
+    const rateLimitResult = await checkRateLimit(
       `payment_init:${userId}`,
       RateLimits.PAYMENT_INIT
     );
@@ -108,22 +108,30 @@ export async function POST(request: NextRequest) {
         userId,
       });
       if (existingPayment) {
-        // Return existing payment if found
-        return NextResponse.json(
-          {
-            success: true,
-            checkoutUrl: existingPayment.checkoutUrl,
-            txRef: existingPayment.chapaTransactionRef,
-            paymentId: existingPayment._id,
-            cached: true,
-          },
-          {
-            headers: {
-              ...SECURITY_HEADERS,
-              ...createRateLimitHeaders(rateLimitResult),
+        // Validate freshness - only return cached if within 30 minutes and still pending
+        const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+        const isStale = existingPayment.createdAt && (Date.now() - existingPayment.createdAt > CACHE_TTL_MS);
+        const isCompleted = existingPayment.status !== "pending";
+        
+        if (!isStale && !isCompleted && existingPayment.checkoutUrl) {
+          // Return existing payment if found and fresh
+          return NextResponse.json(
+            {
+              success: true,
+              checkoutUrl: existingPayment.checkoutUrl,
+              txRef: existingPayment.chapaTransactionRef,
+              paymentId: existingPayment._id,
+              cached: true,
             },
-          }
-        );
+            {
+              headers: {
+                ...SECURITY_HEADERS,
+                ...createRateLimitHeaders(rateLimitResult),
+              },
+            }
+          );
+        }
+        // If stale or completed, fall through to create a new payment
       }
     }
 
@@ -143,11 +151,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get base URL for callbacks
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      request.headers.get("origin") ||
-      "http://localhost:3000";
+    // Get base URL for callbacks - use configured URL in production, fallback only in dev
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
+    
+    if (!configuredUrl && !isDevelopment) {
+      console.error("NEXT_PUBLIC_APP_URL not configured in production");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500, headers: SECURITY_HEADERS }
+      );
+    }
+    
+    const baseUrl = configuredUrl || "http://localhost:3000";
 
     const urls = getPaymentUrls(baseUrl, payment.txRef);
 

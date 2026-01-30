@@ -53,6 +53,16 @@ export const add = mutation({
         quantity: args.quantity,
       });
 
+      // Validate quantity is positive (same check as update mutation)
+      if (args.quantity <= 0) {
+        log.warn("Add to cart failed - non-positive quantity", {
+          productId: args.productId,
+          quantity: args.quantity,
+        });
+        await flushLogs();
+        throw new Error("Quantity must be greater than zero");
+      }
+
       const user = await getOrCreateUser(ctx);
       log.setContext({ userId: user.clerkId });
 
@@ -152,11 +162,8 @@ export const add = mutation({
         return await ctx.db.get(cartItemId);
       }
     } catch (error) {
-      log.error("Add to cart failed", error, {
-        productId: args.productId,
-        quantity: args.quantity,
-      });
-      await flushLogs();
+      // Don't duplicate logging - errors are already logged at the point of failure
+      // Just re-throw to propagate the error
       throw error;
     }
   },

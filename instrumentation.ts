@@ -46,8 +46,14 @@ export const onRequestError: Instrumentation.onRequestError = async (
           const postHogData = JSON.parse(decodedCookie);
           distinctId = postHogData.distinct_id;
         } catch (e) {
-          // Silently ignore cookie parse errors
-          console.error("[PostHog] Error parsing PostHog cookie:", e);
+          // Log parse failure with context for debugging
+          console.warn("[PostHog] Cookie parse failed, error tracking will be anonymous:", {
+            error: e instanceof Error ? e.message : String(e),
+            cookieLength: postHogCookieMatch[1].length,
+            cookiePreview: postHogCookieMatch[1].substring(0, 50) + "...",
+          });
+          // Use a fallback ID to group anonymous errors
+          distinctId = "anonymous_parse_error";
         }
       }
     }

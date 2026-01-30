@@ -437,7 +437,7 @@ export const changePlan = mutation({
 });
 
 /**
- * Update subscription status (used by admin or system)
+ * Update subscription status (admin only or system/webhook calls)
  */
 export const updateStatus = mutation({
   args: {
@@ -451,7 +451,22 @@ export const updateStatus = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // This mutation doesn't require user auth as it's called by system/webhooks
+    // Require authentication - admin or system calls
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    
+    // Verify caller is admin
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
+    
     const subscription = await ctx.db.get(args.subscriptionId);
 
     if (!subscription) {
@@ -654,29 +669,52 @@ export const processExpiredSubscriptions = mutation({
 export const getUsageStats = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, args) => {
-    const subscription = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    
+    // Get the requesting user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .first();
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-    // Get business owner
+    // Get business
     const business = await ctx.db.get(args.businessId);
     if (!business) {
       throw new Error("Business not found");
     }
 
-    // Count products
+    // Verify caller has access to this business (owner or admin)
+    if (business.ownerId !== user._id && user.role !== "admin") {
+      throw new Error("Unauthorized: You don't have access to this business");
+    }
+
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
+      .first();
+
+    // Count products for this specific business (using businessId, not ownerId)
+    // Note: If there's no index by_business on products, we filter by seller who owns this business
     const products = await ctx.db
       .query("products")
       .withIndex("by_seller", (q) => q.eq("sellerId", business.ownerId))
       .collect();
 
-    // Count orders this month
+    // Count orders this month for this specific business
     const monthStart = new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
     const monthStartMs = monthStart.getTime();
 
+    // Use sellerId that matches the business owner
     const orders = await ctx.db
       .query("orders")
       .withIndex("by_seller", (q) => q.eq("sellerId", business.ownerId))

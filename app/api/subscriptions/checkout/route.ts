@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimitResult = checkRateLimit(
+    const rateLimitResult = await checkRateLimit(
       `subscription_checkout:${userId}`,
       RateLimits.SUBSCRIPTION_CHECKOUT
     );
@@ -92,12 +92,26 @@ export async function POST(request: NextRequest) {
 
     const { planId, billingCycle, idempotencyKey } = validation.data;
 
-    // Create authenticated Convex client
-    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-    const token = await getToken({ template: "convex" });
-    if (token) {
-      convex.setAuth(token);
+    // Validate Convex URL exists
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!convexUrl) {
+      console.error("NEXT_PUBLIC_CONVEX_URL not configured");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500, headers: SECURITY_HEADERS }
+      );
     }
+
+    // Create authenticated Convex client
+    const convex = new ConvexHttpClient(convexUrl);
+    const token = await getToken({ template: "convex" });
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication failed - no valid token" },
+        { status: 401, headers: SECURITY_HEADERS }
+      );
+    }
+    convex.setAuth(token);
 
     // Get current user from Convex to check business
     const convexUser = await convex.query(api.users.getCurrentUser);
@@ -163,9 +177,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate price based on billing cycle
-    const amount = billingCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
-    const amountInDollars = amount / 100; // Convert from cents
+    // Calculate price based on billing cycle with validation
+    const rawPrice = billingCycle === "annual" ? plan.annualPrice : plan.monthlyPrice;
+    
+    // Validate price is a valid number
+    if (rawPrice === undefined || rawPrice === null || isNaN(rawPrice) || rawPrice < 0) {
+      console.error("Invalid plan price:", { planId, billingCycle, rawPrice });
+      return NextResponse.json(
+        { error: "Plan pricing is not properly configured" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
+    
+    // Get currency subunit divisor (most currencies use 100, some like JPY use 1)
+    const zeroDecimalCurrencies = ["JPY", "KRW", "VND"];
+    const subunitDivisor = zeroDecimalCurrencies.includes(plan.currency) ? 1 : 100;
+    
+    const amount = rawPrice;
+    const amountInDollars = amount / subunitDivisor; // Convert from subunits to major units
 
     // Generate transaction reference
     const txRef = generateTxRef();
@@ -192,11 +221,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get base URL for callbacks
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      request.headers.get("origin") ||
-      "http://localhost:3000";
+    // Get base URL for callbacks - use configured URL in production, fallback only in dev
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
+    
+    if (!configuredUrl && !isDevelopment) {
+      console.error("NEXT_PUBLIC_APP_URL not configured in production");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500, headers: SECURITY_HEADERS }
+      );
+    }
+    
+    const baseUrl = configuredUrl || "http://localhost:3000";
 
     const urls = getPaymentUrls(baseUrl, payment.txRef);
 
@@ -204,6 +241,14 @@ export async function POST(request: NextRequest) {
     const firstName = user.firstName || user.username || "Customer";
     const lastName = user.lastName || "";
     const email = user.emailAddresses[0]?.emailAddress || "";
+    
+    // Validate email before proceeding to payment
+    if (!email || !email.includes("@")) {
+      return NextResponse.json(
+        { error: "Valid email address is required for payment processing" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
 
     // Initialize Chapa payment
     const chapaResponse = await initializePayment({

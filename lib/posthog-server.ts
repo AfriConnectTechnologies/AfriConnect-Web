@@ -15,17 +15,19 @@ export function getPostHogServer(): PostHog {
     const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
     if (!posthogKey) {
+      // Only log once by caching the no-op instance
       console.warn(
         "[PostHog Server] Missing NEXT_PUBLIC_POSTHOG_KEY - server-side analytics disabled"
       );
-      // Return a no-op client to prevent crashes
-      return {
+      // Create and cache a no-op client to prevent crashes and stop repeated warnings
+      posthogInstance = {
         capture: () => {},
         captureException: () => {},
         identify: () => {},
         shutdown: async () => {},
         flush: async () => {},
       } as unknown as PostHog;
+      return posthogInstance;
     }
 
     posthogInstance = new PostHog(posthogKey, {

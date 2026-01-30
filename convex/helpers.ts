@@ -145,7 +145,19 @@ export async function getBusinessPlanLimits(
   }
 
   try {
-    return JSON.parse(plan.limits) as PlanLimits;
+    const parsed = JSON.parse(plan.limits);
+    // Validate and merge with defaults to ensure all fields exist
+    const validated: PlanLimits = {
+      maxProducts: typeof parsed.maxProducts === "number" ? parsed.maxProducts : DEFAULT_PLAN_LIMITS.maxProducts,
+      maxMonthlyOrders: typeof parsed.maxMonthlyOrders === "number" ? parsed.maxMonthlyOrders : DEFAULT_PLAN_LIMITS.maxMonthlyOrders,
+      maxOriginCalculations: typeof parsed.maxOriginCalculations === "number" ? parsed.maxOriginCalculations : DEFAULT_PLAN_LIMITS.maxOriginCalculations,
+      maxHsCodeLookups: typeof parsed.maxHsCodeLookups === "number" ? parsed.maxHsCodeLookups : DEFAULT_PLAN_LIMITS.maxHsCodeLookups,
+      maxTeamMembers: typeof parsed.maxTeamMembers === "number" ? parsed.maxTeamMembers : DEFAULT_PLAN_LIMITS.maxTeamMembers,
+      prioritySupport: ["none", "email", "chat", "dedicated"].includes(parsed.prioritySupport) ? parsed.prioritySupport : DEFAULT_PLAN_LIMITS.prioritySupport,
+      analytics: ["basic", "advanced", "full", "custom"].includes(parsed.analytics) ? parsed.analytics : DEFAULT_PLAN_LIMITS.analytics,
+      apiAccess: ["none", "limited", "full"].includes(parsed.apiAccess) ? parsed.apiAccess : DEFAULT_PLAN_LIMITS.apiAccess,
+    };
+    return validated;
   } catch {
     return DEFAULT_PLAN_LIMITS;
   }
@@ -225,13 +237,10 @@ export async function checkOriginCalculationLimit(
  */
 export async function checkOrderLimit(
   ctx: QueryCtx,
-  sellerId: string
+  sellerId: Id<"users">
 ): Promise<{ allowed: boolean; current: number; limit: number; unlimited: boolean }> {
-  // Get seller's business
-  const seller = await ctx.db
-    .query("users")
-    .filter((q) => q.eq(q.field("_id"), sellerId))
-    .first();
+  // Get seller's business using direct lookup
+  const seller = await ctx.db.get(sellerId);
 
   if (!seller || !seller.businessId) {
     return { allowed: true, current: 0, limit: DEFAULT_PLAN_LIMITS.maxMonthlyOrders, unlimited: false };

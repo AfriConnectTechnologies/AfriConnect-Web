@@ -327,7 +327,7 @@ export const verifyBusiness = mutation({
         previousStatus,
         newStatus: args.status,
         ownerId: business.ownerId,
-        ownerEmail: owner?.email,
+        ownerEmailPresent: !!owner?.email, // Don't log PII, just indicate presence
         adminId: admin._id,
       });
 

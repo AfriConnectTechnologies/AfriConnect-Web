@@ -125,15 +125,33 @@ export default function RefundsPage() {
   const handleRefund = async () => {
     if (!selectedPayment) return;
 
+    // Validate partialAmount if provided
+    if (partialAmount) {
+      const parsed = parseFloat(partialAmount);
+      if (isNaN(parsed) || !Number.isFinite(parsed) || parsed <= 0) {
+        toast.error("Invalid Amount", {
+          description: "Please enter a valid positive number for the refund amount.",
+        });
+        return;
+      }
+      if (parsed > selectedPayment.amount) {
+        toast.error("Amount Too High", {
+          description: `Refund amount cannot exceed the original payment of ${formatPrice(selectedPayment.amount, selectedPayment.currency)}.`,
+        });
+        return;
+      }
+    }
+
     setIsRefunding(true);
     try {
+      const validatedAmount = partialAmount ? parseFloat(partialAmount) : undefined;
       const response = await fetch("/api/admin/refunds", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paymentId: selectedPayment._id,
           reason: refundReason || undefined,
-          amount: partialAmount ? parseFloat(partialAmount) : undefined,
+          amount: validatedAmount,
         }),
       });
 

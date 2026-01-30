@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import Link from "next/link";
@@ -59,13 +59,15 @@ export default function SubscriptionPage() {
   const reactivateSubscription = useMutation(api.subscriptions.reactivate);
   const changePlanMutation = useMutation(api.subscriptions.changePlan);
 
-  // Show success message if redirected from payment
-  if (success === "true" && txRef) {
-    toast.success("Payment Successful!", {
-      description: "Your subscription has been activated.",
-      id: "payment-success",
-    });
-  }
+  // Show success message if redirected from payment (move to useEffect to avoid side effect during render)
+  useEffect(() => {
+    if (success === "true" && txRef) {
+      toast.success("Payment Successful!", {
+        description: "Your subscription has been activated.",
+        id: "payment-success",
+      });
+    }
+  }, [success, txRef]);
 
   const handleCancelSubscription = async () => {
     if (!subscription) return;
@@ -367,9 +369,11 @@ export default function SubscriptionPage() {
                 .filter((p) => p.slug !== "enterprise") // Hide enterprise for self-service
                 .map((p) => {
                   const isCurrentPlan = subscription.plan?.slug === p.slug;
-                  const currentPlanOrder = plans.findIndex((pl) => pl.slug === subscription.plan?.slug);
-                  const thisPlanOrder = plans.findIndex((pl) => pl.slug === p.slug);
-                  const isUpgrade = thisPlanOrder > currentPlanOrder;
+                  // Use explicit tier map for deterministic comparison instead of array index
+                  const tierMap: Record<string, number> = { free: 0, starter: 1, growth: 2, pro: 3, enterprise: 4 };
+                  const currentPlanTier = tierMap[subscription.plan?.slug ?? ""] ?? 0;
+                  const thisPlanTier = tierMap[p.slug] ?? 0;
+                  const isUpgrade = thisPlanTier > currentPlanTier;
                   const monthlyPrice = subscription.billingCycle === "annual"
                     ? Math.round(p.annualPrice / 12)
                     : p.monthlyPrice;
@@ -458,7 +462,9 @@ export default function SubscriptionPage() {
               {!usageStats.products.unlimited && (
                 <Progress
                   value={
-                    (usageStats.products.used / usageStats.products.limit) * 100
+                    usageStats.products.limit > 0
+                      ? (usageStats.products.used / usageStats.products.limit) * 100
+                      : 0
                   }
                   className="h-2"
                 />
@@ -481,7 +487,11 @@ export default function SubscriptionPage() {
               </div>
               {!usageStats.orders.unlimited && (
                 <Progress
-                  value={(usageStats.orders.used / usageStats.orders.limit) * 100}
+                  value={
+                    usageStats.orders.limit > 0
+                      ? (usageStats.orders.used / usageStats.orders.limit) * 100
+                      : 0
+                  }
                   className="h-2"
                 />
               )}
@@ -504,9 +514,11 @@ export default function SubscriptionPage() {
               {!usageStats.originCalculations.unlimited && (
                 <Progress
                   value={
-                    (usageStats.originCalculations.used /
-                      usageStats.originCalculations.limit) *
-                    100
+                    usageStats.originCalculations.limit > 0
+                      ? (usageStats.originCalculations.used /
+                          usageStats.originCalculations.limit) *
+                        100
+                      : 0
                   }
                   className="h-2"
                 />
@@ -518,25 +530,42 @@ export default function SubscriptionPage() {
 
       {/* Plan Features */}
       {plan && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Plan Features</CardTitle>
-            <CardDescription>
-              Features included in your {plan.name} plan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-2 md:grid-cols-2">
-              {JSON.parse(plan.features).map((feature: string, index: number) => (
-                <li key={index} className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <PlanFeaturesCard plan={plan} />
       )}
     </div>
+  );
+}
+
+// Helper component to safely parse and display plan features
+function PlanFeaturesCard({ plan }: { plan: { name: string; features: string; slug?: string } }) {
+  const parsedFeatures = useMemo(() => {
+    try {
+      const parsed = JSON.parse(plan.features ?? "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error(`Failed to parse features for plan ${plan.slug || plan.name}:`, error);
+      return [];
+    }
+  }, [plan.features, plan.slug, plan.name]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Plan Features</CardTitle>
+        <CardDescription>
+          Features included in your {plan.name} plan
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="grid gap-2 md:grid-cols-2">
+          {parsedFeatures.map((feature: string, index: number) => (
+            <li key={index} className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span className="text-sm">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }

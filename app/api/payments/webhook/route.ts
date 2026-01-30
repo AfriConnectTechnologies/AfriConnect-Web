@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Rate limiting for webhooks
-    const rateLimitResult = checkRateLimit(`webhook:${ipAddress}`, RateLimits.WEBHOOK);
+    const rateLimitResult = await checkRateLimit(`webhook:${ipAddress}`, RateLimits.WEBHOOK);
     if (!rateLimitResult.success) {
       log.warn("Webhook rate limited", { ip: ipAddress });
       await logAuditEvent(
@@ -431,31 +431,29 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Webhook GET processing error:", error);
 
-    // If verification fails but we have status from query, use that
-    if (status) {
-      const paymentStatus = status === "success" ? "success" : "failed";
-      try {
-        await convex.mutation(api.payments.updateStatus, {
-          txRef,
-          status: paymentStatus,
-        });
-      } catch {
-        // Ignore update errors
-      }
+    // SECURITY: If verification fails, do NOT trust unverified query parameter status
+    // Set to "pending" for manual review instead of trusting client-controlled data
+    try {
+      await convex.mutation(api.payments.updateStatus, {
+        txRef,
+        status: "pending", // Safe fallback - requires manual review
+      });
+    } catch {
+      // Ignore update errors
     }
 
     await logAuditEvent(
       "webhook_get",
-      "fallback",
+      "fallback_pending",
       txRef,
-      { queryStatus: status },
-      error instanceof Error ? error.message : "Verification failed",
+      { untrustedQueryStatus: status },
+      error instanceof Error ? error.message : "Verification failed - set to pending",
       ipAddress,
       userAgent
     );
 
     return NextResponse.json(
-      { success: true, message: "Webhook processed" },
+      { success: true, message: "Webhook processed - verification required" },
       { headers: SECURITY_HEADERS }
     );
   }

@@ -55,22 +55,39 @@ export const markWebhookProcessed = mutation({
     signature: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Check if already processed
-    const existing = await ctx.db
-      .query("webhookEvents")
-      .withIndex("by_tx_ref", (q) => q.eq("txRef", args.txRef))
-      .first();
-
-    if (existing) {
-      return { alreadyProcessed: true, eventId: existing._id };
-    }
-
+    // Race-safe deduplication: insert first, then check if we're the winner
+    // This handles concurrent webhooks without requiring unique constraints
+    const processedAt = Date.now();
     const eventId = await ctx.db.insert("webhookEvents", {
       txRef: args.txRef,
       eventType: args.eventType,
       signature: args.signature,
-      processedAt: Date.now(),
+      processedAt,
     });
+
+    // Check all events for this txRef - the earliest one wins
+    const allEvents = await ctx.db
+      .query("webhookEvents")
+      .withIndex("by_tx_ref", (q) => q.eq("txRef", args.txRef))
+      .collect();
+
+    // Sort by processedAt, then by _creationTime as tiebreaker
+    allEvents.sort((a, b) => 
+      a.processedAt - b.processedAt || a._creationTime - b._creationTime
+    );
+
+    const winner = allEvents[0];
+    
+    if (winner._id !== eventId) {
+      // We lost the race - delete our entry and report as duplicate
+      await ctx.db.delete(eventId);
+      return { alreadyProcessed: true, eventId: winner._id };
+    }
+
+    // We won - clean up any other duplicate entries (from concurrent inserts)
+    for (const event of allEvents.slice(1)) {
+      await ctx.db.delete(event._id);
+    }
 
     return { alreadyProcessed: false, eventId };
   },
@@ -124,13 +141,16 @@ export const listRecent = query({
 });
 
 /**
- * Get audit logs by transaction reference
+ * Get audit logs by transaction reference (admin only)
  */
 export const getByTxRef = query({
   args: {
     txRef: v.string(),
   },
   handler: async (ctx, args) => {
+    // Require admin auth to access audit logs
+    await requireAdmin(ctx);
+
     const logs = await ctx.db
       .query("paymentAuditLogs")
       .withIndex("by_tx_ref", (q) => q.eq("txRef", args.txRef))
@@ -143,6 +163,7 @@ export const getByTxRef = query({
 /**
  * Clean up old webhook events (to prevent table bloat)
  * Should be run periodically via a cron job
+ * Returns hasMore=true if more records remain to be deleted
  */
 export const cleanupOldWebhookEvents = mutation({
   args: {
@@ -151,14 +172,16 @@ export const cleanupOldWebhookEvents = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
+    const BATCH_SIZE = 500;
     const days = args.olderThanDays || 30;
     const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000;
 
+    // Get limited batch of old events
     const oldEvents = await ctx.db
       .query("webhookEvents")
       .withIndex("by_processed")
       .filter((q) => q.lt(q.field("processedAt"), cutoffTime))
-      .collect();
+      .take(BATCH_SIZE);
 
     let deleted = 0;
     for (const event of oldEvents) {
@@ -166,6 +189,13 @@ export const cleanupOldWebhookEvents = mutation({
       deleted++;
     }
 
-    return { deleted };
+    // Check if more records remain
+    const remaining = await ctx.db
+      .query("webhookEvents")
+      .withIndex("by_processed")
+      .filter((q) => q.lt(q.field("processedAt"), cutoffTime))
+      .take(1);
+
+    return { deleted, hasMore: remaining.length > 0 };
   },
 });

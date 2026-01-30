@@ -137,6 +137,38 @@ export const create = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
 
+    // Validate slug format (alphanumeric and kebab-case)
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(args.slug)) {
+      throw new Error("Slug must be lowercase alphanumeric with optional hyphens (kebab-case)");
+    }
+
+    // Validate prices are non-negative numbers
+    if (args.monthlyPrice < 0 || args.annualPrice < 0) {
+      throw new Error("Prices must be non-negative numbers");
+    }
+    
+    // Validate annual price doesn't exceed reasonable bounds
+    if (args.annualPrice > args.monthlyPrice * 12) {
+      throw new Error("Annual price cannot exceed monthly price × 12");
+    }
+
+    // Validate features JSON
+    try {
+      const features = JSON.parse(args.features);
+      if (!Array.isArray(features)) {
+        throw new Error("Features must be a JSON array");
+      }
+    } catch (e) {
+      throw new Error("Invalid features JSON: " + (e instanceof Error ? e.message : "Parse error"));
+    }
+
+    // Validate limits JSON
+    try {
+      JSON.parse(args.limits);
+    } catch (e) {
+      throw new Error("Invalid limits JSON: " + (e instanceof Error ? e.message : "Parse error"));
+    }
+
     // Check if slug already exists
     const existing = await ctx.db
       .query("subscriptionPlans")
@@ -205,11 +237,14 @@ export const update = mutation({
 
 /**
  * Delete all plans (for re-seeding)
- * Allows deletion without auth only if no subscriptions reference the plans
+ * Always requires admin authentication - force flag is ignored for external calls
  */
 export const deleteAll = mutation({
   args: { force: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
+    // Always require admin for plan deletion - security first
+    await requireAdmin(ctx);
+    
     const existingPlans = await ctx.db.query("subscriptionPlans").collect();
     
     if (existingPlans.length === 0) {
@@ -222,9 +257,9 @@ export const deleteAll = mutation({
       (sub) => sub.status === "active" || sub.status === "trialing"
     );
     
-    // If there are active subscriptions, require admin (unless force=true for CLI setup)
-    if (hasActiveSubscriptions && !args.force) {
-      await requireAdmin(ctx);
+    // Prevent deletion if there are active subscriptions (data integrity)
+    if (hasActiveSubscriptions) {
+      throw new Error("Cannot delete plans while active subscriptions exist");
     }
     
     let deleted = 0;
@@ -386,12 +421,18 @@ export const calculatePrice = query({
         ? plan.monthlyPrice * 12 - plan.annualPrice
         : 0;
 
+    // Guard against division by zero when monthlyPrice is 0 (e.g., Enterprise)
+    const annualEquivalent = plan.monthlyPrice * 12;
+    const savingsPercent = savings > 0 && annualEquivalent > 0 
+      ? Math.round((savings / annualEquivalent) * 100) 
+      : 0;
+    
     return {
       price,
       currency: plan.currency,
       billingCycle: args.billingCycle,
       savings,
-      savingsPercent: savings > 0 ? Math.round((savings / (plan.monthlyPrice * 12)) * 100) : 0,
+      savingsPercent,
     };
   },
 });

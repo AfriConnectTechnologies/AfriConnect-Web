@@ -18,7 +18,7 @@ export default function BillingPage() {
   const tOrders = useTranslations("orders");
   
   const payments = useQuery(api.payments.list, COMMERCE_ENABLED ? {} : "skip");
-  const subscription = useQuery(api.subscriptions.getCurrentSubscription);
+  const subscription = useQuery(api.subscriptions.getCurrentSubscription, COMMERCE_ENABLED ? {} : "skip");
 
   if (!COMMERCE_ENABLED) {
     return (
@@ -30,8 +30,13 @@ export default function BillingPage() {
     );
   }
 
+  // Get locale from next-intl (fallback to en-US if not available)
+  const locale = typeof window !== "undefined" 
+    ? (document.documentElement.lang || "en-US") 
+    : "en-US";
+
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
+    return new Date(timestamp).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -41,7 +46,7 @@ export default function BillingPage() {
   };
 
   const formatShortDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
+    return new Date(timestamp).toLocaleDateString(locale, {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -50,17 +55,17 @@ export default function BillingPage() {
 
   const getSubscriptionStatusBadge = (status: string, cancelAtPeriodEnd: boolean) => {
     if (cancelAtPeriodEnd) {
-      return <Badge variant="destructive">Cancels Soon</Badge>;
+      return <Badge variant="destructive">{t("status.cancelsSoon")}</Badge>;
     }
     switch (status) {
       case "active":
-        return <Badge className="bg-green-500">Active</Badge>;
+        return <Badge className="bg-green-500">{t("status.active")}</Badge>;
       case "trialing":
-        return <Badge variant="secondary">Trial</Badge>;
+        return <Badge variant="secondary">{t("status.trial")}</Badge>;
       case "past_due":
-        return <Badge variant="destructive">Past Due</Badge>;
+        return <Badge variant="destructive">{t("status.pastDue")}</Badge>;
       case "cancelled":
-        return <Badge variant="outline">Cancelled</Badge>;
+        return <Badge variant="outline">{t("status.cancelled")}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -110,7 +115,7 @@ export default function BillingPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium">{subscription.plan?.name} Plan</p>
+                    <p className="font-medium">{subscription.plan?.name ?? "Unknown"} Plan</p>
                     {getSubscriptionStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)}
                   </div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -122,15 +127,21 @@ export default function BillingPage() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-semibold">
-                  {subscription.plan?.currency === "ETB" 
-                    ? `${((subscription.billingCycle === "annual" ? subscription.plan?.annualPrice : subscription.plan?.monthlyPrice) / 100).toLocaleString()} ETB`
-                    : `$${((subscription.billingCycle === "annual" ? subscription.plan?.annualPrice : subscription.plan?.monthlyPrice) / 100).toFixed(0)}`
-                  }
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  per {subscription.billingCycle === "annual" ? "year" : "month"}
-                </p>
+                {subscription.plan ? (
+                  <>
+                    <p className="font-semibold">
+                      {subscription.plan.currency === "ETB" 
+                        ? `${((subscription.billingCycle === "annual" ? (subscription.plan.annualPrice ?? 0) : (subscription.plan.monthlyPrice ?? 0)) / 100).toLocaleString()} ETB`
+                        : `$${((subscription.billingCycle === "annual" ? (subscription.plan.annualPrice ?? 0) : (subscription.plan.monthlyPrice ?? 0)) / 100).toFixed(0)}`
+                      }
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      per {subscription.billingCycle === "annual" ? "year" : "month"}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Price unavailable</p>
+                )}
               </div>
             </div>
           ) : (

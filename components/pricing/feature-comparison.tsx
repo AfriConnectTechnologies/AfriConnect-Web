@@ -136,9 +136,15 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
 function FeatureCell({ value }: { value: string | boolean | number }) {
   if (typeof value === "boolean") {
     return value ? (
-      <Check className="h-5 w-5 text-green-500 mx-auto" />
+      <span className="flex justify-center">
+        <Check className="h-5 w-5 text-green-500" aria-hidden="true" />
+        <span className="sr-only">Included</span>
+      </span>
     ) : (
-      <X className="h-5 w-5 text-muted-foreground/50 mx-auto" />
+      <span className="flex justify-center">
+        <X className="h-5 w-5 text-muted-foreground/50" aria-hidden="true" />
+        <span className="sr-only">Not included</span>
+      </span>
     );
   }
   return <span className="text-sm">{value}</span>;

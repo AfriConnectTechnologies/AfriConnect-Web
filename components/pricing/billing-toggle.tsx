@@ -13,19 +13,28 @@ export function BillingToggle({
   onToggle,
   savingsPercent = 20,
 }: BillingToggleProps) {
+  const handleKeyDown = (cycle: "monthly" | "annual") => (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onToggle(cycle);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center gap-4">
-      <span
+      <button
+        type="button"
         className={cn(
-          "text-sm font-medium transition-colors cursor-pointer",
+          "text-sm font-medium transition-colors cursor-pointer bg-transparent border-none p-0",
           billingCycle === "monthly"
             ? "text-foreground"
             : "text-muted-foreground"
         )}
         onClick={() => onToggle("monthly")}
+        onKeyDown={handleKeyDown("monthly")}
       >
         Monthly
-      </span>
+      </button>
 
       <button
         type="button"
@@ -47,17 +56,19 @@ export function BillingToggle({
         />
       </button>
 
-      <span
+      <button
+        type="button"
         className={cn(
-          "text-sm font-medium transition-colors cursor-pointer",
+          "text-sm font-medium transition-colors cursor-pointer bg-transparent border-none p-0",
           billingCycle === "annual"
             ? "text-foreground"
             : "text-muted-foreground"
         )}
         onClick={() => onToggle("annual")}
+        onKeyDown={handleKeyDown("annual")}
       >
         Annual
-      </span>
+      </button>
 
       {savingsPercent > 0 && (
         <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-400">

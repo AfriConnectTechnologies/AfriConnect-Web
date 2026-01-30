@@ -41,12 +41,29 @@ export async function POST(request: NextRequest) {
 
     log.setUserId(userId);
 
-    // Create authenticated Convex client
-    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-    const token = await getToken({ template: "convex" });
-    if (token) {
-      convex.setAuth(token);
+    // Validate Convex URL exists
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!convexUrl) {
+      log.error("Server configuration error - CONVEX_URL missing");
+      await flushLogs();
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500, headers: SECURITY_HEADERS }
+      );
     }
+
+    // Create authenticated Convex client
+    const convex = new ConvexHttpClient(convexUrl);
+    const token = await getToken({ template: "convex" });
+    if (!token) {
+      log.warn("Refund request - no valid authentication token");
+      await flushLogs();
+      return NextResponse.json(
+        { error: "Authentication failed" },
+        { status: 401, headers: SECURITY_HEADERS }
+      );
+    }
+    convex.setAuth(token);
 
     // Check if user is admin
     const currentUser = await convex.query(api.users.getCurrentUser);
@@ -64,6 +81,7 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch {
+      await flushLogs();
       return NextResponse.json(
         { error: "Invalid JSON body" },
         { status: 400, headers: SECURITY_HEADERS }
@@ -72,6 +90,7 @@ export async function POST(request: NextRequest) {
 
     const validation = refundSchema.safeParse(body);
     if (!validation.success) {
+      await flushLogs();
       return NextResponse.json(
         { error: validation.error.issues[0]?.message || "Validation failed" },
         { status: 400, headers: SECURITY_HEADERS }
@@ -80,23 +99,26 @@ export async function POST(request: NextRequest) {
 
     const { paymentId, reason, amount } = validation.data;
 
+    // Validate paymentId format (Convex IDs are alphanumeric strings)
+    if (!/^[a-zA-Z0-9]+$/.test(paymentId)) {
+      log.warn("Invalid payment ID format", { paymentId });
+      await flushLogs();
+      return NextResponse.json(
+        { error: "Invalid payment ID format" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
+
     // Get payment details from Convex
     const payment = await convex.query(api.payments.getById, {
       paymentId: paymentId as Id<"payments">,
     });
 
     if (!payment) {
+      await flushLogs();
       return NextResponse.json(
         { error: "Payment not found" },
         { status: 404, headers: SECURITY_HEADERS }
-      );
-    }
-
-    // Only allow refunds for subscription payments
-    if (payment.paymentType !== "subscription") {
-      return NextResponse.json(
-        { error: "Refunds are only available for subscription payments" },
-        { status: 400, headers: SECURITY_HEADERS }
       );
     }
 
@@ -116,9 +138,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate refund amount doesn't exceed original payment
+    if (amount !== undefined) {
+      if (amount <= 0) {
+        await flushLogs();
+        return NextResponse.json(
+          { error: "Refund amount must be a positive number" },
+          { status: 400, headers: SECURITY_HEADERS }
+        );
+      }
+      if (amount > payment.amount) {
+        log.warn("Refund amount exceeds original payment", {
+          paymentId,
+          requestedAmount: amount,
+          originalAmount: payment.amount,
+        });
+        await flushLogs();
+        return NextResponse.json(
+          { error: `Refund amount cannot exceed original payment of ${payment.amount}` },
+          { status: 400, headers: SECURITY_HEADERS }
+        );
+      }
+    }
+
     // Get the Chapa transaction reference
     const chapaTrxRef = payment.chapaTrxRef;
     if (!chapaTrxRef) {
+      await flushLogs();
       return NextResponse.json(
         { error: "No Chapa transaction reference found for this payment" },
         { status: 400, headers: SECURITY_HEADERS }
@@ -136,21 +182,49 @@ export async function POST(request: NextRequest) {
       meta: {
         payment_id: paymentId,
         admin_user_id: userId,
-        refund_type: "subscription",
+        refund_type: payment.paymentType,
       },
     });
 
-    // Record refund in Convex
-    await convex.mutation(api.payments.recordRefund, {
-      paymentId: paymentId as Id<"payments">,
-      refundAmount: amount || payment.amount,
-      refundReason: reason || "Admin initiated refund",
-      refundReference,
-      adminUserId: userId,
-    });
+    // Record refund in Convex with error handling for inconsistent state
+    const refundAmount = amount || payment.amount;
+    try {
+      await convex.mutation(api.payments.recordRefund, {
+        paymentId: paymentId as Id<"payments">,
+        refundAmount,
+        refundReason: reason || "Admin initiated refund",
+        refundReference,
+      });
+    } catch (mutationError) {
+      // Log detailed error for refund discrepancy tracking
+      log.error("Refund processed but database update failed - RECONCILIATION NEEDED", mutationError, {
+        paymentId,
+        refundReference,
+        refundAmount,
+        reason,
+        adminUserId: userId,
+        chapaResponse: refundResponse.data,
+      });
+      await flushLogs();
+      // Return partial success so the caller knows refund went through but DB update failed
+      return NextResponse.json(
+        {
+          success: true,
+          warning: "Refund processed with payment provider but database update failed. Please contact support.",
+          refund: {
+            reference: refundReference,
+            amount: refundAmount,
+            currency: payment.currency,
+            chapaResponse: refundResponse.data,
+          },
+          reconciliationRequired: true,
+        },
+        { status: 200, headers: SECURITY_HEADERS }
+      );
+    }
 
     // If this was a subscription payment, cancel the subscription
-    if (payment.metadata) {
+    if (payment.paymentType === "subscription" && payment.metadata) {
       try {
         const metadata = JSON.parse(payment.metadata);
         if (metadata.businessId) {

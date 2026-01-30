@@ -11,7 +11,10 @@ interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
   ({ className, value = 0, max = 100, ...props }, ref) => {
-    const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+    // Guard against division by zero when max <= 0
+    const percentage = max > 0 
+      ? Math.min(100, Math.max(0, (value / max) * 100))
+      : 0;
 
     return (
       <div

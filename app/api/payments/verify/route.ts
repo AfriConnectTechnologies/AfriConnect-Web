@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const rateLimitKey = userId ? `payment_verify:${userId}` : `payment_verify:${clientIp}`;
 
     // Apply rate limiting
-    const rateLimitResult = checkRateLimit(rateLimitKey, RateLimits.PAYMENT_VERIFY);
+    const rateLimitResult = await checkRateLimit(rateLimitKey, RateLimits.PAYMENT_VERIFY);
 
     if (!rateLimitResult.success) {
       return rateLimitExceededResponse(rateLimitResult);
@@ -63,12 +63,47 @@ export async function GET(request: NextRequest) {
 
     // Update payment status in Convex
     const status = chapaResponse.data.status === "success" ? "success" : "failed";
+    const verifiedTxRef = validation.data.tx_ref;
+    const chapaTrxRef = chapaResponse.data.reference;
 
-    await convex.mutation(api.payments.updateStatus, {
-      txRef: validation.data.tx_ref,
-      status,
-      chapaTrxRef: chapaResponse.data.reference,
-    });
+    // Isolate DB update so Chapa verification and DB updates are handled separately
+    try {
+      await convex.mutation(api.payments.updateStatus, {
+        txRef: verifiedTxRef,
+        status,
+        chapaTrxRef,
+      });
+    } catch (updateError) {
+      console.error("Chapa verification succeeded but DB update failed:", {
+        txRef: verifiedTxRef,
+        chapaTrxRef,
+        chapaResponse: chapaResponse.data,
+        error: updateError,
+      });
+      // Return partial success - verification passed but DB update failed
+      return NextResponse.json(
+        {
+          success: true,
+          status,
+          warning: "Payment verified but status update failed. Please contact support if issues persist.",
+          data: {
+            amount: chapaResponse.data.amount,
+            currency: chapaResponse.data.currency,
+            reference: chapaResponse.data.reference,
+            tx_ref: chapaResponse.data.tx_ref,
+            payment_method: chapaResponse.data.method,
+            created_at: chapaResponse.data.created_at,
+          },
+          reconciliationRequired: true,
+        },
+        {
+          headers: {
+            ...SECURITY_HEADERS,
+            ...createRateLimitHeaders(rateLimitResult),
+          },
+        }
+      );
+    }
 
     return NextResponse.json(
       {

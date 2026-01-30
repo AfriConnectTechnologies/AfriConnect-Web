@@ -132,7 +132,9 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("success"),
       v.literal("failed"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
+      v.literal("refunded"),
+      v.literal("partially_refunded")
     ),
     paymentType: v.union(
       v.literal("order"),

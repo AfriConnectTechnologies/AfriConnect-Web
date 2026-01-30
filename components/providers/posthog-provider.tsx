@@ -58,18 +58,24 @@ function PostHogPageView() {
 function PostHogUserIdentify() {
   const { user, isSignedIn } = useUser();
   const posthogClient = usePostHog();
+  const { hasConsent } = useAnalytics();
 
   useEffect(() => {
     if (posthogClient && isSignedIn && user) {
+      // Only include email if user has granted analytics consent and PostHog is not opted out
+      const isOptedOut = posthogClient.has_opted_out_capturing?.() ?? false;
+      const canIncludePII = hasConsent && !isOptedOut;
+      
       posthogClient.identify(user.id, {
-        email: user.primaryEmailAddress?.emailAddress,
+        // Only include email when consent is explicitly granted
+        ...(canIncludePII && { email: user.primaryEmailAddress?.emailAddress }),
         name: user.fullName,
         created_at: user.createdAt,
       });
     } else if (posthogClient && !isSignedIn) {
       posthogClient.reset();
     }
-  }, [posthogClient, user, isSignedIn]);
+  }, [posthogClient, user, isSignedIn, hasConsent]);
 
   return null;
 }

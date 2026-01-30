@@ -27,6 +27,17 @@ export default function PricingPage() {
   // Get current subscription if user is logged in
   const currentSubscription = useQuery(api.subscriptions.getCurrentSubscription);
 
+  // Helper to safely parse features
+  const parseFeatures = (features: string, planSlug: string): string[] => {
+    try {
+      const parsed = JSON.parse(features);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error(`Failed to parse features for plan ${planSlug}:`, error);
+      return [];
+    }
+  };
+
   // Transform database plans to UI format
   const plans: PricingPlan[] = dbPlans
     ? dbPlans.map((plan) => ({
@@ -38,7 +49,7 @@ export default function PricingPage() {
         monthlyPrice: plan.monthlyPrice,
         annualPrice: plan.annualPrice,
         currency: plan.currency,
-        features: JSON.parse(plan.features),
+        features: parseFeatures(plan.features, plan.slug),
         isPopular: plan.isPopular || plan.slug === "growth",
         isEnterprise: plan.slug === "enterprise",
       }))
@@ -73,7 +84,22 @@ export default function PricingPage() {
         }),
       });
 
-      const data = await response.json();
+      // Safely parse JSON response
+      let data: { error?: string; checkoutUrl?: string } = {};
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          const text = await response.text();
+          console.error(`Failed to parse JSON response (status ${response.status}):`, text);
+          throw new Error(`Server returned invalid JSON (status ${response.status})`);
+        }
+      } else {
+        const text = await response.text();
+        console.error(`Non-JSON response (status ${response.status}):`, text);
+        throw new Error(`Unexpected server response (status ${response.status})`);
+      }
 
       if (!response.ok) {
         // Handle specific errors
@@ -155,17 +181,16 @@ export default function PricingPage() {
             className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            {t("pricing.backToHome")}
           </Link>
 
           {/* Page Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold tracking-tight mb-4">
-              Simple, Transparent Pricing
+              {t("pricing.title")}
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-              Choose the plan that best fits your business needs. All plans include
-              access to our B2B marketplace and AfCFTA compliance tools.
+              {t("pricing.subtitle")}
             </p>
 
             {/* Billing Toggle */}
@@ -179,7 +204,7 @@ export default function PricingPage() {
           {/* Pricing Cards */}
           {plans.length === 0 ? (
             <div className="flex items-center justify-center py-24">
-              <div className="text-muted-foreground">Loading plans...</div>
+              <div className="text-muted-foreground">{t("pricing.loadingPlans")}</div>
             </div>
           ) : (
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto mb-16">

@@ -590,30 +590,68 @@ export const getWithOrder = query({
 export const getById = query({
   args: { paymentId: v.id("payments") },
   handler: async (ctx, args) => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    
+    // Get user and verify admin role
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    
+    if (!user || user.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
+    
     const payment = await ctx.db.get(args.paymentId);
     return payment;
   },
 });
 
-// Record a refund (admin only)
+// Record a refund (admin only - derives admin from auth context)
 export const recordRefund = mutation({
   args: {
     paymentId: v.id("payments"),
     refundAmount: v.number(),
     refundReason: v.string(),
     refundReference: v.string(),
-    adminUserId: v.string(),
+    // adminUserId is no longer a public arg - derived from auth
   },
   handler: async (ctx, args) => {
     const log = createLogger("payments.recordRefund");
     
     try {
+      // Require authentication and admin role
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        log.error("Refund failed - not authenticated");
+        await flushLogs();
+        throw new Error("Unauthorized: Authentication required");
+      }
+      
+      const admin = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+      
+      if (!admin || admin.role !== "admin") {
+        log.error("Refund failed - not admin", { userId: identity.subject });
+        await flushLogs();
+        throw new Error("Unauthorized: Admin access required");
+      }
+      
+      const adminUserId = admin.clerkId;
+      log.setContext({ userId: adminUserId });
+      
       log.info("Refund recording initiated", {
         paymentId: args.paymentId,
         refundAmount: args.refundAmount,
         refundReason: args.refundReason,
         refundReference: args.refundReference,
-        adminUserId: args.adminUserId,
+        adminUserId,
       });
 
       const payment = await ctx.db.get(args.paymentId);
@@ -623,6 +661,27 @@ export const recordRefund = mutation({
         throw new Error("Payment not found");
       }
 
+      // Validate payment status - only successful payments can be refunded
+      if (payment.status !== "success") {
+        log.error("Refund failed - invalid payment status", undefined, { 
+          paymentId: args.paymentId,
+          status: payment.status,
+        });
+        await flushLogs();
+        throw new Error("Only successful payments can be refunded");
+      }
+      
+      // Validate refund amount
+      if (args.refundAmount <= 0 || args.refundAmount > payment.amount) {
+        log.error("Refund failed - invalid amount", undefined, {
+          paymentId: args.paymentId,
+          refundAmount: args.refundAmount,
+          originalAmount: payment.amount,
+        });
+        await flushLogs();
+        throw new Error("Invalid refund amount");
+      }
+
       log.debug("Payment found for refund", {
         paymentId: args.paymentId,
         originalAmount: payment.amount,
@@ -630,21 +689,31 @@ export const recordRefund = mutation({
         paymentType: payment.paymentType,
       });
 
+      // Calculate total refunded including previous refunds
+      const previousRefundAmount = payment.refundAmount || 0;
+      const totalRefunded = previousRefundAmount + args.refundAmount;
+      
+      // Determine new status based on refund amount
+      const newStatus = totalRefunded >= payment.amount ? "refunded" : "partially_refunded";
+
       // Update payment with refund info
       await ctx.db.patch(args.paymentId, {
+        status: newStatus,
         refundedAt: Date.now(),
-        refundAmount: args.refundAmount,
+        refundAmount: totalRefunded,
         refundReason: args.refundReason,
         refundReference: args.refundReference,
-        refundedByUserId: args.adminUserId,
+        refundedByUserId: adminUserId,
       });
 
       log.info("Refund recorded successfully", {
         paymentId: args.paymentId,
         originalAmount: payment.amount,
         refundAmount: args.refundAmount,
+        totalRefunded,
+        newStatus,
         refundReference: args.refundReference,
-        adminUserId: args.adminUserId,
+        adminUserId,
         txRef: payment.chapaTransactionRef,
       });
 
@@ -667,6 +736,22 @@ export const listSubscriptionPayments = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // Require authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthorized: Authentication required");
+    }
+    
+    // Get user and verify admin role
+    const authUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+    
+    if (!authUser || authUser.role !== "admin") {
+      throw new Error("Unauthorized: Admin access required");
+    }
+
     const limit = args.limit || 50;
 
     const payments = await ctx.db
