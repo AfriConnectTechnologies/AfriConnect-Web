@@ -2,8 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
-// Type for HS code entry from JSON
-interface HSCodeEntry {
+// Supported countries/regions
+type Country = "ethiopia" | "kenya";
+
+// Normalized type for HS code entry (unified format for both countries)
+interface NormalizedHSCodeEntry {
+  hs_code: string;
+  english_name: string;
+  amharic_name: string;
+  category: string;
+  rates: {
+    "2026": string;
+    "2027": string;
+    "2028": string;
+    "2029": string;
+    "2030": string;
+  };
+  base_rate?: string;
+  unit?: string;
+}
+
+// Ethiopia data structure
+interface EthiopiaHSCodeEntry {
   hs_code: string;
   english_name: string;
   amharic_name: string;
@@ -17,18 +37,83 @@ interface HSCodeEntry {
   };
 }
 
-// Cache the loaded data
-let cachedData: HSCodeEntry[] | null = null;
+// EAC/Kenya data structure
+interface EACHSCodeEntry {
+  hs_code: string;
+  description: string;
+  unit: string;
+  base_rate: string;
+  category: string;
+  rates: {
+    "2026": string;
+    "2027": string;
+    "2028": string;
+    "2029": string;
+    "2030": string;
+  };
+}
 
-async function loadHSCodeData(): Promise<HSCodeEntry[]> {
-  if (cachedData) {
-    return cachedData;
+// Cache for loaded data (separate cache per country)
+const dataCache: Record<Country, NormalizedHSCodeEntry[] | null> = {
+  ethiopia: null,
+  kenya: null,
+};
+
+// Strip percentage sign and return clean number string
+function stripPercentage(value: string): string {
+  return value.replace(/%/g, "").trim();
+}
+
+// Normalize Ethiopia data
+function normalizeEthiopiaData(data: EthiopiaHSCodeEntry[]): NormalizedHSCodeEntry[] {
+  return data.map((item) => ({
+    hs_code: item.hs_code,
+    english_name: item.english_name,
+    amharic_name: item.amharic_name,
+    category: item.category,
+    rates: item.rates,
+  }));
+}
+
+// Normalize EAC/Kenya data
+function normalizeEACData(data: EACHSCodeEntry[]): NormalizedHSCodeEntry[] {
+  return data.map((item) => ({
+    hs_code: item.hs_code,
+    english_name: item.description,
+    amharic_name: "", // EAC doesn't have Amharic names
+    category: item.category,
+    rates: {
+      "2026": stripPercentage(item.rates["2026"]),
+      "2027": stripPercentage(item.rates["2027"]),
+      "2028": stripPercentage(item.rates["2028"]),
+      "2029": stripPercentage(item.rates["2029"]),
+      "2030": stripPercentage(item.rates["2030"]),
+    },
+    base_rate: stripPercentage(item.base_rate),
+    unit: item.unit,
+  }));
+}
+
+async function loadHSCodeData(country: Country): Promise<NormalizedHSCodeEntry[]> {
+  if (dataCache[country]) {
+    return dataCache[country]!;
   }
 
-  const filePath = path.join(process.cwd(), "category_a_detailed_2026_2030.json");
+  const fileName = country === "ethiopia" 
+    ? "category_a_detailed_2026_2030.json" 
+    : "eac_category_a_2026_2030.json";
+  
+  const filePath = path.join(process.cwd(), fileName);
   const fileContent = await fs.readFile(filePath, "utf-8");
-  cachedData = JSON.parse(fileContent);
-  return cachedData!;
+  const rawData = JSON.parse(fileContent);
+
+  // Normalize based on country
+  const normalizedData = country === "ethiopia"
+    ? normalizeEthiopiaData(rawData as EthiopiaHSCodeEntry[])
+    : normalizeEACData(rawData as EACHSCodeEntry[]);
+
+  dataCache[country] = normalizedData;
+  return normalizedData;
 }
 
 export async function GET(request: NextRequest) {
@@ -37,23 +122,40 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("q")?.toLowerCase().trim() || "";
     const hsCode = searchParams.get("hs_code")?.trim() || "";
     const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const country = (searchParams.get("country") || "ethiopia") as Country;
 
-    const data = await loadHSCodeData();
+    // Validate country parameter
+    if (country !== "ethiopia" && country !== "kenya") {
+      return NextResponse.json({
+        success: false,
+        error: "Invalid country. Must be 'ethiopia' or 'kenya'",
+      }, { status: 400 });
+    }
+
+    const data = await loadHSCodeData(country);
 
     // If looking up a specific HS code
     if (hsCode) {
-      const entry = data.find((item) => item.hs_code === hsCode);
+      // For Kenya/EAC, also try matching with dots removed or added
+      const normalizedHsCode = hsCode.replace(/\./g, "");
+      const entry = data.find((item) => {
+        const itemNormalized = item.hs_code.replace(/\./g, "");
+        return item.hs_code === hsCode || itemNormalized === normalizedHsCode;
+      });
+      
       if (entry) {
         return NextResponse.json({
           success: true,
           data: entry,
           isCompliant: true, // If found in this file, it's Category A compliant
+          country,
         });
       } else {
         return NextResponse.json({
           success: true,
           data: null,
           isCompliant: false, // Not found in Category A
+          country,
         });
       }
     }
@@ -64,14 +166,19 @@ export async function GET(request: NextRequest) {
         success: true,
         results: [],
         message: "Please enter at least 2 characters to search",
+        country,
       });
     }
 
+    const normalizedQuery = query.replace(/\./g, ""); // Remove dots for HS code matching
+    
     const results = data
       .filter((item) => {
         const matchesName = item.english_name.toLowerCase().includes(query) ||
-          item.amharic_name.includes(query);
-        const matchesCode = item.hs_code.includes(query);
+          (item.amharic_name && item.amharic_name.includes(query));
+        const itemCodeNormalized = item.hs_code.replace(/\./g, "");
+        const matchesCode = item.hs_code.includes(query) || 
+          itemCodeNormalized.includes(normalizedQuery);
         return matchesName || matchesCode;
       })
       .slice(0, limit)
@@ -82,12 +189,15 @@ export async function GET(request: NextRequest) {
         category: item.category,
         rates: item.rates,
         currentRate: item.rates["2026"], // Current year
+        baseRate: item.base_rate,
+        unit: item.unit,
       }));
 
     return NextResponse.json({
       success: true,
       results,
       total: results.length,
+      country,
     });
   } catch (error) {
     console.error("Compliance search API error:", error);

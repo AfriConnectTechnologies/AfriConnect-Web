@@ -738,7 +738,11 @@
     "afcftaComplianceDescription": "Check if your products qualify for African Continental Free Trade Area benefits",
     "noComplianceCheckYet": "You haven't added any products for compliance checking yet.",
     "startComplianceCheck": "Start Compliance Check",
-    "manageProducts": "Manage Products"
+    "manageProducts": "Manage Products",
+    "selectCountry": "Select Country/Region",
+    "ethiopia": "Ethiopia",
+    "kenyaEac": "Kenya (EAC)",
+    "countryDescription": "Select the country to search tariff schedules for"
   },
   "originEligibility": {
     "title": "Certificate of Origin Eligibility",

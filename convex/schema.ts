@@ -271,11 +271,13 @@ export default defineSchema({
     isCompliant: v.boolean(), // Found in Category A
     currentRate: v.optional(v.string()), // Current year's rate
     rates: v.optional(v.string()), // JSON string of all rates { "2026": "2", "2027": "1.5", ... }
+    country: v.optional(v.string()), // "ethiopia" or "kenya" (EAC)
     createdAt: v.number(),
   })
     .index("by_business", ["businessId"])
     .index("by_hs_code", ["hsCode"])
-    .index("by_business_hs", ["businessId", "hsCode"]),
+    .index("by_business_hs", ["businessId", "hsCode"])
+    .index("by_country", ["country"]),
 
   // Certificate of Origin - Eligibility Calculations (MaxNOM 60% Rule)
   originCalculations: defineTable({
