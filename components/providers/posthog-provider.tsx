@@ -2,7 +2,7 @@
 
 import posthog from "posthog-js";
 import { PostHogProvider as PHProvider, usePostHog } from "posthog-js/react";
-import { useEffect, useState, createContext, useContext, useCallback } from "react";
+import { useEffect, useState, createContext, useContext, useCallback, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -183,7 +183,9 @@ function PostHogProviderInner({ children }: { children: React.ReactNode }) {
   return (
     <PostHogContext.Provider value={contextValue}>
       {children}
-      <PostHogPageView />
+      <Suspense fallback={null}>
+        <PostHogPageView />
+      </Suspense>
       <PostHogUserIdentify />
     </PostHogContext.Provider>
   );
