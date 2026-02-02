@@ -101,6 +101,8 @@ export default function AdminBusinessesPage() {
   );
 
   const verifyBusiness = useMutation(api.businesses.verifyBusiness);
+  const updatePricesToUsd = useMutation(api.subscriptionPlans.updatePricesToUsd);
+  const [isMigratingPrices, setIsMigratingPrices] = useState(false);
 
   const handleVerificationAction = async () => {
     if (!actionDialog) return;
@@ -397,6 +399,43 @@ export default function AdminBusinessesPage() {
               </Table>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Data Migration: Update plan prices to USD */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Data Migration</CardTitle>
+          <CardDescription>
+            Migrate subscription plan prices from ETB to canonical USD values ($29, $79, $149)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isMigratingPrices}
+            onClick={async () => {
+              setIsMigratingPrices(true);
+              try {
+                const result = await updatePricesToUsd();
+                toast.success(`Updated ${result.updated} plan(s) to USD pricing`);
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Migration failed");
+              } finally {
+                setIsMigratingPrices(false);
+              }
+            }}
+          >
+            {isMigratingPrices ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update plan prices to USD"
+            )}
+          </Button>
         </CardContent>
       </Card>
 
