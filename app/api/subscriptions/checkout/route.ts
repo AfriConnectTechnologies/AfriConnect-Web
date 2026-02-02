@@ -27,13 +27,6 @@ const SECURITY_HEADERS = {
   "Pragma": "no-cache",
 };
 
-// Generate unique transaction reference
-function generateTxRef(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `AC-SUB-${timestamp}-${random}`;
-}
-
 export async function POST(request: NextRequest) {
   // Check if commerce features are enabled
   if (!COMMERCE_ENABLED) {
@@ -203,10 +196,7 @@ export async function POST(request: NextRequest) {
         ? Math.round(amountInPlanCurrency * USD_TO_ETB_RATE)
         : amountInPlanCurrency;
 
-    // Generate transaction reference
-    const txRef = generateTxRef();
-
-    // Create payment record in Convex (store actual charge amount in ETB for Chapa)
+    // Create payment record in Convex (generates txRef/chapaTransactionRef; store actual charge amount in ETB for Chapa)
     const payment = await convex.mutation(api.payments.create, {
       amount: chargeAmount,
       currency: chargeCurrency,

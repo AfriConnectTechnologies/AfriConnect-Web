@@ -75,7 +75,7 @@ export const paymentVerifySchema = z.object({
     .string({ message: "Transaction reference is required" })
     .min(1, "Transaction reference cannot be empty")
     .max(100, "Transaction reference too long")
-    .regex(/^AC-\d+-[A-Z0-9]+$/, "Invalid transaction reference format"),
+    .regex(/^AC(-[A-Z0-9]+)+$/, "Invalid transaction reference format"),
 });
 
 export type PaymentVerifyInput = z.infer<typeof paymentVerifySchema>;

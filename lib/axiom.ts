@@ -101,9 +101,11 @@ async function sendToAxiom(logs: ApiLogEntry[]): Promise<void> {
     if (!response.ok) {
       const responseText = await response.text();
       console.error(`[Axiom] Failed to send logs: ${response.status} ${response.statusText}`, responseText);
+      throw new Error(`Axiom ingest failed: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
     console.error("[Axiom] Error sending logs:", error);
+    throw error;
   }
 }
 

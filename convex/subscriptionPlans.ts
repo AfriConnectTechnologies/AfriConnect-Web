@@ -244,12 +244,14 @@ const CANONICAL_USD_PRICES: Record<string, { monthlyPrice: number; annualPrice: 
 };
 
 /**
- * Update plan prices to canonical USD. One-time migration from ETB to USD.
- * No auth required - this is a safe idempotent operation with hardcoded values.
+ * Update plan prices to canonical USD (admin only). One-time migration from ETB to USD.
+ * Run from the app while logged in as admin, or via Dashboard if you temporarily
+ * bypass auth for the migration run.
  */
 export const updatePricesToUsd = mutation({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     const plans = await ctx.db.query("subscriptionPlans").collect();
     let updated = 0;
     for (const plan of plans) {

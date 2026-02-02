@@ -22,6 +22,16 @@ const SECURITY_HEADERS = {
   "Pragma": "no-cache",
 };
 
+/** Prefer platform-set headers (not client-spoofable) over x-forwarded-for */
+function getClientIP(request: NextRequest): string {
+  return (
+    request.headers.get("x-real-ip") ||
+    request.headers.get("cf-connecting-ip") ||
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "anonymous"
+  );
+}
+
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(request: NextRequest) {
@@ -34,20 +44,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get userId for rate limiting (optional - allows anonymous verification)
-    const { userId } = await auth();
-    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
-    const rateLimitKey = userId ? `payment_verify:${userId}` : `payment_verify:${clientIp}`;
+    const { searchParams } = new URL(request.url);
+    const txRef = searchParams.get("tx_ref");
 
-    // Apply rate limiting
+    const { userId } = await auth();
+    const clientIp = getClientIP(request);
+    const rateLimitKey = userId
+      ? `payment_verify:${userId}`
+      : `payment_verify:${clientIp}:${txRef || "no-ref"}`;
+
     const rateLimitResult = await checkRateLimit(rateLimitKey, RateLimits.PAYMENT_VERIFY);
 
     if (!rateLimitResult.success) {
       return rateLimitExceededResponse(rateLimitResult);
     }
-
-    const { searchParams } = new URL(request.url);
-    const txRef = searchParams.get("tx_ref");
 
     // Validate input
     const validation = validatePaymentInput(paymentVerifySchema, { tx_ref: txRef });

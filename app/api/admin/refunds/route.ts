@@ -161,9 +161,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get the Chapa transaction reference
-    const chapaTrxRef = payment.chapaTrxRef;
-    if (!chapaTrxRef) {
+    // Use tx_ref we sent to Chapa (required for refund API), not chapaTrxRef (returned by Chapa)
+    const txRef = payment.chapaTransactionRef;
+    if (!txRef) {
       await flushLogs();
       return NextResponse.json(
         { error: "No Chapa transaction reference found for this payment" },
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
     const refundReference = `REF-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // Process refund with Chapa
-    const refundResponse = await processRefund(chapaTrxRef, {
+    const refundResponse = await processRefund(txRef, {
       reason: reason || "Subscription refund requested by admin",
       amount: amount ? amount.toString() : undefined, // If not provided, full refund
       reference: refundReference,

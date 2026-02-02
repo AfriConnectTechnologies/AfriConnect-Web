@@ -27,26 +27,31 @@ const MAX_WEBHOOK_AGE_MS = 5 * 60 * 1000;
 
 /**
  * Verify webhook signature from Chapa using HMAC-SHA256
+ * Normalizes signature (strips sha256= prefix), decodes to fixed-length buffer,
+ * and only uses timingSafeEqual when lengths match to avoid throws.
  */
 function verifyWebhookSignature(
   payload: string,
   signature: string,
   secret: string
 ): boolean {
+  const expectedHex = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  const expectedBuffer = Buffer.from(expectedHex, "hex");
+  const normalized = signature.replace(/^sha256=/i, "").trim();
+  let signatureBuffer: Buffer;
   try {
-    const expectedSignature = crypto
-      .createHmac("sha256", secret)
-      .update(payload)
-      .digest("hex");
-
-    // Use timing-safe comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    if (/^[0-9a-fA-F]{64}$/.test(normalized)) {
+      signatureBuffer = Buffer.from(normalized, "hex");
+    } else {
+      return false;
+    }
   } catch {
     return false;
   }
+  if (signatureBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
 }
 
 /**
