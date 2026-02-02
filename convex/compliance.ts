@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireUser, requireSeller } from "./helpers";
+import { createLogger, flushLogs } from "./lib/logger";
 
 // Add a product to a business with HS code compliance info
 export const addBusinessProduct = mutation({
@@ -14,38 +15,71 @@ export const addBusinessProduct = mutation({
     country: v.optional(v.string()), // "ethiopia" or "kenya" (EAC)
   },
   handler: async (ctx, args) => {
-    const user = await requireSeller(ctx);
+    const log = createLogger("compliance.addBusinessProduct");
+    
+    try {
+      log.info("Adding business product with HS code", {
+        hsCode: args.hsCode,
+        productName: args.productName,
+        isCompliant: args.isCompliant,
+      });
 
-    if (!user.businessId) {
-      throw new Error("You don't have a registered business");
-    }
+      const user = await requireSeller(ctx);
+      log.setContext({ userId: user.clerkId, businessId: user.businessId });
 
-    // Check if this HS code already exists for this business (same country)
-    const existingProduct = await ctx.db
-      .query("businessProducts")
-      .withIndex("by_business_hs", (q) =>
-        q.eq("businessId", user.businessId!).eq("hsCode", args.hsCode)
-      )
+      if (!user.businessId) {
+        log.warn("Add business product failed - no business registered");
+        await flushLogs();
+        throw new Error("You don't have a registered business");
+      }
+
+      // Check if this HS code already exists for this business (same country)
+      const existingProduct = await ctx.db
+        .query("businessProducts")
+        .withIndex("by_business_hs", (q) =>
+          q.eq("businessId", user.businessId!).eq("hsCode", args.hsCode)
+        )
       .filter((q) => q.eq(q.field("country"), args.country || "ethiopia"))
-      .first();
+        .first();
 
-    if (existingProduct) {
-      throw new Error("This HS code is already added to your business for this country");
+      if (existingProduct) {
+        log.warn("Add business product failed - HS code already exists", {
+          hsCode: args.hsCode,
+          existingProductId: existingProduct._id,
+        });
+        await flushLogs();
+        throw new Error("This HS code is already added to your business for this country");
+      }
+
+      const productId = await ctx.db.insert("businessProducts", {
+        businessId: user.businessId,
+        hsCode: args.hsCode,
+        productName: args.productName,
+        productNameAmharic: args.productNameAmharic,
+        isCompliant: args.isCompliant,
+        currentRate: args.currentRate,
+        rates: args.rates,
+        country: args.country || "ethiopia",
+        createdAt: Date.now(),
+      });
+
+      log.info("Business product added successfully", {
+        businessProductId: productId,
+        hsCode: args.hsCode,
+        productName: args.productName,
+        isCompliant: args.isCompliant,
+      });
+
+      await flushLogs();
+      return await ctx.db.get(productId);
+    } catch (error) {
+      log.error("Add business product failed", error, {
+        hsCode: args.hsCode,
+        productName: args.productName,
+      });
+      await flushLogs();
+      throw error;
     }
-
-    const productId = await ctx.db.insert("businessProducts", {
-      businessId: user.businessId,
-      hsCode: args.hsCode,
-      productName: args.productName,
-      productNameAmharic: args.productNameAmharic,
-      isCompliant: args.isCompliant,
-      currentRate: args.currentRate,
-      rates: args.rates,
-      country: args.country || "ethiopia", // Default to ethiopia for backward compatibility
-      createdAt: Date.now(),
-    });
-
-    return await ctx.db.get(productId);
   },
 });
 

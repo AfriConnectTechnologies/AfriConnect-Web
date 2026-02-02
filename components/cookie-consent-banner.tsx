@@ -53,6 +53,9 @@ export function CookieConsentBanner() {
     setPreferences(prefs);
     setIsVisible(false);
     setShowSettings(false);
+    
+    // Dispatch custom event for PostHog provider to listen to
+    window.dispatchEvent(new CustomEvent("cookieConsentChanged", { detail: prefs }));
   };
 
   const handleAcceptAll = () => {

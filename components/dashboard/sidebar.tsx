@@ -4,9 +4,9 @@ import { useState, useMemo } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { UserButton } from "@clerk/nextjs";
-import { BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle } from "lucide-react";
+import { Globe2, BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
@@ -14,7 +14,7 @@ import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "compliance";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageRefunds" | "compliance";
 
 type NavItem = {
   href: string;
@@ -48,6 +48,7 @@ const buyerNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { href: "/admin/users", labelKey: "manageUsers", icon: Users },
   { href: "/admin/businesses", labelKey: "manageBusinesses", icon: Building },
+  { href: "/admin/refunds", labelKey: "manageRefunds", icon: RefreshCw },
 ];
 
 export function MobileSidebarTrigger() {
@@ -63,6 +64,8 @@ export function MobileSidebarTrigger() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0">
+        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+        <SheetDescription className="sr-only">Main navigation sidebar</SheetDescription>
         <SidebarContent pathname={pathname} isCollapsed={false} toggleCollapse={() => {}} isMobile={true} />
       </SheetContent>
     </Sheet>
@@ -151,7 +154,9 @@ function SidebarContent({
           href="/"
           className="flex items-center gap-2 cursor-pointer"
         >
-          <BarChart3 className="h-6 w-6 shrink-0" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shrink-0">
+            <Globe2 className="h-4 w-4 text-primary-foreground" />
+          </div>
           {!isCollapsed && <span className="text-lg font-bold">AfriConnect</span>}
         </Link>
       </div>

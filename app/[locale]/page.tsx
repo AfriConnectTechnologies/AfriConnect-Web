@@ -149,6 +149,9 @@ export default function LandingPage() {
             <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               {t("nav.marketplace")}
             </Link>
+            <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              {t("nav.pricing")}
+            </Link>
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               {t("nav.features")}
             </Link>
@@ -210,6 +213,13 @@ export default function LandingPage() {
                       >
                         <Compass className="h-4 w-4 text-muted-foreground" />
                         {t("nav.marketplace")}
+                      </Link>
+                      <Link 
+                        href="/pricing" 
+                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+                      >
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        {t("nav.pricing")}
                       </Link>
                       <Link 
                         href="#features" 

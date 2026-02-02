@@ -43,6 +43,7 @@
     "registerBusiness": "Sajili Biashara",
     "manageUsers": "Simamia Watumiaji",
     "manageBusinesses": "Simamia Biashara",
+    "manageRefunds": "Simamia Marejesho",
     "compliance": "Uzingatiaji wa AfCFTA",
     "toggleMenu": "Badilisha menyu",
     "toggleSidebar": "Badilisha upau wa pembeni"
@@ -220,6 +221,7 @@
   "dashboard": {
     "title": "Dashibodi",
     "welcome": "Karibu tena! Hapa kuna muhtasari wa maagizo yako.",
+    "welcomeBack": "Karibu tena,",
     "overview": "Muhtasari",
     "recentOrders": "Maagizo ya Hivi Karibuni",
     "recentProducts": "Bidhaa za Hivi Karibuni",
@@ -227,7 +229,9 @@
     "totalRevenue": "Mapato Yote",
     "totalOrders": "Maagizo Yote",
     "totalProducts": "Bidhaa Zote",
-    "pendingOrders": "Maagizo Yanayosubiri"
+    "pendingOrders": "Maagizo Yanayosubiri",
+    "discoverProducts": "Gundua Bidhaa",
+    "browseDescription": "Vinjari bidhaa kutoka biashara Afrika nzima"
   },
   "settings": {
     "title": "Mipangilio",
@@ -260,6 +264,119 @@
     "type": "Aina",
     "amount": "Kiasi",
     "failed": "Imeshindwa"
+  },
+  "pricing": {
+    "title": "Bei Rahisi, Wazi",
+    "description": "Chagua mpango unaofaa mahitaji ya biashara yako. Mipango yote inajumuisha ufikiaji wa soko la B2B na zana za ulinganifu wa AfCFTA.",
+    "subtitle": "Chagua mpango unaofaa mahitaji ya biashara yako. Mipango yote inajumuisha ufikiaji wa soko la B2B na zana za ulinganifu wa AfCFTA.",
+    "backToHome": "Rudi Nyumbani",
+    "loadingPlans": "Inapakia mipango...",
+    "monthly": "Kila Mwezi",
+    "annual": "Kila Mwaka",
+    "savePercent": "Okoa {percent}%",
+    "perMonth": "/mwezi",
+    "perYear": "/mwaka",
+    "billedAnnually": "{amount}/mw kwa bili ya mwaka",
+    "mostPopular": "Maarufu Zaidi",
+    "currentPlan": "Mpango wa Sasa",
+    "getStarted": "Anza",
+    "contactSales": "Wasiliana na Mauzo",
+    "custom": "Maalum",
+    "compareFeatures": "Linganisha Vipengele Vyote",
+    "faq": {
+      "title": "Maswali Yanayoulizwa Mara kwa Mara",
+      "changePlan": {
+        "question": "Je, ninaweza kubadilisha mpango wangu baadaye?",
+        "answer": "Ndiyo, unaweza kuboresha au kupunguza mpango wako wakati wowote. Unapoboresha, utapata ufikiaji wa papo hapo kwa vipengele vipya. Unapopunguza, mabadiliko yatatekelezwa katika mzunguko wako ujao wa bili."
+      },
+      "paymentMethods": {
+        "question": "Mnakubali njia gani za malipo?",
+        "answer": "Tunakubali malipo kupitia Chapa, ambayo inasaidia Pesa za Simu, uhawilisho wa benki, na malipo ya kadi. Malipo yote yanachakatwa kwa usalama."
+      },
+      "freeTrial": {
+        "question": "Kuna jaribio la bure?",
+        "answer": "Biashara mpya zinaweza kuanza na mpango wetu wa Starter kuchunguza jukwaa. Wasiliana nasi kwa chaguo za jaribio la biashara."
+      },
+      "limits": {
+        "question": "Nini kinatokea ninapofika kikomo changu?",
+        "answer": "Utapokea arifa unapokaribia kikomo cha mpango wako. Unapofika kikomo, unaweza kuboresha mpango wako kuendelea kutumia kipengele hicho."
+      }
+    },
+    "cta": {
+      "title": "Unahitaji Suluhisho Maalum?",
+      "description": "Mpango wetu wa Biashara unatoa vipengele maalum, msaada maalum, na ujumuishaji uliobinafsishwa kwa mashirika makubwa."
+    },
+    "plans": {
+      "starter": {
+        "name": "Mwanzo",
+        "target": "SMBs Ndogo",
+        "description": "Kamili kwa biashara ndogo zinazoanza"
+      },
+      "growth": {
+        "name": "Ukuaji",
+        "target": "SMBs Zinazokua",
+        "description": "Kwa biashara zinazokua ziko tayari kukua"
+      },
+      "pro": {
+        "name": "Pro",
+        "target": "Soko la Kati",
+        "description": "Mpango wenye vipengele kamili kwa biashara zilizojiimarisha"
+      },
+      "enterprise": {
+        "name": "Biashara",
+        "target": "Mashirika Makubwa",
+        "description": "Suluhisho maalum kwa mashirika makubwa"
+      }
+    },
+    "features": {
+      "products": "Bidhaa",
+      "monthlyOrders": "Maagizo ya Kila Mwezi",
+      "originCalculations": "Mahesabu ya Asili",
+      "hsCodeLookups": "Utafutaji wa Nambari za HS",
+      "teamMembers": "Wanatimu",
+      "prioritySupport": "Msaada wa Kipaumbele",
+      "analytics": "Uchambuzi",
+      "apiAccess": "Ufikiaji wa API",
+      "unlimited": "Bila Kikomo"
+    }
+  },
+  "subscription": {
+    "title": "Usajili",
+    "description": "Simamia usajili na bili yako",
+    "businessRequired": "Biashara Inahitajika",
+    "businessRequiredDescription": "Unahitaji kusajili biashara kabla ya kujisajili kwa mpango.",
+    "registerBusiness": "Sajili Biashara Yako",
+    "noActiveSubscription": "Hakuna Usajili Unaoendelea",
+    "noSubscriptionDescription": "Kwa sasa uko katika ngazi ya bure yenye vipengele vichache. Boresha ili kufungua bidhaa zaidi, maagizo, na zana za ulinganifu.",
+    "viewPlans": "Angalia Mipango",
+    "currentPlan": "Mpango wa Sasa",
+    "billedMonthly": "Bili ya kila mwezi",
+    "billedAnnually": "Bili ya kila mwaka",
+    "currentPeriod": "Kipindi cha sasa",
+    "cancelsSoon": "Itasitishwa Hivi Karibuni",
+    "active": "Inaendelea",
+    "trial": "Jaribio",
+    "pastDue": "Imepita Muda",
+    "cancelled": "Imesitishwa",
+    "cancellationNotice": "Usajili wako utaisha tarehe {date}",
+    "trialNotice": "Jaribio lako litaisha tarehe {date}",
+    "changePlan": "Badilisha Mpango",
+    "reactivate": "Washa Usajili Tena",
+    "reactivating": "Inawashwa tena...",
+    "cancel": "Sitisha Usajili",
+    "cancelling": "Inasitishwa...",
+    "usageThisMonth": "Matumizi Mwezi Huu",
+    "usageDescription": "Fuatilia matumizi yako dhidi ya vikomo vya mpango wako",
+    "planFeatures": "Vipengele vya Mpango",
+    "planFeaturesDescription": "Vipengele vilivyojumuishwa katika mpango wako wa {plan}",
+    "paymentSuccessful": "Malipo Yamefanikiwa!",
+    "subscriptionActivated": "Usajili wako umeamilishwa.",
+    "subscriptionCancelled": "Usajili Umesitishwa",
+    "subscriptionCancelledDescription": "Usajili wako utabaki hai hadi mwisho wa kipindi cha bili.",
+    "subscriptionReactivated": "Usajili Umewashwa Tena",
+    "subscriptionReactivatedDescription": "Usajili wako utaendelea mwishoni mwa kipindi cha bili.",
+    "failedToCancel": "Imeshindwa kusitisha usajili",
+    "failedToReactivate": "Imeshindwa kuwasha usajili tena"
   },
   "validation": {
     "required": "Sehemu hii inahitajika",
@@ -376,6 +493,7 @@
     },
     "nav": {
       "marketplace": "Soko",
+      "pricing": "Bei",
       "categories": "Kategoria",
       "howItWorks": "Inavyofanya Kazi",
       "features": "Vipengele",

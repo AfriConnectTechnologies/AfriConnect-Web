@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getOrCreateUser } from "./helpers";
+import { getOrCreateUser, checkProductLimit, PlanLimitError } from "./helpers";
+import { createLogger, flushLogs } from "./lib/logger";
 
 export const list = query({
   args: {
@@ -71,26 +72,73 @@ export const create = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const user = await getOrCreateUser(ctx);
+    const log = createLogger("products.create");
+    
+    try {
+      log.info("Product creation initiated", {
+        name: args.name,
+        price: args.price,
+        quantity: args.quantity,
+        category: args.category,
+        country: args.country,
+        status: args.status ?? "active",
+      });
 
-    const now = Date.now();
-    const productId = await ctx.db.insert("products", {
-      sellerId: user._id,
-      name: args.name,
-      description: args.description,
-      price: args.price,
-      quantity: args.quantity,
-      category: args.category,
-      status: args.status ?? "active",
-      country: args.country,
-      minOrderQuantity: args.minOrderQuantity,
-      specifications: args.specifications,
-      tags: args.tags,
-      createdAt: now,
-      updatedAt: now,
-    });
+      const user = await getOrCreateUser(ctx);
+      log.setContext({ userId: user.clerkId });
 
-    return await ctx.db.get(productId);
+      // Check product limit based on subscription plan
+      const productLimit = await checkProductLimit(ctx, user._id);
+      if (!productLimit.allowed) {
+        log.warn("Product creation failed - plan limit reached", {
+          currentProducts: productLimit.current,
+          limit: productLimit.limit,
+        });
+        await flushLogs();
+        throw new PlanLimitError("products", productLimit.current, productLimit.limit);
+      }
+
+      log.debug("Product limit check passed", {
+        currentProducts: productLimit.current,
+        limit: productLimit.limit,
+      });
+
+      const now = Date.now();
+      const productId = await ctx.db.insert("products", {
+        sellerId: user._id,
+        name: args.name,
+        description: args.description,
+        price: args.price,
+        quantity: args.quantity,
+        category: args.category,
+        status: args.status ?? "active",
+        country: args.country,
+        minOrderQuantity: args.minOrderQuantity,
+        specifications: args.specifications,
+        tags: args.tags,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      log.info("Product created successfully", {
+        productId,
+        name: args.name,
+        price: args.price,
+        quantity: args.quantity,
+        category: args.category,
+        status: args.status ?? "active",
+      });
+
+      await flushLogs();
+      return await ctx.db.get(productId);
+    } catch (error) {
+      log.error("Product creation failed", error, {
+        name: args.name,
+        price: args.price,
+      });
+      await flushLogs();
+      throw error;
+    }
   },
 });
 
@@ -109,74 +157,137 @@ export const update = mutation({
     tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
+    const log = createLogger("products.update");
+    
+    try {
+      log.info("Product update initiated", {
+        productId: args.id,
+        fieldsToUpdate: Object.keys(args).filter(k => k !== "id" && args[k as keyof typeof args] !== undefined),
+      });
+
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity === null) {
+        log.warn("Product update failed - not authenticated");
+        await flushLogs();
+        throw new Error("Not authenticated");
+      }
+
+      log.setContext({ userId: identity.subject });
+
+      const product = await ctx.db.get(args.id);
+      if (!product) {
+        log.error("Product update failed - not found", undefined, { productId: args.id });
+        await flushLogs();
+        throw new Error("Product not found");
+      }
+
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+
+      if (!user || product.sellerId !== user._id) {
+        log.warn("Product update failed - unauthorized", {
+          productId: args.id,
+          productOwnerId: product.sellerId,
+          requestingUserId: user?._id,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, ...updates } = args;
+      await ctx.db.patch(args.id, {
+        ...updates,
+        updatedAt: Date.now(),
+      });
+
+      log.info("Product updated successfully", {
+        productId: args.id,
+        productName: args.name || product.name,
+        fieldsUpdated: Object.keys(updates).filter(k => updates[k as keyof typeof updates] !== undefined),
+      });
+
+      await flushLogs();
+      return await ctx.db.get(args.id);
+    } catch (error) {
+      log.error("Product update failed", error, { productId: args.id });
+      await flushLogs();
+      throw error;
     }
-
-    const product = await ctx.db.get(args.id);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user || product.sellerId !== user._id) {
-      throw new Error("Unauthorized");
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _id, ...updates } = args;
-    await ctx.db.patch(args.id, {
-      ...updates,
-      updatedAt: Date.now(),
-    });
-
-    return await ctx.db.get(args.id);
   },
 });
 
 export const remove = mutation({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
+    const log = createLogger("products.remove");
+    
+    try {
+      log.info("Product removal initiated", { productId: args.id });
+
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity === null) {
+        log.warn("Product removal failed - not authenticated");
+        await flushLogs();
+        throw new Error("Not authenticated");
+      }
+
+      log.setContext({ userId: identity.subject });
+
+      const product = await ctx.db.get(args.id);
+      if (!product) {
+        log.error("Product removal failed - not found", undefined, { productId: args.id });
+        await flushLogs();
+        throw new Error("Product not found");
+      }
+
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+
+      if (!user || product.sellerId !== user._id) {
+        log.warn("Product removal failed - unauthorized", {
+          productId: args.id,
+          productOwnerId: product.sellerId,
+          requestingUserId: user?._id,
+        });
+        await flushLogs();
+        throw new Error("Unauthorized");
+      }
+
+      // Delete all associated images from Convex (R2 cleanup should be done via API)
+      const images = await ctx.db
+        .query("productImages")
+        .withIndex("by_product", (q) => q.eq("productId", args.id))
+        .collect();
+
+      const r2Keys: string[] = [];
+      for (const image of images) {
+        r2Keys.push(image.r2Key);
+        await ctx.db.delete(image._id);
+      }
+
+      await ctx.db.delete(args.id);
+
+      log.info("Product removed successfully", {
+        productId: args.id,
+        productName: product.name,
+        imagesDeleted: images.length,
+        r2KeysToCleanup: r2Keys.length,
+      });
+
+      await flushLogs();
+
+      // Return the R2 keys so the caller can delete them from R2
+      return { r2Keys };
+    } catch (error) {
+      log.error("Product removal failed", error, { productId: args.id });
+      await flushLogs();
+      throw error;
     }
-
-    const product = await ctx.db.get(args.id);
-    if (!product) {
-      throw new Error("Product not found");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user || product.sellerId !== user._id) {
-      throw new Error("Unauthorized");
-    }
-
-    // Delete all associated images from Convex (R2 cleanup should be done via API)
-    const images = await ctx.db
-      .query("productImages")
-      .withIndex("by_product", (q) => q.eq("productId", args.id))
-      .collect();
-
-    const r2Keys: string[] = [];
-    for (const image of images) {
-      r2Keys.push(image.r2Key);
-      await ctx.db.delete(image._id);
-    }
-
-    await ctx.db.delete(args.id);
-
-    // Return the R2 keys so the caller can delete them from R2
-    return { r2Keys };
   },
 });
 
