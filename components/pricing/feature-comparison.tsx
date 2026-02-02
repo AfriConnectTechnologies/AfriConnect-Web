@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, X, Minus } from "lucide-react";
+import { Check, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -49,23 +49,6 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
         name: "Bulk Product Upload",
         values: { starter: false, growth: true, pro: true, enterprise: true },
       },
-    ],
-  },
-  {
-    name: "AfCFTA Compliance",
-    features: [
-      {
-        name: "Origin Calculations/month",
-        values: { starter: "5", growth: "25", pro: "100", enterprise: "Unlimited" },
-      },
-      {
-        name: "HS Code Lookups/month",
-        values: { starter: "10", growth: "50", pro: "200", enterprise: "Unlimited" },
-      },
-      {
-        name: "Tariff Rate Finder",
-        values: { starter: true, growth: true, pro: true, enterprise: true },
-      },
       {
         name: "Certificate of Origin Prep",
         values: { starter: false, growth: true, pro: true, enterprise: true },
@@ -111,7 +94,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
     ],
   },
   {
-    name: "Support & API",
+    name: "Support",
     features: [
       {
         name: "Email Support",
@@ -120,14 +103,6 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       {
         name: "Priority Support",
         values: { starter: false, growth: "Email", pro: "Chat", enterprise: "Dedicated" },
-      },
-      {
-        name: "API Access",
-        values: { starter: false, growth: "Limited", pro: "Full", enterprise: "Full" },
-      },
-      {
-        name: "Custom Integrations",
-        values: { starter: false, growth: false, pro: false, enterprise: true },
       },
     ],
   },

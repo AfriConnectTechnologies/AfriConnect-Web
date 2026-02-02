@@ -426,7 +426,7 @@ export default function SubscriptionPage() {
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Need custom features?{" "}
-              <a href="mailto:sales@africonnect.com" className="text-primary hover:underline">
+              <a href="mailto:admin@africonnect.africa.com" className="text-primary hover:underline">
                 Contact us
               </a>{" "}
               for Enterprise pricing.

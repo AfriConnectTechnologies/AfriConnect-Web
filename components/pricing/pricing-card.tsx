@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 export interface PricingPlan {
   id: string;
@@ -30,6 +31,7 @@ export interface PricingPlan {
 interface PricingCardProps {
   plan: PricingPlan;
   billingCycle: "monthly" | "annual";
+  displayCurrency?: "USD" | "ETB";
   onSelect: (planId: string, billingCycle: "monthly" | "annual") => void;
   isLoading?: boolean;
   isCurrentPlan?: boolean;
@@ -39,23 +41,34 @@ interface PricingCardProps {
 export function PricingCard({
   plan,
   billingCycle,
+  displayCurrency = "USD",
   onSelect,
   isLoading,
   isCurrentPlan,
   hasActiveSubscription,
 }: PricingCardProps) {
-  // Always show monthly rate as the main price
-  const monthlyEquivalent = billingCycle === "annual" 
-    ? Math.round(plan.annualPrice / 12) 
+  // Always show monthly rate as the main price (DB stores in cents)
+  const monthlyEquivalent = billingCycle === "annual"
+    ? Math.round(plan.annualPrice / 12)
     : plan.monthlyPrice;
-  
-  // Format price based on currency
-  const formatPrice = (amountInCents: number) => {
-    const amount = amountInCents / 100;
-    if (plan.currency === "ETB") {
-      return `${amount.toLocaleString()} ETB`;
+
+  // Normalize to USD: DB may store USD cents or ETB cents (legacy)
+  const getAmountUSD = (amountInCents: number) => {
+    if (plan.currency === "USD") {
+      return amountInCents / 100;
     }
-    return `$${amount.toFixed(0)}`;
+    // Legacy ETB: convert ETB cents to USD
+    const amountETB = amountInCents / 100;
+    return amountETB / USD_TO_ETB_RATE;
+  };
+
+  const formatPrice = (amountInCents: number) => {
+    const amountUSD = getAmountUSD(amountInCents);
+    if (displayCurrency === "ETB") {
+      const amountETB = Math.round(amountUSD * USD_TO_ETB_RATE);
+      return `${amountETB.toLocaleString()} ETB`;
+    }
+    return `$${Math.round(amountUSD).toLocaleString()}`;
   };
   
   const priceDisplay = plan.isEnterprise ? "Custom" : formatPrice(monthlyEquivalent);

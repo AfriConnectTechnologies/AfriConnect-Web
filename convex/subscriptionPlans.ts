@@ -235,6 +235,40 @@ export const update = mutation({
   },
 });
 
+/** New USD prices (cents): $29=2900, $278=27800, etc. */
+const CANONICAL_USD_PRICES: Record<string, { monthlyPrice: number; annualPrice: number; targetCustomer: string }> = {
+  starter: { monthlyPrice: 2900, annualPrice: 27800, targetCustomer: "Small SMBs" },
+  growth: { monthlyPrice: 7900, annualPrice: 75800, targetCustomer: "Growing SMBs" },
+  pro: { monthlyPrice: 14900, annualPrice: 143000, targetCustomer: "Mid-Market" },
+  enterprise: { monthlyPrice: 0, annualPrice: 0, targetCustomer: "Large orgs" },
+};
+
+/**
+ * Update plan prices to canonical USD. One-time migration from ETB to USD.
+ * No auth required - this is a safe idempotent operation with hardcoded values.
+ */
+export const updatePricesToUsd = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const plans = await ctx.db.query("subscriptionPlans").collect();
+    let updated = 0;
+    for (const plan of plans) {
+      const canonical = CANONICAL_USD_PRICES[plan.slug];
+      if (canonical) {
+        await ctx.db.patch(plan._id, {
+          monthlyPrice: canonical.monthlyPrice,
+          annualPrice: canonical.annualPrice,
+          currency: "USD",
+          targetCustomer: canonical.targetCustomer,
+          updatedAt: Date.now(),
+        });
+        updated++;
+      }
+    }
+    return { updated };
+  },
+});
+
 /**
  * Delete all plans (for re-seeding)
  * Always requires admin authentication - force flag is ignored for external calls
@@ -274,7 +308,7 @@ export const deleteAll = mutation({
 
 /**
  * Seed initial plans (allows initial setup, requires admin if plans exist)
- * Uses ETB currency for Chapa compatibility
+ * Prices in USD (cents). Chapa checkout converts to ETB at payment time.
  */
 export const seedPlans = mutation({
   args: {},
@@ -291,17 +325,16 @@ export const seedPlans = mutation({
 
     const now = Date.now();
 
-    // Prices in ETB (cents) - using approximate conversion and rounded for the market
-    // ~1 USD = 55 ETB, prices rounded to nice numbers
+    // Prices in USD (cents): $29=2900, $278=27800, etc. Annual has 20% discount.
     const plans = [
       {
         name: "Starter",
         slug: "starter",
         description: "Perfect for small businesses just getting started",
         targetCustomer: "Small SMBs",
-        monthlyPrice: 150000, // 1,500 ETB/month
-        annualPrice: 1440000, // 14,400 ETB/year (20% off)
-        currency: "ETB",
+        monthlyPrice: 2900, // $29/month
+        annualPrice: 27800, // $278/year (20% off)
+        currency: "USD",
         features: JSON.stringify([
           "Up to 10 products",
           "50 orders per month",
@@ -321,9 +354,9 @@ export const seedPlans = mutation({
         slug: "growth",
         description: "For growing businesses ready to scale",
         targetCustomer: "Growing SMBs",
-        monthlyPrice: 400000, // 4,000 ETB/month
-        annualPrice: 3840000, // 38,400 ETB/year (20% off)
-        currency: "ETB",
+        monthlyPrice: 7900, // $79/month
+        annualPrice: 75800, // $758/year (20% off)
+        currency: "USD",
         features: JSON.stringify([
           "Up to 50 products",
           "200 orders per month",
@@ -344,9 +377,9 @@ export const seedPlans = mutation({
         slug: "pro",
         description: "Full-featured plan for established businesses",
         targetCustomer: "Mid-Market",
-        monthlyPrice: 800000, // 8,000 ETB/month
-        annualPrice: 7680000, // 76,800 ETB/year (20% off)
-        currency: "ETB",
+        monthlyPrice: 14900, // $149/month
+        annualPrice: 143000, // $1,430/year (20% off)
+        currency: "USD",
         features: JSON.stringify([
           "Up to 200 products",
           "1,000 orders per month",
@@ -370,7 +403,7 @@ export const seedPlans = mutation({
         targetCustomer: "Large orgs",
         monthlyPrice: 0, // Custom pricing
         annualPrice: 0,
-        currency: "ETB",
+        currency: "USD",
         features: JSON.stringify([
           "Unlimited products",
           "Unlimited orders",

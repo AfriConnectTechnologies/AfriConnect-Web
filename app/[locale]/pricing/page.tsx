@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Globe2, ArrowLeft, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { BillingToggle, PricingCard, FeatureComparison } from "@/components/pricing";
+import { BillingToggle, CurrencyToggle, PricingCard, FeatureComparison } from "@/components/pricing";
 import type { PricingPlan } from "@/components/pricing";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ export default function PricingPage() {
   const t = useTranslations("landing");
   const tPricing = useTranslations("pricing");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
+  const [displayCurrency, setDisplayCurrency] = useState<"USD" | "ETB">("USD");
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
 
   // Fetch plans from database
@@ -62,7 +63,7 @@ export default function PricingPage() {
 
     // Handle enterprise plan - contact sales
     if (plan.isEnterprise) {
-      window.location.href = "mailto:sales@africonnect.com?subject=Enterprise%20Plan%20Inquiry";
+      window.location.href = "mailto:admin@africonnect.africa.com?subject=Enterprise%20Plan%20Inquiry";
       return;
     }
 
@@ -200,6 +201,12 @@ export default function PricingPage() {
               onToggle={setBillingCycle}
               savingsPercent={20}
             />
+
+            {/* Currency Toggle */}
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <span className="text-sm text-muted-foreground">Display prices in</span>
+              <CurrencyToggle currency={displayCurrency} onToggle={setDisplayCurrency} />
+            </div>
           </div>
 
           {/* Pricing Cards */}
@@ -214,6 +221,7 @@ export default function PricingPage() {
                   key={plan.id}
                   plan={plan}
                   billingCycle={billingCycle}
+                  displayCurrency={displayCurrency}
                   onSelect={handleSelectPlan}
                   isLoading={loadingPlanId === plan.id}
                   isCurrentPlan={currentSubscription?.plan?.slug === plan.slug}
@@ -278,7 +286,7 @@ export default function PricingPage() {
               tailored integrations for large organizations.
             </p>
             <Button size="lg" asChild>
-              <a href="mailto:sales@africonnect.com">
+              <a href="mailto:admin@africonnect.africa.com">
                 <Mail className="mr-2 h-4 w-4" />
                 Contact Sales
               </a>

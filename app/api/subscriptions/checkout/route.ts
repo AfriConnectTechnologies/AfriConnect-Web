@@ -15,6 +15,7 @@ import {
   validatePaymentInput,
 } from "@/lib/validators/payment";
 import { Id } from "@/convex/_generated/dataModel";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 // Security headers
 const SECURITY_HEADERS = {
@@ -193,16 +194,22 @@ export async function POST(request: NextRequest) {
     const zeroDecimalCurrencies = ["JPY", "KRW", "VND"];
     const subunitDivisor = zeroDecimalCurrencies.includes(plan.currency) ? 1 : 100;
     
-    const amount = rawPrice;
-    const amountInDollars = amount / subunitDivisor; // Convert from subunits to major units
+    const amountInPlanCurrency = rawPrice / subunitDivisor; // USD or ETB major units
+
+    // Chapa uses ETB - convert USD to ETB when plan is in USD
+    const chargeCurrency = plan.currency === "USD" ? "ETB" : plan.currency;
+    const chargeAmount =
+      plan.currency === "USD"
+        ? Math.round(amountInPlanCurrency * USD_TO_ETB_RATE)
+        : amountInPlanCurrency;
 
     // Generate transaction reference
     const txRef = generateTxRef();
 
-    // Create payment record in Convex
+    // Create payment record in Convex (store actual charge amount in ETB for Chapa)
     const payment = await convex.mutation(api.payments.create, {
-      amount: amountInDollars,
-      currency: plan.currency,
+      amount: chargeAmount,
+      currency: chargeCurrency,
       paymentType: "subscription",
       metadata: JSON.stringify({
         planId,
@@ -250,10 +257,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Chapa payment
+    // Initialize Chapa payment (Chapa uses ETB)
     const chapaResponse = await initializePayment({
-      amount: amountInDollars.toString(),
-      currency: plan.currency,
+      amount: chargeAmount.toString(),
+      currency: chargeCurrency,
       email,
       first_name: firstName,
       last_name: lastName,
@@ -284,7 +291,7 @@ export async function POST(request: NextRequest) {
         plan: {
           name: plan.name,
           billingCycle,
-          amount: amountInDollars,
+          amount: amountInPlanCurrency,
           currency: plan.currency,
         },
       },
