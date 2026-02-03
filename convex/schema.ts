@@ -34,6 +34,15 @@ export default defineSchema({
     logoUrl: v.optional(v.string()),
     category: v.string(),
     verificationStatus: v.union(v.literal("pending"), v.literal("verified"), v.literal("rejected")),
+    // Registration documents
+    businessLicenceImageUrl: v.optional(v.string()),
+    businessLicenceNumber: v.optional(v.string()),
+    memoOfAssociationImageUrl: v.optional(v.string()),
+    tinCertificateImageUrl: v.optional(v.string()),
+    tinCertificateNumber: v.optional(v.string()),
+    hasImportExportPermit: v.optional(v.boolean()),
+    importExportPermitImageUrl: v.optional(v.string()),
+    importExportPermitNumber: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

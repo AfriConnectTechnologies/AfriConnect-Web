@@ -23,7 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, FileText, Loader2 } from "lucide-react";
+import { DocumentUpload } from "@/components/business";
 
 // African countries list
 const AFRICAN_COUNTRIES = [
@@ -116,6 +117,15 @@ export default function BusinessRegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [country, setCountry] = useState<string>("");
   const [category, setCategory] = useState<string>("");
+  // Registration documents
+  const [businessLicenceImageUrl, setBusinessLicenceImageUrl] = useState<string | null>(null);
+  const [businessLicenceNumber, setBusinessLicenceNumber] = useState<string>("");
+  const [memoOfAssociationImageUrl, setMemoOfAssociationImageUrl] = useState<string | null>(null);
+  const [tinCertificateImageUrl, setTinCertificateImageUrl] = useState<string | null>(null);
+  const [tinCertificateNumber, setTinCertificateNumber] = useState<string>("");
+  const [hasImportExportPermit, setHasImportExportPermit] = useState<string>("");
+  const [importExportPermitImageUrl, setImportExportPermitImageUrl] = useState<string | null>(null);
+  const [importExportPermitNumber, setImportExportPermitNumber] = useState<string>("");
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const createBusiness = useMutation(api.businesses.createBusiness);
@@ -147,6 +157,7 @@ export default function BusinessRegisterPage() {
     const city = (formData.get("city") as string) || undefined;
 
     try {
+      const hasPermit = hasImportExportPermit === "yes";
       const result = await createBusiness({
         name: businessName,
         description: (formData.get("description") as string) || undefined,
@@ -156,6 +167,14 @@ export default function BusinessRegisterPage() {
         phone: (formData.get("phone") as string) || undefined,
         website: (formData.get("website") as string) || undefined,
         category: category,
+        businessLicenceImageUrl: businessLicenceImageUrl ?? undefined,
+        businessLicenceNumber: businessLicenceNumber || undefined,
+        memoOfAssociationImageUrl: memoOfAssociationImageUrl ?? undefined,
+        tinCertificateImageUrl: tinCertificateImageUrl ?? undefined,
+        tinCertificateNumber: tinCertificateNumber || undefined,
+        hasImportExportPermit: hasPermit ? true : false,
+        importExportPermitImageUrl: hasPermit ? (importExportPermitImageUrl ?? undefined) : undefined,
+        importExportPermitNumber: hasPermit ? (importExportPermitNumber || undefined) : undefined,
       });
 
       // Send registration confirmation email to business owner
@@ -339,6 +358,105 @@ export default function BusinessRegisterPage() {
                 </div>
               </div>
             </div>
+
+            <Card className="max-w-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  {t("registrationDocuments")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label>{t("businessLicence")}</Label>
+                    <DocumentUpload
+                      docType="business-licence"
+                      label=""
+                      existingUrl={businessLicenceImageUrl}
+                      onUploadComplete={setBusinessLicenceImageUrl}
+                      onClear={() => setBusinessLicenceImageUrl(null)}
+                      disabled={isSubmitting}
+                    />
+                    <Input
+                      name="businessLicenceNumber"
+                      placeholder={t("businessLicenceNumberPlaceholder")}
+                      value={businessLicenceNumber}
+                      onChange={(e) => setBusinessLicenceNumber(e.target.value)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>{t("memoOfAssociation")}</Label>
+                    <DocumentUpload
+                      docType="memo-of-association"
+                      label=""
+                      existingUrl={memoOfAssociationImageUrl}
+                      onUploadComplete={setMemoOfAssociationImageUrl}
+                      onClear={() => setMemoOfAssociationImageUrl(null)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>{t("tinCertificate")}</Label>
+                    <DocumentUpload
+                      docType="tin-certificate"
+                      label=""
+                      existingUrl={tinCertificateImageUrl}
+                      onUploadComplete={setTinCertificateImageUrl}
+                      onClear={() => setTinCertificateImageUrl(null)}
+                      disabled={isSubmitting}
+                    />
+                    <Input
+                      name="tinCertificateNumber"
+                      placeholder={t("tinCertificateNumberPlaceholder")}
+                      value={tinCertificateNumber}
+                      onChange={(e) => setTinCertificateNumber(e.target.value)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="hasImportExportPermit">{t("hasImportExportPermit")}</Label>
+                    <Select
+                      value={hasImportExportPermit}
+                      onValueChange={setHasImportExportPermit}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger id="hasImportExportPermit">
+                        <SelectValue placeholder={t("hasImportExportPermitPlaceholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">{t("hasImportExportPermitYes")}</SelectItem>
+                        <SelectItem value="no">{t("hasImportExportPermitNo")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {hasImportExportPermit === "yes" && (
+                      <div className="mt-2 space-y-2 rounded-lg border p-4">
+                        <Label>{t("importExportPermit")}</Label>
+                        <DocumentUpload
+                          docType="import-export-permit"
+                          label=""
+                          existingUrl={importExportPermitImageUrl}
+                          onUploadComplete={setImportExportPermitImageUrl}
+                          onClear={() => setImportExportPermitImageUrl(null)}
+                          disabled={isSubmitting}
+                        />
+                        <Input
+                          name="importExportPermitNumber"
+                          placeholder={t("importExportPermitNumberPlaceholder")}
+                          value={importExportPermitNumber}
+                          onChange={(e) => setImportExportPermitNumber(e.target.value)}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="flex gap-4">
               <Button
