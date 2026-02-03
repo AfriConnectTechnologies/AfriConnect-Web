@@ -214,6 +214,8 @@ export default function BusinessProfilePage() {
 
   const status = statusConfig[business.verificationStatus];
   const StatusIcon = status.icon;
+  const canAccessCompliance =
+    (currentUser?.emailVerified ?? false) && business.verificationStatus === "verified";
 
   return (
     <div className="space-y-6">
@@ -491,63 +493,65 @@ export default function BusinessProfilePage() {
       </Card>
 
       {/* AfCFTA Compliance Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {t("afcftaCompliance")}
-          </CardTitle>
-          <CardDescription>
-            {t("afcftaComplianceDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {complianceSummary === undefined ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : complianceSummary.totalProducts === 0 ? (
-            <div className="text-center py-4">
-              <p className="text-muted-foreground mb-4">
-                {t("noComplianceCheckYet")}
-              </p>
-              <Button onClick={() => intlRouter.push("/compliance")}>
-                {t("startComplianceCheck")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-3 rounded-lg bg-muted/50">
-                  <div className="text-xl font-bold">{complianceSummary.totalProducts}</div>
-                  <div className="text-xs text-muted-foreground">{t("totalProducts")}</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
-                  <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                    {complianceSummary.compliantProducts}
-                  </div>
-                  <div className="text-xs text-green-700 dark:text-green-300">{t("eligible")}</div>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">
-                  <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                    {complianceSummary.nonCompliantProducts}
-                  </div>
-                  <div className="text-xs text-amber-700 dark:text-amber-300">{t("notEligible")}</div>
-                </div>
+      {canAccessCompliance && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              {t("afcftaCompliance")}
+            </CardTitle>
+            <CardDescription>
+              {t("afcftaComplianceDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {complianceSummary === undefined ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => intlRouter.push("/compliance")}
-              >
-                {t("manageProducts")}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : complianceSummary.totalProducts === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground mb-4">
+                  {t("noComplianceCheckYet")}
+                </p>
+                <Button onClick={() => intlRouter.push("/compliance")}>
+                  {t("startComplianceCheck")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <div className="text-xl font-bold">{complianceSummary.totalProducts}</div>
+                    <div className="text-xs text-muted-foreground">{t("totalProducts")}</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/30">
+                    <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                      {complianceSummary.compliantProducts}
+                    </div>
+                    <div className="text-xs text-green-700 dark:text-green-300">{t("eligible")}</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">
+                    <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
+                      {complianceSummary.nonCompliantProducts}
+                    </div>
+                    <div className="text-xs text-amber-700 dark:text-amber-300">{t("notEligible")}</div>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => intlRouter.push("/compliance")}
+                >
+                  {t("manageProducts")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

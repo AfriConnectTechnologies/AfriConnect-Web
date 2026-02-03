@@ -38,8 +38,13 @@ const baseNavItems: NavItem[] = [
 
 const sellerNavItems: NavItem[] = [
   { href: "/business/profile", labelKey: "myBusiness", icon: Building2 },
-  { href: "/compliance", labelKey: "compliance", icon: Shield },
 ];
+
+const complianceNavItem: NavItem = {
+  href: "/compliance",
+  labelKey: "compliance",
+  icon: Shield,
+};
 
 const buyerNavItems: NavItem[] = [
   { href: "/business/register", labelKey: "registerBusiness", icon: Building2 },
@@ -120,6 +125,7 @@ function SidebarContent({
   const tCommon = useTranslations("common");
   const cart = useQuery(api.cart.get);
   const currentUser = useQuery(api.users.getCurrentUser);
+  const myBusiness = useQuery(api.businesses.getMyBusiness);
   const { unreadCount } = useChatContext();
   const cartItemCount = cart?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
@@ -128,10 +134,17 @@ function SidebarContent({
     const items: NavItem[] = [...baseNavItems];
     const role = currentUser?.role;
     const hasBusiness = currentUser?.businessId !== undefined && currentUser?.businessId !== null;
+    const isEmailVerified = currentUser?.emailVerified ?? false;
+    const isBusinessVerified = myBusiness?.verificationStatus === "verified";
+    const canAccessCompliance = hasBusiness && isEmailVerified && isBusinessVerified;
 
     // AfCFTA/compliance only visible for registered businesses for now
     if (hasBusiness) {
-      items.push(...sellerNavItems); // My Business + Compliance
+      items.push(...sellerNavItems); // My Business
+    }
+
+    if (canAccessCompliance) {
+      items.push(complianceNavItem);
     }
 
     // Add register business option for buyers without a business
@@ -145,7 +158,12 @@ function SidebarContent({
     }
 
     return items;
-  }, [currentUser?.role, currentUser?.businessId]);
+  }, [
+    currentUser?.role,
+    currentUser?.businessId,
+    currentUser?.emailVerified,
+    myBusiness?.verificationStatus,
+  ]);
 
   return (
     <div className="flex h-full flex-col">

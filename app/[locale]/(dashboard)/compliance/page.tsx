@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
@@ -21,6 +22,15 @@ export default function CompliancePage() {
 
   const isLoading = currentUser === undefined || myBusiness === undefined;
   const hasBusiness = !!myBusiness;
+  const isEmailVerified = currentUser?.emailVerified ?? false;
+  const isBusinessVerified = myBusiness?.verificationStatus === "verified";
+  const canAccessCompliance = hasBusiness && isEmailVerified && isBusinessVerified;
+
+  useEffect(() => {
+    if (!isLoading && hasBusiness && !canAccessCompliance) {
+      router.push("/business/profile");
+    }
+  }, [isLoading, hasBusiness, canAccessCompliance, router]);
 
   if (isLoading) {
     return (
@@ -53,6 +63,14 @@ export default function CompliancePage() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (!canAccessCompliance) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
