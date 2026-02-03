@@ -2,8 +2,10 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import type { Readable } from "stream";
 
 // R2 configuration - lazy loaded
 function getR2Config() {
@@ -78,6 +80,19 @@ export function generateImageKey(
 }
 
 /**
+ * Generate a unique key for business registration documents (uploaded before business exists)
+ */
+export function generateBusinessDocKey(
+  userId: string,
+  docType: string,
+  filename: string
+): string {
+  const timestamp = Date.now();
+  const sanitizedFilename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+  return `business-docs/${userId}/${docType}/${timestamp}-${sanitizedFilename}`;
+}
+
+/**
  * Get a presigned URL for uploading an image directly to R2
  */
 export async function getPresignedUploadUrl(
@@ -109,6 +124,28 @@ export function getPublicUrl(key: string): string {
 }
 
 /**
+ * Extract R2 object key from a stored public URL (must be our R2 public URL).
+ * Returns null if URL is not from our R2 bucket.
+ */
+export function getKeyFromPublicUrl(url: string): string | null {
+  if (!isR2Configured()) return null;
+  const config = getR2Config();
+  const baseUrl = config.publicUrl.replace(/\/$/, "");
+  try {
+    const parsed = new URL(url);
+    const baseParsed = new URL(baseUrl);
+    if (parsed.origin !== baseParsed.origin) return null;
+    const path = parsed.pathname.replace(/^\//, "");
+    const basePath = baseParsed.pathname.replace(/^\//, "");
+    if (basePath && !path.startsWith(basePath)) return null;
+    const key = basePath ? path.slice(basePath.length).replace(/^\//, "") : path;
+    return key || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Delete an image from R2
  */
 export async function deleteObject(key: string): Promise<void> {
@@ -124,6 +161,33 @@ export async function deleteObject(key: string): Promise<void> {
 }
 
 /**
+ * Get an object from R2 by key (for streaming to client, e.g. admin document view).
+ * Returns body stream and content type.
+ */
+export async function getObject(key: string): Promise<{
+  body: Readable;
+  contentType?: string;
+}> {
+  const config = getR2Config();
+  const client = getR2Client();
+
+  const command = new GetObjectCommand({
+    Bucket: config.bucketName,
+    Key: key,
+  });
+
+  const response = await client.send(command);
+  const body = response.Body;
+  if (!body) {
+    throw new Error("Object not found or empty");
+  }
+  return {
+    body: body as Readable,
+    contentType: response.ContentType ?? undefined,
+  };
+}
+
+/**
  * Validate that a file is an acceptable image type
  */
 export function isValidImageType(contentType: string): boolean {
@@ -135,6 +199,26 @@ export function isValidImageType(contentType: string): boolean {
     "image/gif",
   ];
   return validTypes.includes(contentType);
+}
+
+/**
+ * Allowed MIME types for business registration documents (images + PDF).
+ * Shared with client (DocumentUpload) and server (upload-url API) to stay in sync.
+ */
+export const ALLOWED_DOCUMENT_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+] as const;
+
+/**
+ * Validate that a file is an acceptable document type (images + PDF) for business registration
+ */
+export function isValidDocumentType(contentType: string): boolean {
+  return (ALLOWED_DOCUMENT_TYPES as readonly string[]).includes(contentType);
 }
 
 /**

@@ -14,6 +14,14 @@ export const createBusiness = mutation({
     phone: v.optional(v.string()),
     website: v.optional(v.string()),
     category: v.string(),
+    businessLicenceImageUrl: v.optional(v.string()),
+    businessLicenceNumber: v.optional(v.string()),
+    memoOfAssociationImageUrl: v.optional(v.string()),
+    tinCertificateImageUrl: v.optional(v.string()),
+    tinCertificateNumber: v.optional(v.string()),
+    hasImportExportPermit: v.optional(v.boolean()),
+    importExportPermitImageUrl: v.optional(v.string()),
+    importExportPermitNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const log = createLogger("businesses.createBusiness");
@@ -49,6 +57,14 @@ export const createBusiness = mutation({
         phone: args.phone,
         website: args.website,
         category: args.category,
+        businessLicenceImageUrl: args.businessLicenceImageUrl,
+        businessLicenceNumber: args.businessLicenceNumber,
+        memoOfAssociationImageUrl: args.memoOfAssociationImageUrl,
+        tinCertificateImageUrl: args.tinCertificateImageUrl,
+        tinCertificateNumber: args.tinCertificateNumber,
+        hasImportExportPermit: args.hasImportExportPermit,
+        importExportPermitImageUrl: args.importExportPermitImageUrl,
+        importExportPermitNumber: args.importExportPermitNumber,
         verificationStatus: "pending",
         createdAt: now,
         updatedAt: now,
@@ -105,6 +121,14 @@ export const updateBusiness = mutation({
     website: v.optional(v.string()),
     category: v.optional(v.string()),
     logoUrl: v.optional(v.string()),
+    businessLicenceImageUrl: v.optional(v.string()),
+    businessLicenceNumber: v.optional(v.string()),
+    memoOfAssociationImageUrl: v.optional(v.string()),
+    tinCertificateImageUrl: v.optional(v.string()),
+    tinCertificateNumber: v.optional(v.string()),
+    hasImportExportPermit: v.optional(v.boolean()),
+    importExportPermitImageUrl: v.optional(v.string()),
+    importExportPermitNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const log = createLogger("businesses.updateBusiness");
@@ -157,6 +181,14 @@ export const updateBusiness = mutation({
       if (args.website !== undefined) updates.website = args.website;
       if (args.category !== undefined) updates.category = args.category;
       if (args.logoUrl !== undefined) updates.logoUrl = args.logoUrl;
+      if (args.businessLicenceImageUrl !== undefined) updates.businessLicenceImageUrl = args.businessLicenceImageUrl;
+      if (args.businessLicenceNumber !== undefined) updates.businessLicenceNumber = args.businessLicenceNumber;
+      if (args.memoOfAssociationImageUrl !== undefined) updates.memoOfAssociationImageUrl = args.memoOfAssociationImageUrl;
+      if (args.tinCertificateImageUrl !== undefined) updates.tinCertificateImageUrl = args.tinCertificateImageUrl;
+      if (args.tinCertificateNumber !== undefined) updates.tinCertificateNumber = args.tinCertificateNumber;
+      if (args.hasImportExportPermit !== undefined) updates.hasImportExportPermit = args.hasImportExportPermit;
+      if (args.importExportPermitImageUrl !== undefined) updates.importExportPermitImageUrl = args.importExportPermitImageUrl;
+      if (args.importExportPermitNumber !== undefined) updates.importExportPermitNumber = args.importExportPermitNumber;
 
       await ctx.db.patch(user.businessId, updates);
 
@@ -279,6 +311,42 @@ export const listBusinesses = query({
     );
 
     return businessesWithOwner.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// Check if a document URL is stored on any business (admin only). Used to authorize document view.
+// Uses indexed lookups (O(1) per field) instead of scanning all businesses.
+export const isDocumentUrlAllowed = query({
+  args: { url: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const [byLicence, byMemo, byTin, byPermit] = await Promise.all([
+      ctx.db
+        .query("businesses")
+        .withIndex("by_businessLicenceImageUrl", (q) =>
+          q.eq("businessLicenceImageUrl", args.url)
+        )
+        .first(),
+      ctx.db
+        .query("businesses")
+        .withIndex("by_memoOfAssociationImageUrl", (q) =>
+          q.eq("memoOfAssociationImageUrl", args.url)
+        )
+        .first(),
+      ctx.db
+        .query("businesses")
+        .withIndex("by_tinCertificateImageUrl", (q) =>
+          q.eq("tinCertificateImageUrl", args.url)
+        )
+        .first(),
+      ctx.db
+        .query("businesses")
+        .withIndex("by_importExportPermitImageUrl", (q) =>
+          q.eq("importExportPermitImageUrl", args.url)
+        )
+        .first(),
+    ]);
+    return !!(byLicence ?? byMemo ?? byTin ?? byPermit);
   },
 });
 

@@ -48,6 +48,8 @@ import {
   Clock,
   MapPin,
   ExternalLink,
+  Eye,
+  FileText,
 } from "lucide-react";
 
 type VerificationStatus = "pending" | "verified" | "rejected";
@@ -88,7 +90,17 @@ export default function AdminBusinessesPage() {
     businessName: string;
     action: "verify" | "reject";
   } | null>(null);
+  const [viewDialogBusiness, setViewDialogBusiness] = useState<
+    NonNullable<typeof businesses> extends (infer B)[] ? B | null : null
+  >(null);
+  const [viewingDocumentUrl, setViewingDocumentUrl] = useState<string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const documentViewerSrc =
+    viewingDocumentUrl &&
+    `/api/documents/view?url=${encodeURIComponent(viewingDocumentUrl)}`;
 
   const businesses = useQuery(
     api.businesses.listBusinesses,
@@ -342,6 +354,15 @@ export default function AdminBusinessesPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setViewDialogBusiness(business)}
+                              title="View details and documents"
+                            >
+                              <Eye className="mr-1 h-4 w-4" />
+                              View
+                            </Button>
                             {business.website && (
                               <Button
                                 variant="ghost"
@@ -438,6 +459,293 @@ export default function AdminBusinessesPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* View business details and documents dialog */}
+      <Dialog
+        open={!!viewDialogBusiness}
+        onOpenChange={(open) => !open && setViewDialogBusiness(null)}
+      >
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-4xl overflow-y-auto p-0 sm:w-[90vw]">
+          <DialogHeader className="border-b bg-muted/30 px-6 py-5">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                <Building className="h-5 w-5 text-primary" />
+              </div>
+              <span className="font-semibold tracking-tight">
+                {viewDialogBusiness?.name}
+              </span>
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-base text-muted-foreground">
+              Business details and registration documents for review
+            </DialogDescription>
+          </DialogHeader>
+          {viewDialogBusiness && (
+            <div className="space-y-0 p-6">
+              <section className="rounded-xl border bg-card p-5 shadow-sm">
+                <h4 className="mb-4 flex items-center gap-2 border-b pb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Building className="h-4 w-4" />
+                  Business information
+                </h4>
+                <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                  {viewDialogBusiness.description && (
+                    <div className="sm:col-span-2">
+                      <dt className="mb-0.5 text-muted-foreground">Description</dt>
+                      <dd className="rounded-md bg-muted/50 px-3 py-2 text-foreground">
+                        {viewDialogBusiness.description}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="mb-0.5 text-muted-foreground">Owner</dt>
+                    <dd className="font-medium">
+                      {viewDialogBusiness.owner?.name || "—"}
+                      <span className="block text-muted-foreground">
+                        {viewDialogBusiness.owner?.email || "—"}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="mb-0.5 text-muted-foreground">Location</dt>
+                    <dd>
+                      {viewDialogBusiness.city
+                        ? `${viewDialogBusiness.city}, ${viewDialogBusiness.country}`
+                        : viewDialogBusiness.country}
+                    </dd>
+                  </div>
+                  {viewDialogBusiness.address && (
+                    <div className="sm:col-span-2">
+                      <dt className="mb-0.5 text-muted-foreground">Address</dt>
+                      <dd className="rounded-md bg-muted/50 px-3 py-2">
+                        {viewDialogBusiness.address}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="mb-0.5 text-muted-foreground">Category</dt>
+                    <dd>
+                      <Badge variant="secondary" className="font-medium">
+                        {viewDialogBusiness.category}
+                      </Badge>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="mb-0.5 text-muted-foreground">Status</dt>
+                    <dd>
+                      <Badge
+                        variant={
+                          statusConfig[viewDialogBusiness.verificationStatus]
+                            ?.variant ?? "secondary"
+                        }
+                        className="font-medium"
+                      >
+                        {statusConfig[viewDialogBusiness.verificationStatus]?.label ??
+                          viewDialogBusiness.verificationStatus}
+                      </Badge>
+                    </dd>
+                  </div>
+                  {viewDialogBusiness.phone && (
+                    <div>
+                      <dt className="mb-0.5 text-muted-foreground">Phone</dt>
+                      <dd>{viewDialogBusiness.phone}</dd>
+                    </div>
+                  )}
+                  {viewDialogBusiness.website && (
+                    <div>
+                      <dt className="mb-0.5 text-muted-foreground">Website</dt>
+                      <dd>
+                        <a
+                          href={viewDialogBusiness.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+                        >
+                          {viewDialogBusiness.website}
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="mb-0.5 text-muted-foreground">Registered</dt>
+                    <dd>
+                      {new Date(viewDialogBusiness.createdAt).toLocaleDateString(
+                        undefined,
+                        {
+                          dateStyle: "medium",
+                        }
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section className="rounded-xl border bg-card p-5 shadow-sm">
+                <h4 className="mb-4 flex items-center gap-2 border-b pb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  Registration documents
+                </h4>
+                <dl className="space-y-4 text-sm">
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <dt className="mb-1.5 font-medium text-foreground">
+                      Business licence
+                    </dt>
+                    <dd className="flex flex-wrap items-center gap-2">
+                      {viewDialogBusiness.businessLicenceImageUrl ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() =>
+                            setViewingDocumentUrl(
+                              viewDialogBusiness.businessLicenceImageUrl ?? null
+                            )
+                          }
+                        >
+                          View document
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">Not provided</span>
+                      )}
+                      {viewDialogBusiness.businessLicenceNumber && (
+                        <span className="rounded-md border bg-background px-2.5 py-1 font-mono text-xs">
+                          {viewDialogBusiness.businessLicenceNumber}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <dt className="mb-1.5 font-medium text-foreground">
+                      Memo of association
+                    </dt>
+                    <dd>
+                      {viewDialogBusiness.memoOfAssociationImageUrl ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() =>
+                            setViewingDocumentUrl(
+                              viewDialogBusiness.memoOfAssociationImageUrl ?? null
+                            )
+                          }
+                        >
+                          View document
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">Not provided</span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <dt className="mb-1.5 font-medium text-foreground">
+                      TIN certificate
+                    </dt>
+                    <dd className="flex flex-wrap items-center gap-2">
+                      {viewDialogBusiness.tinCertificateImageUrl ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() =>
+                            setViewingDocumentUrl(
+                              viewDialogBusiness.tinCertificateImageUrl ?? null
+                            )
+                          }
+                        >
+                          View document
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">Not provided</span>
+                      )}
+                      {viewDialogBusiness.tinCertificateNumber && (
+                        <span className="rounded-md border bg-background px-2.5 py-1 font-mono text-xs">
+                          {viewDialogBusiness.tinCertificateNumber}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <dt className="mb-1.5 font-medium text-foreground">
+                      Import/export permit (foreign)
+                      {viewDialogBusiness.hasImportExportPermit !== undefined && (
+                        <span className="ml-1.5 font-normal text-muted-foreground">
+                          — {viewDialogBusiness.hasImportExportPermit ? "Yes" : "No"}
+                        </span>
+                      )}
+                    </dt>
+                    <dd className="flex flex-wrap items-center gap-2">
+                      {viewDialogBusiness.hasImportExportPermit &&
+                      viewDialogBusiness.importExportPermitImageUrl ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() =>
+                              setViewingDocumentUrl(
+                                viewDialogBusiness.importExportPermitImageUrl ??
+                                  null
+                              )
+                            }
+                          >
+                            View document
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                          {viewDialogBusiness.importExportPermitNumber && (
+                            <span className="rounded-md border bg-background px-2.5 py-1 font-mono text-xs">
+                              {viewDialogBusiness.importExportPermitNumber}
+                            </span>
+                          )}
+                        </>
+                      ) : viewDialogBusiness.hasImportExportPermit ? (
+                        <span className="text-muted-foreground">Not provided</span>
+                      ) : (
+                        <span className="text-muted-foreground">N/A</span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Document viewer dialog – renders document in-page via proxy */}
+      <Dialog
+        open={!!viewingDocumentUrl}
+        onOpenChange={(open) => !open && setViewingDocumentUrl(null)}
+      >
+        <DialogContent className="flex h-[85vh] max-h-[85vh] w-[90vw] max-w-4xl flex-col">
+          <DialogHeader>
+            <DialogTitle>Document</DialogTitle>
+            <DialogDescription>
+              Viewing document (served from storage)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 rounded-md border bg-muted/30">
+            {documentViewerSrc && (
+              <iframe
+                title="Document viewer"
+                src={documentViewerSrc}
+                className="h-full w-full rounded-md border-0"
+                style={{ minHeight: "70vh" }}
+              />
+            )}
+          </div>
+          <div className="flex justify-end border-t pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setViewingDocumentUrl(null)}
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <Dialog

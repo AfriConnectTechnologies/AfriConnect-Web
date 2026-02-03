@@ -3,11 +3,20 @@ import { auth } from "@clerk/nextjs/server";
 import {
   getPresignedUploadUrl,
   generateImageKey,
+  generateBusinessDocKey,
   getPublicUrl,
   isValidImageType,
+  isValidDocumentType,
   isR2Configured,
   MAX_FILE_SIZE,
 } from "@/lib/r2";
+
+const BUSINESS_REGISTRATION_DOC_TYPES = [
+  "business-licence",
+  "memo-of-association",
+  "tin-certificate",
+  "import-export-permit",
+] as const;
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,22 +38,46 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { productId, filename, contentType, fileSize } = body;
+    const { productId, filename, contentType, fileSize, context, docType } = body;
 
-    // Validate required fields
-    if (!productId || !filename || !contentType) {
-      return NextResponse.json(
-        { error: "Missing required fields: productId, filename, contentType" },
-        { status: 400 }
-      );
+    const isBusinessRegistration =
+      context === "business-registration" &&
+      docType &&
+      BUSINESS_REGISTRATION_DOC_TYPES.includes(docType);
+
+    if (isBusinessRegistration) {
+      // Business registration document upload (no productId)
+      if (!filename || !contentType) {
+        return NextResponse.json(
+          { error: "Missing required fields: filename, contentType" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Product image upload (existing flow)
+      if (!productId || !filename || !contentType) {
+        return NextResponse.json(
+          { error: "Missing required fields: productId, filename, contentType" },
+          { status: 400 }
+        );
+      }
     }
 
-    // Validate content type
-    if (!isValidImageType(contentType)) {
-      return NextResponse.json(
-        { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF" },
-        { status: 400 }
-      );
+    // Validate content type (business docs allow images + PDF; product images allow images only)
+    if (isBusinessRegistration) {
+      if (!isValidDocumentType(contentType)) {
+        return NextResponse.json(
+          { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, PDF" },
+          { status: 400 }
+        );
+      }
+    } else {
+      if (!isValidImageType(contentType)) {
+        return NextResponse.json(
+          { error: "Invalid file type. Allowed: JPEG, PNG, WebP, GIF" },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate file size
@@ -55,8 +88,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique key for the image
-    const key = generateImageKey(productId, filename);
+    const key = isBusinessRegistration
+      ? generateBusinessDocKey(userId, docType, filename)
+      : generateImageKey(productId, filename);
 
     // Get presigned upload URL
     const uploadUrl = await getPresignedUploadUrl(key, contentType);
