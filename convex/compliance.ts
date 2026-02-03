@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireUser, requireSeller } from "./helpers";
+import { requireUser } from "./helpers";
 import { createLogger, flushLogs } from "./lib/logger";
 
 // Add a product to a business with HS code compliance info
@@ -24,7 +24,7 @@ export const addBusinessProduct = mutation({
         isCompliant: args.isCompliant,
       });
 
-      const user = await requireSeller(ctx);
+      const user = await requireUser(ctx);
       log.setContext({ userId: user.clerkId, businessId: user.businessId });
 
       if (!user.businessId) {
@@ -89,7 +89,7 @@ export const removeBusinessProduct = mutation({
     productId: v.id("businessProducts"),
   },
   handler: async (ctx, args) => {
-    const user = await requireSeller(ctx);
+    const user = await requireUser(ctx);
 
     if (!user.businessId) {
       throw new Error("You don't have a registered business");

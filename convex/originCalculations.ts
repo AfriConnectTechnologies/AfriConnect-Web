@@ -1,9 +1,9 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireUser, requireSeller, checkOriginCalculationLimit, PlanLimitError } from "./helpers";
+import { requireUser } from "./helpers";
 import { createLogger, flushLogs } from "./lib/logger";
 
-// Save a new origin calculation
+// Save a new origin calculation (AfCFTA offered free for all sellers and buyers - no plan limit)
 export const saveOriginCalculation = mutation({
   args: {
     productId: v.optional(v.id("businessProducts")),
@@ -26,7 +26,7 @@ export const saveOriginCalculation = mutation({
         hasProductId: !!args.productId,
       });
 
-      const user = await requireSeller(ctx);
+      const user = await requireUser(ctx);
       log.setContext({ userId: user.clerkId, businessId: user.businessId });
 
       if (!user.businessId) {
@@ -35,25 +35,7 @@ export const saveOriginCalculation = mutation({
         throw new Error("You don't have a registered business");
       }
 
-      // Check origin calculation limit based on subscription plan
-      const calculationLimit = await checkOriginCalculationLimit(ctx, user.businessId);
-      if (!calculationLimit.allowed) {
-        log.warn("Origin calculation failed - plan limit reached", {
-          currentCalculations: calculationLimit.current,
-          limit: calculationLimit.limit,
-        });
-        await flushLogs();
-        throw new PlanLimitError(
-          "origin calculations this month",
-          calculationLimit.current,
-          calculationLimit.limit
-        );
-      }
-
-      log.debug("Origin calculation limit check passed", {
-        currentCalculations: calculationLimit.current,
-        limit: calculationLimit.limit,
-      });
+      // AfCFTA is free for all - no subscription/plan limit on origin calculations
 
       // Calculate EXW and VNM percentage
       const exWorksPrice =
@@ -131,7 +113,7 @@ export const updateOriginCalculation = mutation({
     currency: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireSeller(ctx);
+    const user = await requireUser(ctx);
 
     if (!user.businessId) {
       throw new Error("You don't have a registered business");
@@ -187,7 +169,7 @@ export const deleteOriginCalculation = mutation({
     calculationId: v.id("originCalculations"),
   },
   handler: async (ctx, args) => {
-    const user = await requireSeller(ctx);
+    const user = await requireUser(ctx);
 
     if (!user.businessId) {
       throw new Error("You don't have a registered business");

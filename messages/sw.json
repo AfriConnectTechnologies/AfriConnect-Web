@@ -759,7 +759,8 @@
     "selectCountry": "Chagua Nchi/Eneo",
     "ethiopia": "Ethiopia",
     "kenyaEac": "Kenya (EAC)",
-    "countryDescription": "Chagua nchi kutafuta ratiba za ushuru"
+    "countryDescription": "Chagua nchi kutafuta ratiba za ushuru",
+    "registerToSaveProducts": "Sajili biashara yako ili kuhifadhi bidhaa kwenye orodha yako."
   },
   "originEligibility": {
     "title": "Ustahiki wa Cheti cha Asili",
@@ -812,6 +813,7 @@
     "saveCalculation": "Hifadhi Hesabu",
     "saving": "Inahifadhi...",
     "calculationSaved": "Hesabu imehifadhiwa kwa mafanikio",
+    "registerToSaveCalculation": "Sajili biashara yako ili kuhifadhi hesabu hii.",
     "calculationDeleted": "Hesabu imefutwa kwa mafanikio",
     "deleteCalculation": "Futa Hesabu",
     "failedToSave": "Imeshindwa kuhifadhi hesabu",

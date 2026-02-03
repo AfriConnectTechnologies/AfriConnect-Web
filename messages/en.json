@@ -759,7 +759,8 @@
     "selectCountry": "Select Country/Region",
     "ethiopia": "Ethiopia",
     "kenyaEac": "Kenya (EAC)",
-    "countryDescription": "Select the country to search tariff schedules for"
+    "countryDescription": "Select the country to search tariff schedules for",
+    "registerToSaveProducts": "Register your business to save products to your list."
   },
   "originEligibility": {
     "title": "Certificate of Origin Eligibility",
@@ -812,6 +813,7 @@
     "saveCalculation": "Save Calculation",
     "saving": "Saving...",
     "calculationSaved": "Calculation saved successfully",
+    "registerToSaveCalculation": "Register your business to save this calculation.",
     "calculationDeleted": "Calculation deleted successfully",
     "deleteCalculation": "Delete Calculation",
     "failedToSave": "Failed to save calculation",

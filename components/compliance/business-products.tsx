@@ -33,12 +33,19 @@ export function BusinessProducts({
   const [showSearch, setShowSearch] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<TariffCountry>("ethiopia");
 
+  const myBusiness = useQuery(api.businesses.getMyBusiness);
   const products = useQuery(api.compliance.getMyBusinessProducts);
   const summary = useQuery(api.compliance.getComplianceSummary);
   const addProduct = useMutation(api.compliance.addBusinessProduct);
   const removeProduct = useMutation(api.compliance.removeBusinessProduct);
 
+  const hasBusiness = !!myBusiness;
+
   const handleAddProduct = async (result: HSCodeResult) => {
+    if (!hasBusiness) {
+      toast.info(t("registerToSaveProducts"));
+      return;
+    }
     setIsAddingProduct(true);
     try {
       await addProduct({

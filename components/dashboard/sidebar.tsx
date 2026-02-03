@@ -129,9 +129,12 @@ function SidebarContent({
     const role = currentUser?.role;
     const hasBusiness = currentUser?.businessId !== undefined && currentUser?.businessId !== null;
 
-    // Add seller nav items if user is a seller with a business
-    if ((role === "seller" || role === "admin") && hasBusiness) {
-      items.push(...sellerNavItems);
+    // AfCFTA/compliance free for all – show for everyone (buyers and sellers)
+    if (hasBusiness) {
+      items.push(...sellerNavItems); // My Business + Compliance
+    } else {
+      // Buyers (and anyone without a business) see Compliance so they can discover AfCFTA
+      items.push({ href: "/compliance", labelKey: "compliance", icon: Shield });
     }
 
     // Add register business option for buyers without a business

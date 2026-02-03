@@ -86,10 +86,13 @@ export function OriginEligibilityCalculator({
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
 
+  const myBusiness = useQuery(api.businesses.getMyBusiness);
   const summary = useQuery(api.originCalculations.getOriginCalculationsSummary);
   const calculations = useQuery(api.originCalculations.getMyOriginCalculations);
   const saveCalculation = useMutation(api.originCalculations.saveOriginCalculation);
   const deleteCalculation = useMutation(api.originCalculations.deleteOriginCalculation);
+
+  const hasBusiness = !!myBusiness;
 
   // Calculations
   const exWorksPrice =
@@ -150,6 +153,10 @@ export function OriginEligibilityCalculator({
   };
 
   const handleSave = async () => {
+    if (!hasBusiness) {
+      toast.info(t("registerToSaveCalculation"));
+      return;
+    }
     setIsSaving(true);
     try {
       await saveCalculation({
@@ -583,26 +590,33 @@ export function OriginEligibilityCalculator({
               currency={data.currency}
             />
 
-            {/* Save Button */}
+            {/* Save Button – requires business to save */}
             {!hasSaved && (
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="w-full"
-                size="lg"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {t("saving")}
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {t("saveCalculation")}
-                  </>
+              <div className="space-y-2">
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {t("saving")}
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      {t("saveCalculation")}
+                    </>
+                  )}
+                </Button>
+                {!hasBusiness && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    {t("registerToSaveCalculation")}
+                  </p>
                 )}
-              </Button>
+              </div>
             )}
 
             {hasSaved && (

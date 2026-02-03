@@ -759,7 +759,8 @@
     "selectCountry": "ሀገር/ክልል ይምረጡ",
     "ethiopia": "ኢትዮጵያ",
     "kenyaEac": "ኬንያ (EAC)",
-    "countryDescription": "የታሪፍ መርሐግብሮችን ለመፈለግ ሀገር ይምረጡ"
+    "countryDescription": "የታሪፍ መርሐግብሮችን ለመፈለግ ሀገር ይምረጡ",
+    "registerToSaveProducts": "ምርቶችዎን በዝርዝርዎ ለማስቀጠል ንግድዎን ይመዝገቡ።"
   },
   "originEligibility": {
     "title": "የመነሻ ሰርተፊኬት ብቁነት",
@@ -812,6 +813,7 @@
     "saveCalculation": "ስሌት አስቀምጥ",
     "saving": "በማስቀመጥ ላይ...",
     "calculationSaved": "ስሌት በተሳካ ሁኔታ ተቀምጧል",
+    "registerToSaveCalculation": "ይህን ስሌት ለማስቀጠል ንግድዎን ይመዝገቡ።",
     "calculationDeleted": "ስሌት በተሳካ ሁኔታ ተሰርዟል",
     "deleteCalculation": "ስሌት ሰርዝ",
     "failedToSave": "ስሌት ማስቀመጥ አልተሳካም",
