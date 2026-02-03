@@ -30,8 +30,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Search, Loader2, Users, Shield, Building2 } from "lucide-react";
+import { Search, Loader2, Users, Shield, Building2, LogIn } from "lucide-react";
+import { useClerk } from "@clerk/nextjs";
 
 type UserRole = "buyer" | "seller" | "admin";
 
@@ -49,9 +51,11 @@ const roleIcons: Record<UserRole, React.ReactNode> = {
 
 export default function AdminUsersPage() {
   const { isLoading: authLoading, isAuthorized } = useRequireAdmin();
+  const { signOut } = useClerk();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [updatingUserId, setUpdatingUserId] = useState<Id<"users"> | null>(null);
+  const [impersonatingUserId, setImpersonatingUserId] = useState<Id<"users"> | null>(null);
 
   const users = useQuery(
     api.users.listUsers,
@@ -76,6 +80,39 @@ export default function AdminUsersPage() {
       toast.error(errorMessage);
     } finally {
       setUpdatingUserId(null);
+    }
+  };
+
+  const handleImpersonate = async (userId: Id<"users">, label: string) => {
+    const confirmed = window.confirm(
+      `Impersonate ${label}? This will switch your session to their account.`
+    );
+    if (!confirmed) return;
+
+    setImpersonatingUserId(userId);
+    try {
+      const response = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to impersonate user");
+      }
+
+      if (!data?.url) {
+        throw new Error("Missing impersonation URL");
+      }
+
+      await signOut({ redirectUrl: data.url });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to impersonate user";
+      toast.error(message);
+    } finally {
+      setImpersonatingUserId(null);
     }
   };
 
@@ -237,26 +274,48 @@ export default function AdminUsersPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Select
-                          value={user.role || "buyer"}
-                          onValueChange={(v) =>
-                            handleRoleChange(user._id, v as UserRole)
-                          }
-                          disabled={updatingUserId === user._id}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            {updatingUserId === user._id ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <Select
+                            value={user.role || "buyer"}
+                            onValueChange={(v) =>
+                              handleRoleChange(user._id, v as UserRole)
+                            }
+                            disabled={updatingUserId === user._id}
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              {updatingUserId === user._id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <SelectValue />
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="buyer">Buyer</SelectItem>
+                              <SelectItem value="seller">Seller</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleImpersonate(
+                                user._id,
+                                user.name || user.email || "this user"
+                              )
+                            }
+                            disabled={impersonatingUserId === user._id}
+                          >
+                            {impersonatingUserId === user._id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <SelectValue />
+                              <>
+                                <LogIn className="h-4 w-4 mr-2" />
+                                Impersonate
+                              </>
                             )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="buyer">Buyer</SelectItem>
-                            <SelectItem value="seller">Seller</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
