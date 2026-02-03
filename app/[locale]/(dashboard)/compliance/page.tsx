@@ -2,26 +2,57 @@
 
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Loader2, Shield, ExternalLink, Info, FileCheck } from "lucide-react";
 import { BusinessProducts, OriginEligibilityCalculator } from "@/components/compliance";
 import { Separator } from "@/components/ui/separator";
 
 export default function CompliancePage() {
   const t = useTranslations("compliance");
+  const router = useRouter();
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const myBusiness = useQuery(api.businesses.getMyBusiness);
   const complianceSummary = useQuery(api.compliance.getComplianceSummary);
 
   const isLoading = currentUser === undefined || myBusiness === undefined;
+  const hasBusiness = !!myBusiness;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!hasBusiness) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("description")}</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              {t("businessRequired")}
+            </CardTitle>
+            <CardDescription>
+              {t("businessRequiredDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push("/business/register")}>
+              {t("registerBusiness")}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
