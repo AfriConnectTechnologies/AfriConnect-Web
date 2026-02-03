@@ -5,15 +5,6 @@ import { api } from "@/convex/_generated/api";
 import { getObject, getKeyFromPublicUrl, isR2Configured } from "@/lib/r2";
 import { Readable } from "stream";
 
-function streamToBuffer(stream: Readable): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    stream.on("data", (chunk: Buffer) => chunks.push(chunk));
-    stream.on("error", reject);
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-  });
-}
-
 export async function GET(request: NextRequest) {
   try {
     const { userId, getToken } = await auth();
@@ -81,9 +72,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { body, contentType } = await getObject(key);
-    const buffer = await streamToBuffer(body);
+    const webStream = Readable.toWeb(body) as ReadableStream<Uint8Array>;
 
-    return new NextResponse(new Uint8Array(buffer), {
+    return new NextResponse(webStream, {
       headers: {
         "Content-Type": contentType ?? "application/octet-stream",
         "Cache-Control": "private, max-age=300",

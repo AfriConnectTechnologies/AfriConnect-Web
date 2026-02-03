@@ -49,7 +49,11 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_status", ["verificationStatus"])
     .index("by_country", ["country"])
-    .index("by_category", ["category"]),
+    .index("by_category", ["category"])
+    .index("by_businessLicenceImageUrl", ["businessLicenceImageUrl"])
+    .index("by_memoOfAssociationImageUrl", ["memoOfAssociationImageUrl"])
+    .index("by_tinCertificateImageUrl", ["tinCertificateImageUrl"])
+    .index("by_importExportPermitImageUrl", ["importExportPermitImageUrl"]),
 
   orders: defineTable({
     userId: v.string(), // buyerId for marketplace orders

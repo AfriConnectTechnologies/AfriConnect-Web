@@ -5,17 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Upload, Loader2, CheckCircle2, X, FileImage } from "lucide-react";
 import { toast } from "sonner";
+import {
+  MAX_FILE_SIZE,
+  ALLOWED_DOCUMENT_TYPES,
+} from "@/lib/r2";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "application/pdf",
-];
 const R2_NOT_CONFIGURED = "R2_NOT_CONFIGURED";
+const DEFAULT_ACCEPT = ALLOWED_DOCUMENT_TYPES.join(",");
 
 export type BusinessDocType =
   | "business-licence"
@@ -39,7 +35,7 @@ export function DocumentUpload({
   onClear,
   existingUrl,
   disabled = false,
-  accept = "image/jpeg,image/jpg,image/png,image/webp,image/gif,application/pdf",
+  accept = DEFAULT_ACCEPT,
   label,
 }: DocumentUploadProps) {
   const [status, setStatus] = useState<"idle" | "uploading" | "complete" | "error">("idle");
@@ -51,7 +47,8 @@ export function DocumentUpload({
 
   const validateFile = (file: File): string | null => {
     const types = accept.split(",").map((t) => t.trim());
-    const allowed = types.length ? types : ALLOWED_TYPES;
+    const allowed =
+      types.length > 0 ? types : [...ALLOWED_DOCUMENT_TYPES];
     if (!allowed.some((t) => file.type === t)) {
       return "Invalid file type. Allowed: JPEG, PNG, WebP, GIF, PDF";
     }

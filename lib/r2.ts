@@ -202,18 +202,23 @@ export function isValidImageType(contentType: string): boolean {
 }
 
 /**
+ * Allowed MIME types for business registration documents (images + PDF).
+ * Shared with client (DocumentUpload) and server (upload-url API) to stay in sync.
+ */
+export const ALLOWED_DOCUMENT_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+] as const;
+
+/**
  * Validate that a file is an acceptable document type (images + PDF) for business registration
  */
 export function isValidDocumentType(contentType: string): boolean {
-  const validTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-    "application/pdf",
-  ];
-  return validTypes.includes(contentType);
+  return (ALLOWED_DOCUMENT_TYPES as readonly string[]).includes(contentType);
 }
 
 /**

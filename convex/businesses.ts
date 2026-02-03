@@ -315,18 +315,38 @@ export const listBusinesses = query({
 });
 
 // Check if a document URL is stored on any business (admin only). Used to authorize document view.
+// Uses indexed lookups (O(1) per field) instead of scanning all businesses.
 export const isDocumentUrlAllowed = query({
   args: { url: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
-    const businesses = await ctx.db.query("businesses").collect();
-    return businesses.some(
-      (b) =>
-        b.businessLicenceImageUrl === args.url ||
-        b.memoOfAssociationImageUrl === args.url ||
-        b.tinCertificateImageUrl === args.url ||
-        b.importExportPermitImageUrl === args.url
-    );
+    const [byLicence, byMemo, byTin, byPermit] = await Promise.all([
+      ctx.db
+        .query("businesses")
+        .withIndex("by_businessLicenceImageUrl", (q) =>
+          q.eq("businessLicenceImageUrl", args.url)
+        )
+        .first(),
+      ctx.db
+        .query("businesses")
+        .withIndex("by_memoOfAssociationImageUrl", (q) =>
+          q.eq("memoOfAssociationImageUrl", args.url)
+        )
+        .first(),
+      ctx.db
+        .query("businesses")
+        .withIndex("by_tinCertificateImageUrl", (q) =>
+          q.eq("tinCertificateImageUrl", args.url)
+        )
+        .first(),
+      ctx.db
+        .query("businesses")
+        .withIndex("by_importExportPermitImageUrl", (q) =>
+          q.eq("importExportPermitImageUrl", args.url)
+        )
+        .first(),
+    ]);
+    return !!(byLicence ?? byMemo ?? byTin ?? byPermit);
   },
 });
 
