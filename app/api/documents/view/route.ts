@@ -70,6 +70,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const allowed = await convex.query(api.businesses.isDocumentUrlAllowed, {
+      url,
+    });
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Document not found or access denied" },
+        { status: 404 }
+      );
+    }
+
     const { body, contentType } = await getObject(key);
     const buffer = await streamToBuffer(body);
 

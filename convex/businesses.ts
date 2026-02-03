@@ -314,6 +314,22 @@ export const listBusinesses = query({
   },
 });
 
+// Check if a document URL is stored on any business (admin only). Used to authorize document view.
+export const isDocumentUrlAllowed = query({
+  args: { url: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    const businesses = await ctx.db.query("businesses").collect();
+    return businesses.some(
+      (b) =>
+        b.businessLicenceImageUrl === args.url ||
+        b.memoOfAssociationImageUrl === args.url ||
+        b.tinCertificateImageUrl === args.url ||
+        b.importExportPermitImageUrl === args.url
+    );
+  },
+});
+
 // Verify or reject business (admin only)
 export const verifyBusiness = mutation({
   args: {

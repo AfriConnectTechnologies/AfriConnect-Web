@@ -172,7 +172,7 @@ export default function BusinessRegisterPage() {
         memoOfAssociationImageUrl: memoOfAssociationImageUrl ?? undefined,
         tinCertificateImageUrl: tinCertificateImageUrl ?? undefined,
         tinCertificateNumber: tinCertificateNumber || undefined,
-        hasImportExportPermit: hasPermit ? true : false,
+        hasImportExportPermit: hasPermit,
         importExportPermitImageUrl: hasPermit ? (importExportPermitImageUrl ?? undefined) : undefined,
         importExportPermitNumber: hasPermit ? (importExportPermitNumber || undefined) : undefined,
       });
