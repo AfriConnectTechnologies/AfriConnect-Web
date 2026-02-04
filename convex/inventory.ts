@@ -88,7 +88,7 @@ export const getTransactions = query({
     } else {
       transactions = await ctx.db
         .query("inventoryTransactions")
-        .withIndex("by_seller", (q) => q.eq("sellerId", user._id))
+        .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
         .collect();
     }
 
