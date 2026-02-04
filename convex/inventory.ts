@@ -207,7 +207,7 @@ export const updateThresholds = mutation({
       log.setContext({ userId: user.clerkId });
 
       const product = await ctx.db.get(args.productId);
-      if (!product || product.sellerId !== user._id) {
+      if (!product || product.sellerId !== user.clerkId) {
         throw new Error("Unauthorized");
       }
 
