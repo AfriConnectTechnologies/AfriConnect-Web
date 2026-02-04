@@ -550,6 +550,19 @@ export const checkout = mutation({
               updatedAt: now,
             });
 
+            await ctx.db.insert("inventoryTransactions", {
+              productId: item.productId,
+              sellerId: product.sellerId,
+              type: "sale",
+              direction: "out",
+              quantity: item.quantity,
+              previousQuantity: product.quantity,
+              newQuantity: product.quantity - item.quantity,
+              reference: orderId,
+              createdBy: user._id,
+              createdAt: now,
+            });
+
             log.debug("Product quantity updated", {
               productId: item.productId,
               previousQty: product.quantity,
@@ -585,4 +598,3 @@ export const checkout = mutation({
     }
   },
 });
-

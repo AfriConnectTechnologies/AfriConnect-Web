@@ -34,6 +34,7 @@
     "marketplace": "Marketplace",
     "directory": "Directory",
     "products": "My Products",
+    "inventory": "Inventory",
     "messages": "Messages",
     "cart": "Cart",
     "orders": "Orders",
@@ -106,6 +107,10 @@
     "price": "Price",
     "stockQuantity": "Stock Quantity",
     "quantity": "Quantity",
+    "sku": "SKU",
+    "skuPlaceholder": "e.g., AC-COF-001",
+    "lowStockThreshold": "Low Stock Threshold",
+    "reorderQuantity": "Reorder Quantity",
     "category": "Category",
     "categoryPlaceholder": "e.g., Electronics",
     "originCountry": "Origin Country",
@@ -821,5 +826,92 @@
     "totalCalculations": "Total Calculations",
     "previousCalculations": "Previous Calculations",
     "previousCalculationsDescription": "Your saved eligibility calculations"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "description": "Track stock levels, adjust quantities, and set replenishment alerts",
+    "summary": {
+      "totalProducts": "Total Products",
+      "totalUnits": "Total Units",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock"
+    },
+    "tabs": {
+      "inventory": "Inventory",
+      "activity": "Activity"
+    },
+    "searchPlaceholder": "Search by product or SKU...",
+    "filterStatus": "Filter status",
+    "status": {
+      "in_stock": "In Stock",
+      "low_stock": "Low Stock",
+      "out_of_stock": "Out of Stock",
+      "inStock": "In Stock",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock"
+    },
+    "table": {
+      "product": "Product",
+      "sku": "SKU",
+      "onHand": "On Hand",
+      "threshold": "Low Stock Threshold",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "adjust": "Adjust",
+      "thresholds": "Thresholds",
+      "history": "History"
+    },
+    "noSku": "No SKU",
+    "noResults": "No inventory items match your filters.",
+    "activityTitle": "Recent Activity",
+    "activity": {
+      "date": "Date",
+      "product": "Product",
+      "type": "Type",
+      "quantity": "Qty",
+      "newQuantity": "New Qty",
+      "reason": "Reason",
+      "none": "None",
+      "empty": "No inventory activity yet."
+    },
+    "types": {
+      "restock": "Restock",
+      "adjustment": "Adjustment",
+      "return": "Return",
+      "correction": "Correction",
+      "sale": "Sale"
+    },
+    "adjustDialog": {
+      "title": "Adjust Inventory",
+      "description": "Record a stock change for this product.",
+      "type": "Adjustment Type",
+      "delta": "Quantity Change",
+      "deltaPlaceholder": "Use negative values for reductions",
+      "quickAdd": "Add 1",
+      "quickRemove": "Remove 1",
+      "reason": "Reason",
+      "reasonPlaceholder": "Optional note for this change",
+      "save": "Save Adjustment"
+    },
+    "historyDialog": {
+      "title": "Inventory History",
+      "description": "Latest inventory transactions for this product."
+    },
+    "thresholdDialog": {
+      "title": "Replenishment Settings",
+      "description": "Set low stock alerts and reorder quantities.",
+      "lowStock": "Low Stock Threshold",
+      "lowStockPlaceholder": "e.g., 5",
+      "reorder": "Reorder Quantity",
+      "reorderPlaceholder": "e.g., 25",
+      "save": "Save Settings"
+    },
+    "invalidAdjustment": "Enter a non-zero adjustment.",
+    "adjustmentSaved": "Inventory adjustment saved.",
+    "invalidThreshold": "Low stock threshold must be 0 or greater.",
+    "invalidReorder": "Reorder quantity must be 0 or greater.",
+    "thresholdsSaved": "Replenishment settings saved."
   }
 }

@@ -86,6 +86,9 @@ export default defineSchema({
     description: v.optional(v.string()),
     price: v.number(),
     quantity: v.number(),
+    sku: v.optional(v.string()),
+    lowStockThreshold: v.optional(v.number()),
+    reorderQuantity: v.optional(v.number()),
     category: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("inactive")),
     country: v.optional(v.string()),
@@ -98,6 +101,7 @@ export default defineSchema({
     .index("by_seller", ["sellerId"])
     .index("by_status", ["status"])
     .index("by_seller_status", ["sellerId", "status"])
+    .index("by_seller_sku", ["sellerId", "sku"])
     .index("by_category", ["category"])
     .index("by_country", ["country"])
     .index("by_category_country", ["category", "country"]),
@@ -112,6 +116,30 @@ export default defineSchema({
   })
     .index("by_product", ["productId"])
     .index("by_product_primary", ["productId", "isPrimary"]),
+
+  inventoryTransactions: defineTable({
+    productId: v.id("products"),
+    sellerId: v.string(),
+    type: v.union(
+      v.literal("restock"),
+      v.literal("sale"),
+      v.literal("adjustment"),
+      v.literal("return"),
+      v.literal("correction")
+    ),
+    direction: v.union(v.literal("in"), v.literal("out")),
+    quantity: v.number(),
+    previousQuantity: v.number(),
+    newQuantity: v.number(),
+    reason: v.optional(v.string()),
+    reference: v.optional(v.string()),
+    createdBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+  })
+    .index("by_product", ["productId"])
+    .index("by_product_created", ["productId", "createdAt"])
+    .index("by_seller", ["sellerId"])
+    .index("by_seller_created", ["sellerId", "createdAt"]),
 
   cartItems: defineTable({
     userId: v.string(),
@@ -321,4 +349,3 @@ export default defineSchema({
     .index("by_product", ["productId"])
     .index("by_eligibility", ["businessId", "isEligible"]),
 });
-

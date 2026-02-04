@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { UserButton, useClerk, useUser } from "@clerk/nextjs";
-import { Globe2, BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw } from "lucide-react";
+import { Globe2, BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw, Boxes } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageRefunds" | "compliance";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageRefunds" | "compliance";
 
 type NavItem = {
   href: string;
@@ -39,6 +39,7 @@ const baseNavItems: NavItem[] = [
 
 const sellerNavItems: NavItem[] = [
   { href: "/business/profile", labelKey: "myBusiness", icon: Building2 },
+  { href: "/inventory", labelKey: "inventory", icon: Boxes },
 ];
 
 const complianceNavItem: NavItem = {
