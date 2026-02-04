@@ -34,6 +34,7 @@
     "marketplace": "የገበያ ቦታ",
     "directory": "ማውጫ",
     "products": "ምርቶቼ",
+    "inventory": "እቃ አስተዳደር",
     "messages": "መልዕክቶች",
     "cart": "ጋሪ",
     "orders": "ትዕዛዞች",
@@ -106,6 +107,10 @@
     "price": "ዋጋ",
     "stockQuantity": "የክምችት ብዛት",
     "quantity": "ብዛት",
+    "sku": "SKU",
+    "skuPlaceholder": "ለምሳሌ፣ AC-COF-001",
+    "lowStockThreshold": "ዝቅተኛ ክምችት ገደብ",
+    "reorderQuantity": "የዳግም መሙላት ብዛት",
     "category": "ምድብ",
     "categoryPlaceholder": "ለምሳሌ ኤሌክትሮኒክስ",
     "originCountry": "የመነሻ አገር",
@@ -821,5 +826,92 @@
     "totalCalculations": "ጠቅላላ ስሌቶች",
     "previousCalculations": "ቀድሞ የነበሩ ስሌቶች",
     "previousCalculationsDescription": "የተቀመጡ የብቁነት ስሌቶችዎ"
+  },
+  "inventory": {
+    "title": "እቃ አስተዳደር",
+    "description": "የምርት ክምችትዎን ይከታተሉ፣ መጠኖችን ያስተካክሉ፣ እና የመሙላት ማሳወቂያዎችን ያቀናብሩ",
+    "summary": {
+      "totalProducts": "ጠቅላላ ምርቶች",
+      "totalUnits": "ጠቅላላ ክፍሎች",
+      "lowStock": "ዝቅተኛ ክምችት",
+      "outOfStock": "ከክምችት ውጭ"
+    },
+    "tabs": {
+      "inventory": "እቃ ዝርዝር",
+      "activity": "እንቅስቃሴ"
+    },
+    "searchPlaceholder": "በምርት ወይም SKU ይፈልጉ...",
+    "filterStatus": "ሁኔታ ይጣሩ",
+    "status": {
+      "in_stock": "በክምችት ውስጥ",
+      "low_stock": "ዝቅተኛ ክምችት",
+      "out_of_stock": "ከክምችት ውጭ",
+      "inStock": "በክምችት ውስጥ",
+      "lowStock": "ዝቅተኛ ክምችት",
+      "outOfStock": "ከክምችት ውጭ"
+    },
+    "table": {
+      "product": "ምርት",
+      "sku": "SKU",
+      "onHand": "ካለበት መጠን",
+      "threshold": "ዝቅተኛ ክምችት ገደብ",
+      "status": "ሁኔታ",
+      "actions": "ድርጊቶች"
+    },
+    "actions": {
+      "adjust": "አስተካክል",
+      "thresholds": "ገደቦች",
+      "history": "ታሪክ"
+    },
+    "noSku": "SKU የለም",
+    "noResults": "ከማጣሪያዎችዎ ጋር የሚዛመዱ እቃዎች የሉም።",
+    "activityTitle": "የቅርብ ጊዜ እንቅስቃሴ",
+    "activity": {
+      "date": "ቀን",
+      "product": "ምርት",
+      "type": "አይነት",
+      "quantity": "መጠን",
+      "newQuantity": "አዲስ መጠን",
+      "reason": "ምክንያት",
+      "none": "የለም",
+      "empty": "እስካሁን የእቃ እንቅስቃሴ የለም።"
+    },
+    "types": {
+      "restock": "ዳግም አስመልስ",
+      "adjustment": "ማስተካከያ",
+      "return": "መመለሻ",
+      "correction": "ማስተካከያ",
+      "sale": "ሽያጭ"
+    },
+    "adjustDialog": {
+      "title": "ክምችት አስተካክል",
+      "description": "ለዚህ ምርት የክምችት ለውጥ ይመዝግቡ።",
+      "type": "የማስተካከያ አይነት",
+      "delta": "የመጠን ለውጥ",
+      "deltaPlaceholder": "ለመቀነስ አሉታዊ እሴቶችን ይጠቀሙ",
+      "quickAdd": "1 ጨምር",
+      "quickRemove": "1 ቀንስ",
+      "reason": "ምክንያት",
+      "reasonPlaceholder": "በነፃ ማስታወሻ",
+      "save": "ማስተካከያን አስቀምጥ"
+    },
+    "historyDialog": {
+      "title": "የክምችት ታሪክ",
+      "description": "ለዚህ ምርት የቅርብ ጊዜ ክምችት እንቅስቃሴዎች።"
+    },
+    "thresholdDialog": {
+      "title": "የመሙላት ቅንብሮች",
+      "description": "ዝቅተኛ ክምችት ማሳወቂያ እና የዳግም መሙላት መጠን ያቀናብሩ።",
+      "lowStock": "ዝቅተኛ ክምችት ገደብ",
+      "lowStockPlaceholder": "ለምሳሌ፣ 5",
+      "reorder": "የዳግም መሙላት መጠን",
+      "reorderPlaceholder": "ለምሳሌ፣ 25",
+      "save": "ቅንብሮችን አስቀምጥ"
+    },
+    "invalidAdjustment": "ዜሮ ያልሆነ ለውጥ ያስገቡ።",
+    "adjustmentSaved": "የእቃ ማስተካከያ ተቀምጧል።",
+    "invalidThreshold": "ዝቅተኛ ክምችት ገደብ 0 ወይም ከዚያ በላይ መሆን አለበት።",
+    "invalidReorder": "የዳግም መሙላት መጠን 0 ወይም ከዚያ በላይ መሆን አለበት።",
+    "thresholdsSaved": "የመሙላት ቅንብሮች ተቀምጠዋል።"
   }
 }

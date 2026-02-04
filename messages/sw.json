@@ -34,6 +34,7 @@
     "marketplace": "Soko",
     "directory": "Saraka",
     "products": "Bidhaa Zangu",
+    "inventory": "Hesabu ya Hisa",
     "messages": "Ujumbe",
     "cart": "Kikapu",
     "orders": "Maagizo",
@@ -106,6 +107,10 @@
     "price": "Bei",
     "stockQuantity": "Kiasi cha Stoki",
     "quantity": "Kiasi",
+    "sku": "SKU",
+    "skuPlaceholder": "mfano, AC-COF-001",
+    "lowStockThreshold": "Kizingiti cha Hisa Chini",
+    "reorderQuantity": "Kiasi cha Kujaza Tena",
     "category": "Kategoria",
     "categoryPlaceholder": "mfano, Elektroniki",
     "originCountry": "Nchi ya Asili",
@@ -821,5 +826,92 @@
     "totalCalculations": "Jumla ya Hesabu",
     "previousCalculations": "Hesabu Zilizopita",
     "previousCalculationsDescription": "Hesabu zako za ustahiki zilizohifadhiwa"
+  },
+  "inventory": {
+    "title": "Hesabu ya Hisa",
+    "description": "Fuata viwango vya hisa, rekebisha kiasi, na weka arifa za kujaza tena",
+    "summary": {
+      "totalProducts": "Jumla ya Bidhaa",
+      "totalUnits": "Jumla ya Vipande",
+      "lowStock": "Hisa Chini",
+      "outOfStock": "Hisa Zimekwisha"
+    },
+    "tabs": {
+      "inventory": "Hisa",
+      "activity": "Shughuli"
+    },
+    "searchPlaceholder": "Tafuta kwa bidhaa au SKU...",
+    "filterStatus": "Chuja hali",
+    "status": {
+      "in_stock": "Ipo Hisa",
+      "low_stock": "Hisa Chini",
+      "out_of_stock": "Hisa Zimekwisha",
+      "inStock": "Ipo Hisa",
+      "lowStock": "Hisa Chini",
+      "outOfStock": "Hisa Zimekwisha"
+    },
+    "table": {
+      "product": "Bidhaa",
+      "sku": "SKU",
+      "onHand": "Kipo",
+      "threshold": "Kizingiti cha Hisa Chini",
+      "status": "Hali",
+      "actions": "Vitendo"
+    },
+    "actions": {
+      "adjust": "Rekebisha",
+      "thresholds": "Vizingiti",
+      "history": "Historia"
+    },
+    "noSku": "Hakuna SKU",
+    "noResults": "Hakuna bidhaa za hisa zinazoendana na vichujio.",
+    "activityTitle": "Shughuli za Karibu",
+    "activity": {
+      "date": "Tarehe",
+      "product": "Bidhaa",
+      "type": "Aina",
+      "quantity": "Kiasi",
+      "newQuantity": "Kiasi Kipya",
+      "reason": "Sababu",
+      "none": "Hakuna",
+      "empty": "Hakuna shughuli za hisa bado."
+    },
+    "types": {
+      "restock": "Jaza Tena",
+      "adjustment": "Marekebisho",
+      "return": "Rejesho",
+      "correction": "Marekebisho",
+      "sale": "Mauzo"
+    },
+    "adjustDialog": {
+      "title": "Rekebisha Hisa",
+      "description": "Rekodi mabadiliko ya hisa kwa bidhaa hii.",
+      "type": "Aina ya Marekebisho",
+      "delta": "Mabadiliko ya Kiasi",
+      "deltaPlaceholder": "Tumia thamani hasi kwa kupunguza",
+      "quickAdd": "Ongeza 1",
+      "quickRemove": "Punguza 1",
+      "reason": "Sababu",
+      "reasonPlaceholder": "Kumbukumbu ya hiari",
+      "save": "Hifadhi Marekebisho"
+    },
+    "historyDialog": {
+      "title": "Historia ya Hisa",
+      "description": "Miingiliano ya hivi karibuni ya hisa kwa bidhaa hii."
+    },
+    "thresholdDialog": {
+      "title": "Mipangilio ya Kujaza",
+      "description": "Weka arifa za hisa chini na kiasi cha kujaza tena.",
+      "lowStock": "Kizingiti cha Hisa Chini",
+      "lowStockPlaceholder": "mfano, 5",
+      "reorder": "Kiasi cha Kujaza Tena",
+      "reorderPlaceholder": "mfano, 25",
+      "save": "Hifadhi Mipangilio"
+    },
+    "invalidAdjustment": "Weka marekebisho yasiyo sifuri.",
+    "adjustmentSaved": "Marekebisho ya hisa yamehifadhiwa.",
+    "invalidThreshold": "Kizingiti cha hisa chini lazima kiwe 0 au zaidi.",
+    "invalidReorder": "Kiasi cha kujaza tena lazima kiwe 0 au zaidi.",
+    "thresholdsSaved": "Mipangilio ya kujaza imehifadhiwa."
   }
 }

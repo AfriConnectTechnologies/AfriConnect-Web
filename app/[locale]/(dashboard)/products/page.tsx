@@ -112,6 +112,13 @@ export default function ProductsPage() {
         description: (formData.get("description") as string) || undefined,
         price: parseFloat(formData.get("price") as string),
         quantity: parseInt(formData.get("quantity") as string),
+        sku: (formData.get("sku") as string) || undefined,
+        lowStockThreshold: formData.get("lowStockThreshold")
+          ? parseInt(formData.get("lowStockThreshold") as string)
+          : undefined,
+        reorderQuantity: formData.get("reorderQuantity")
+          ? parseInt(formData.get("reorderQuantity") as string)
+          : undefined,
         category: (formData.get("category") as string) || undefined,
         status: createStatus,
         country: (formData.get("country") as string) || undefined,
@@ -165,6 +172,13 @@ export default function ProductsPage() {
         description: (formData.get("description") as string) || undefined,
         price: parseFloat(formData.get("price") as string),
         quantity: parseInt(formData.get("quantity") as string),
+        sku: (formData.get("sku") as string) || undefined,
+        lowStockThreshold: formData.get("lowStockThreshold")
+          ? parseInt(formData.get("lowStockThreshold") as string)
+          : undefined,
+        reorderQuantity: formData.get("reorderQuantity")
+          ? parseInt(formData.get("reorderQuantity") as string)
+          : undefined,
         category: (formData.get("category") as string) || undefined,
         status: editStatus,
         country: (formData.get("country") as string) || undefined,
@@ -411,6 +425,26 @@ export default function ProductsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
+                    <Label htmlFor="create-sku">{t("sku")}</Label>
+                    <Input
+                      id="create-sku"
+                      name="sku"
+                      placeholder={t("skuPlaceholder")}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-lowStockThreshold">{t("lowStockThreshold")}</Label>
+                    <Input
+                      id="create-lowStockThreshold"
+                      name="lowStockThreshold"
+                      type="number"
+                      min="0"
+                      placeholder="5"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
                     <Label htmlFor="create-category">{t("category")}</Label>
                     <Input
                       id="create-category"
@@ -439,20 +473,30 @@ export default function ProductsPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-status">{t("status")}</Label>
-                    <Select
-                      value={createStatus}
-                      onValueChange={(v) => setCreateStatus(v as ProductStatus)}
-                    >
-                      <SelectTrigger id="create-status">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">{t("active")}</SelectItem>
-                        <SelectItem value="inactive">{t("inactive")}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="create-reorderQuantity">{t("reorderQuantity")}</Label>
+                    <Input
+                      id="create-reorderQuantity"
+                      name="reorderQuantity"
+                      type="number"
+                      min="0"
+                      placeholder="25"
+                    />
                   </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="create-status">{t("status")}</Label>
+                  <Select
+                    value={createStatus}
+                    onValueChange={(v) => setCreateStatus(v as ProductStatus)}
+                  >
+                    <SelectTrigger id="create-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">{t("active")}</SelectItem>
+                      <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
@@ -574,6 +618,26 @@ export default function ProductsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
+                          <Label htmlFor="edit-sku">{t("sku")}</Label>
+                          <Input
+                            id="edit-sku"
+                            name="sku"
+                            defaultValue={productToEdit.sku || ""}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-lowStockThreshold">{t("lowStockThreshold")}</Label>
+                          <Input
+                            id="edit-lowStockThreshold"
+                            name="lowStockThreshold"
+                            type="number"
+                            min="0"
+                            defaultValue={productToEdit.lowStockThreshold ?? ""}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
                           <Label htmlFor="edit-category">{t("category")}</Label>
                           <Input
                             id="edit-category"
@@ -602,20 +666,30 @@ export default function ProductsPage() {
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-status">{t("status")}</Label>
-                          <Select
-                            value={editStatus}
-                            onValueChange={(v) => setEditStatus(v as ProductStatus)}
-                          >
-                            <SelectTrigger id="edit-status">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="active">{t("active")}</SelectItem>
-                              <SelectItem value="inactive">{t("inactive")}</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Label htmlFor="edit-reorderQuantity">{t("reorderQuantity")}</Label>
+                          <Input
+                            id="edit-reorderQuantity"
+                            name="reorderQuantity"
+                            type="number"
+                            min="0"
+                            defaultValue={productToEdit.reorderQuantity ?? ""}
+                          />
                         </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-status">{t("status")}</Label>
+                        <Select
+                          value={editStatus}
+                          onValueChange={(v) => setEditStatus(v as ProductStatus)}
+                        >
+                          <SelectTrigger id="edit-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">{t("active")}</SelectItem>
+                            <SelectItem value="inactive">{t("inactive")}</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </form>

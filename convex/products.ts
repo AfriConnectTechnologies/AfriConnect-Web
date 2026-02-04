@@ -64,6 +64,9 @@ export const create = mutation({
     description: v.optional(v.string()),
     price: v.number(),
     quantity: v.number(),
+    sku: v.optional(v.string()),
+    lowStockThreshold: v.optional(v.number()),
+    reorderQuantity: v.optional(v.number()),
     category: v.optional(v.string()),
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
     country: v.optional(v.string()),
@@ -103,6 +106,25 @@ export const create = mutation({
         limit: productLimit.limit,
       });
 
+      if (args.lowStockThreshold !== undefined && args.lowStockThreshold < 0) {
+        throw new Error("Low stock threshold must be 0 or greater");
+      }
+      if (args.reorderQuantity !== undefined && args.reorderQuantity < 0) {
+        throw new Error("Reorder quantity must be 0 or greater");
+      }
+
+      if (args.sku) {
+        const existingSku = await ctx.db
+          .query("products")
+          .withIndex("by_seller_sku", (q) =>
+            q.eq("sellerId", user._id).eq("sku", args.sku)
+          )
+          .first();
+        if (existingSku) {
+          throw new Error("SKU already exists for another product");
+        }
+      }
+
       const now = Date.now();
       const productId = await ctx.db.insert("products", {
         sellerId: user._id,
@@ -110,6 +132,9 @@ export const create = mutation({
         description: args.description,
         price: args.price,
         quantity: args.quantity,
+        sku: args.sku,
+        lowStockThreshold: args.lowStockThreshold,
+        reorderQuantity: args.reorderQuantity,
         category: args.category,
         status: args.status ?? "active",
         country: args.country,
@@ -119,6 +144,21 @@ export const create = mutation({
         createdAt: now,
         updatedAt: now,
       });
+
+      if (args.quantity > 0) {
+        await ctx.db.insert("inventoryTransactions", {
+          productId,
+          sellerId: user._id,
+          type: "restock",
+          direction: "in",
+          quantity: args.quantity,
+          previousQuantity: 0,
+          newQuantity: args.quantity,
+          reason: "Initial stock",
+          createdBy: user._id,
+          createdAt: now,
+        });
+      }
 
       log.info("Product created successfully", {
         productId,
@@ -149,6 +189,9 @@ export const update = mutation({
     description: v.optional(v.string()),
     price: v.optional(v.number()),
     quantity: v.optional(v.number()),
+    sku: v.optional(v.string()),
+    lowStockThreshold: v.optional(v.number()),
+    reorderQuantity: v.optional(v.number()),
     category: v.optional(v.string()),
     status: v.optional(v.union(v.literal("active"), v.literal("inactive"))),
     country: v.optional(v.string()),
@@ -196,12 +239,48 @@ export const update = mutation({
         throw new Error("Unauthorized");
       }
 
+      if (args.lowStockThreshold !== undefined && args.lowStockThreshold < 0) {
+        throw new Error("Low stock threshold must be 0 or greater");
+      }
+      if (args.reorderQuantity !== undefined && args.reorderQuantity < 0) {
+        throw new Error("Reorder quantity must be 0 or greater");
+      }
+
+      if (args.sku && args.sku !== product.sku) {
+        const existingSku = await ctx.db
+          .query("products")
+          .withIndex("by_seller_sku", (q) =>
+            q.eq("sellerId", user._id).eq("sku", args.sku)
+          )
+          .first();
+        if (existingSku && existingSku._id !== args.id) {
+          throw new Error("SKU already exists for another product");
+        }
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id: _id, ...updates } = args;
+      const now = Date.now();
       await ctx.db.patch(args.id, {
         ...updates,
-        updatedAt: Date.now(),
+        updatedAt: now,
       });
+
+      if (args.quantity !== undefined && args.quantity !== product.quantity) {
+        const delta = args.quantity - product.quantity;
+        await ctx.db.insert("inventoryTransactions", {
+          productId: args.id,
+          sellerId: product.sellerId,
+          type: "correction",
+          direction: delta > 0 ? "in" : "out",
+          quantity: Math.abs(delta),
+          previousQuantity: product.quantity,
+          newQuantity: args.quantity,
+          reason: "Manual inventory update",
+          createdBy: user._id,
+          createdAt: now,
+        });
+      }
 
       log.info("Product updated successfully", {
         productId: args.id,
@@ -620,4 +699,3 @@ export const getRelatedProducts = query({
     return relatedWithImages;
   },
 });
-
