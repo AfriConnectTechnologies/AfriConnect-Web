@@ -43,7 +43,7 @@ export const list = query({
 
     const products = await ctx.db
       .query("products")
-      .withIndex("by_seller", (q) => q.eq("sellerId", user._id))
+      .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
       .collect();
 
     const enriched = products.map((product) => {
