@@ -127,7 +127,7 @@ export const create = mutation({
 
       const now = Date.now();
       const productId = await ctx.db.insert("products", {
-        sellerId: user._id,
+        sellerId: user.clerkId,
         name: args.name,
         description: args.description,
         price: args.price,
