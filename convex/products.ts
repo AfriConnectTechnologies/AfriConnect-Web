@@ -124,10 +124,6 @@ export const create = mutation({
           throw new Error("SKU already exists for another product");
         }
       }
-        if (existingSku) {
-          throw new Error("SKU already exists for another product");
-        }
-      }
 
       const now = Date.now();
       const productId = await ctx.db.insert("products", {
@@ -257,10 +253,6 @@ export const update = mutation({
             q.eq("sellerId", user.clerkId).eq("sku", args.sku)
           )
           .first();
-        if (existingSku && existingSku._id !== args.id) {
-          throw new Error("SKU already exists for another product");
-        }
-      }
         if (existingSku && existingSku._id !== args.id) {
           throw new Error("SKU already exists for another product");
         }
