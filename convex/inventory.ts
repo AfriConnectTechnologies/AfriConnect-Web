@@ -77,7 +77,7 @@ export const getTransactions = query({
     const productId = args.productId;
     if (productId !== undefined) {
       const product = await ctx.db.get(productId);
-      if (!product || product.sellerId !== user._id) {
+      if (!product || product.sellerId !== user.clerkId) {
         throw new Error("Unauthorized");
       }
 
