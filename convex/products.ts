@@ -113,13 +113,17 @@ export const create = mutation({
         throw new Error("Reorder quantity must be 0 or greater");
       }
 
-      if (args.sku) {
+      if (args.sku && args.sku.trim()) {
         const existingSku = await ctx.db
           .query("products")
           .withIndex("by_seller_sku", (q) =>
-            q.eq("sellerId", user._id).eq("sku", args.sku)
+            q.eq("sellerId", user.clerkId).eq("sku", args.sku)
           )
           .first();
+        if (existingSku) {
+          throw new Error("SKU already exists for another product");
+        }
+      }
         if (existingSku) {
           throw new Error("SKU already exists for another product");
         }
@@ -127,7 +131,7 @@ export const create = mutation({
 
       const now = Date.now();
       const productId = await ctx.db.insert("products", {
-        sellerId: user._id,
+        sellerId: user.clerkId,
         name: args.name,
         description: args.description,
         price: args.price,
@@ -148,7 +152,7 @@ export const create = mutation({
       if (args.quantity > 0) {
         await ctx.db.insert("inventoryTransactions", {
           productId,
-          sellerId: user._id,
+          sellerId: user.clerkId,
           type: "restock",
           direction: "in",
           quantity: args.quantity,
@@ -246,13 +250,17 @@ export const update = mutation({
         throw new Error("Reorder quantity must be 0 or greater");
       }
 
-      if (args.sku && args.sku !== product.sku) {
+      if (args.sku && args.sku.trim() && args.sku !== product.sku) {
         const existingSku = await ctx.db
           .query("products")
           .withIndex("by_seller_sku", (q) =>
-            q.eq("sellerId", user._id).eq("sku", args.sku)
+            q.eq("sellerId", user.clerkId).eq("sku", args.sku)
           )
           .first();
+        if (existingSku && existingSku._id !== args.id) {
+          throw new Error("SKU already exists for another product");
+        }
+      }
         if (existingSku && existingSku._id !== args.id) {
           throw new Error("SKU already exists for another product");
         }

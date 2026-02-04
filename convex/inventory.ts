@@ -43,7 +43,7 @@ export const list = query({
 
     const products = await ctx.db
       .query("products")
-      .withIndex("by_seller", (q) => q.eq("sellerId", user._id))
+      .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
       .collect();
 
     const enriched = products.map((product) => {
@@ -77,7 +77,7 @@ export const getTransactions = query({
     const productId = args.productId;
     if (productId !== undefined) {
       const product = await ctx.db.get(productId);
-      if (!product || product.sellerId !== user._id) {
+      if (!product || product.sellerId !== user.clerkId) {
         throw new Error("Unauthorized");
       }
 
@@ -88,7 +88,7 @@ export const getTransactions = query({
     } else {
       transactions = await ctx.db
         .query("inventoryTransactions")
-        .withIndex("by_seller", (q) => q.eq("sellerId", user._id))
+        .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
         .collect();
     }
 
@@ -137,7 +137,7 @@ export const adjustStock = mutation({
       }
 
       const product = await ctx.db.get(args.productId);
-      if (!product || product.sellerId !== user._id) {
+      if (!product || product.sellerId !== user.clerkId) {
         throw new Error("Unauthorized");
       }
 
@@ -207,7 +207,7 @@ export const updateThresholds = mutation({
       log.setContext({ userId: user.clerkId });
 
       const product = await ctx.db.get(args.productId);
-      if (!product || product.sellerId !== user._id) {
+      if (!product || product.sellerId !== user.clerkId) {
         throw new Error("Unauthorized");
       }
 
