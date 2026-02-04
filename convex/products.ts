@@ -148,7 +148,7 @@ export const create = mutation({
       if (args.quantity > 0) {
         await ctx.db.insert("inventoryTransactions", {
           productId,
-          sellerId: user._id,
+          sellerId: user.clerkId,
           type: "restock",
           direction: "in",
           quantity: args.quantity,
