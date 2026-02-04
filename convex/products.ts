@@ -246,7 +246,7 @@ export const update = mutation({
         throw new Error("Reorder quantity must be 0 or greater");
       }
 
-      if (args.sku && args.sku !== product.sku) {
+      if (args.sku && args.sku.trim() && args.sku !== product.sku) {
         const existingSku = await ctx.db
           .query("products")
           .withIndex("by_seller_sku", (q) =>
