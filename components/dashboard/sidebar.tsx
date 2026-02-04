@@ -3,11 +3,12 @@
 import { useState, useMemo } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useClerk, useUser } from "@clerk/nextjs";
 import { Globe2, BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -123,11 +124,14 @@ function SidebarContent({
 }) {
   const t = useTranslations("navigation");
   const tCommon = useTranslations("common");
+  const { openUserProfile, signOut } = useClerk();
+  const { user } = useUser();
   const cart = useQuery(api.cart.get);
   const currentUser = useQuery(api.users.getCurrentUser);
   const myBusiness = useQuery(api.businesses.getMyBusiness);
   const { unreadCount } = useChatContext();
   const cartItemCount = cart?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const [isMobileAccountMenuOpen, setIsMobileAccountMenuOpen] = useState(false);
 
   // Build nav items based on user role
   const navItems = useMemo(() => {
@@ -280,8 +284,54 @@ function SidebarContent({
               )}
             </div>
           )}
-          <UserButton />
+          {isMobile ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileAccountMenuOpen((open) => !open)}
+              aria-expanded={isMobileAccountMenuOpen}
+              aria-label="Account menu"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user?.imageUrl} alt={user?.fullName ?? "User"} />
+                <AvatarFallback>
+                  {(user?.firstName?.[0] || user?.username?.[0] || "U").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          ) : (
+            <UserButton />
+          )}
         </div>
+        {isMobile && isMobileAccountMenuOpen && (
+          <div className="mt-3 flex flex-col gap-2">
+            <SheetClose asChild>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setIsMobileAccountMenuOpen(false);
+                  openUserProfile();
+                }}
+              >
+                Manage Account
+              </Button>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setIsMobileAccountMenuOpen(false);
+                  signOut({ redirectUrl: "/" });
+                }}
+              >
+                Sign Out
+              </Button>
+            </SheetClose>
+          </div>
+        )}
       </div>
     </div>
   );
