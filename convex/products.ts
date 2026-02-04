@@ -254,9 +254,13 @@ export const update = mutation({
         const existingSku = await ctx.db
           .query("products")
           .withIndex("by_seller_sku", (q) =>
-            q.eq("sellerId", user._id).eq("sku", args.sku)
+            q.eq("sellerId", user.clerkId).eq("sku", args.sku)
           )
           .first();
+        if (existingSku && existingSku._id !== args.id) {
+          throw new Error("SKU already exists for another product");
+        }
+      }
         if (existingSku && existingSku._id !== args.id) {
           throw new Error("SKU already exists for another product");
         }
