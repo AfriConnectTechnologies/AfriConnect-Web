@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useRouter as useNextIntlRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { COMPLIANCE_ENABLED } from "@/lib/features";
 
 // African countries list
 const AFRICAN_COUNTRIES = [
@@ -152,7 +153,10 @@ export default function BusinessProfilePage() {
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const business = useQuery(api.businesses.getMyBusiness);
-  const complianceSummary = useQuery(api.compliance.getComplianceSummary);
+  const complianceSummary = useQuery(
+    api.compliance.getComplianceSummary,
+    COMPLIANCE_ENABLED ? undefined : "skip"
+  );
   const updateBusiness = useMutation(api.businesses.updateBusiness);
 
   // Redirect if user doesn't have a business
@@ -493,7 +497,7 @@ export default function BusinessProfilePage() {
       </Card>
 
       {/* AfCFTA Compliance Section */}
-      {canAccessCompliance && (
+      {canAccessCompliance && COMPLIANCE_ENABLED && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

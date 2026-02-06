@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
+import { COMPLIANCE_ENABLED } from "@/lib/features";
 
 export default function SubscriptionPage() {
   const searchParams = useSearchParams();
@@ -498,32 +499,34 @@ export default function SubscriptionPage() {
             </div>
 
             {/* Origin Calculations */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <Calculator className="h-4 w-4 text-muted-foreground" />
-                  <span>Origin Calculations</span>
+            {COMPLIANCE_ENABLED && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4 text-muted-foreground" />
+                    <span>Origin Calculations</span>
+                  </div>
+                  <span>
+                    {usageStats.originCalculations.used} /{" "}
+                    {usageStats.originCalculations.unlimited
+                      ? "Unlimited"
+                      : usageStats.originCalculations.limit}
+                  </span>
                 </div>
-                <span>
-                  {usageStats.originCalculations.used} /{" "}
-                  {usageStats.originCalculations.unlimited
-                    ? "Unlimited"
-                    : usageStats.originCalculations.limit}
-                </span>
+                {!usageStats.originCalculations.unlimited && (
+                  <Progress
+                    value={
+                      usageStats.originCalculations.limit > 0
+                        ? (usageStats.originCalculations.used /
+                            usageStats.originCalculations.limit) *
+                          100
+                        : 0
+                    }
+                    className="h-2"
+                  />
+                )}
               </div>
-              {!usageStats.originCalculations.unlimited && (
-                <Progress
-                  value={
-                    usageStats.originCalculations.limit > 0
-                      ? (usageStats.originCalculations.used /
-                          usageStats.originCalculations.limit) *
-                        100
-                      : 0
-                  }
-                  className="h-2"
-                />
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
       )}

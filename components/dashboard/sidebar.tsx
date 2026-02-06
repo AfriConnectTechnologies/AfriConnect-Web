@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { COMMERCE_ENABLED } from "@/lib/features";
+import { COMMERCE_ENABLED, COMPLIANCE_ENABLED } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
 type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageRefunds" | "compliance";
@@ -148,7 +148,7 @@ function SidebarContent({
       items.push(...sellerNavItems); // My Business
     }
 
-    if (canAccessCompliance) {
+    if (canAccessCompliance && COMPLIANCE_ENABLED) {
       items.push(complianceNavItem);
     }
 

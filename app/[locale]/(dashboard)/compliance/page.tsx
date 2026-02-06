@@ -11,14 +11,25 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Shield, ExternalLink, Info, FileCheck } from "lucide-react";
 import { BusinessProducts, OriginEligibilityCalculator } from "@/components/compliance";
 import { Separator } from "@/components/ui/separator";
+import { COMPLIANCE_ENABLED } from "@/lib/features";
+import { ComingSoonPage } from "@/components/ui/coming-soon";
 
 export default function CompliancePage() {
   const t = useTranslations("compliance");
   const router = useRouter();
 
-  const currentUser = useQuery(api.users.getCurrentUser);
-  const myBusiness = useQuery(api.businesses.getMyBusiness);
-  const complianceSummary = useQuery(api.compliance.getComplianceSummary);
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    COMPLIANCE_ENABLED ? undefined : "skip"
+  );
+  const myBusiness = useQuery(
+    api.businesses.getMyBusiness,
+    COMPLIANCE_ENABLED ? undefined : "skip"
+  );
+  const complianceSummary = useQuery(
+    api.compliance.getComplianceSummary,
+    COMPLIANCE_ENABLED ? undefined : "skip"
+  );
 
   const isLoading = currentUser === undefined || myBusiness === undefined;
   const hasBusiness = !!myBusiness;
@@ -31,6 +42,16 @@ export default function CompliancePage() {
       router.push("/business/profile");
     }
   }, [isLoading, hasBusiness, canAccessCompliance, router]);
+
+  if (!COMPLIANCE_ENABLED) {
+    return (
+      <ComingSoonPage
+        title={t("title")}
+        description="Tariff calculations and certificate of origin tools are temporarily unavailable."
+        icon={<Shield className="h-8 w-8 text-primary" />}
+      />
+    );
+  }
 
   if (isLoading) {
     return (

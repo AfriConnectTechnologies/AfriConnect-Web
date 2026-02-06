@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { COMPLIANCE_ENABLED } from "@/lib/features";
 
 // Supported countries/regions
 type Country = "ethiopia" | "kenya";
@@ -118,6 +119,12 @@ async function loadHSCodeData(country: Country): Promise<NormalizedHSCodeEntry[]
 
 export async function GET(request: NextRequest) {
   try {
+    if (!COMPLIANCE_ENABLED) {
+      return NextResponse.json(
+        { error: "Compliance tools are currently unavailable." },
+        { status: 503 }
+      );
+    }
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q")?.toLowerCase().trim() || "";
     const hsCode = searchParams.get("hs_code")?.trim() || "";

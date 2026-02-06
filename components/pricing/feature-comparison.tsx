@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { COMPLIANCE_ENABLED } from "@/lib/features";
 
 interface FeatureValue {
   starter: string | boolean | number;
@@ -49,10 +50,14 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
         name: "Bulk Product Upload",
         values: { starter: false, growth: true, pro: true, enterprise: true },
       },
-      {
-        name: "Certificate of Origin Prep",
-        values: { starter: false, growth: true, pro: true, enterprise: true },
-      },
+      ...(COMPLIANCE_ENABLED
+        ? [
+            {
+              name: "Certificate of Origin Prep",
+              values: { starter: false, growth: true, pro: true, enterprise: true },
+            },
+          ]
+        : []),
     ],
   },
   {
