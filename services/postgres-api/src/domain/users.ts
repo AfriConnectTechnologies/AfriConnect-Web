@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { businesses, users } from "../db/schema";
-import { requireAdmin, toDoc, toDocs, type RequestContext } from "./helpers";
+import { requireAdmin, requireEmailFromClaims, toDoc, toDocs, type RequestContext } from "./helpers";
 
 export async function getCurrentUser(ctx: RequestContext) {
   if (!ctx.auth.userId) return null;
@@ -30,7 +30,7 @@ export async function ensureUser(ctx: RequestContext) {
     };
   }
 
-  const email = typeof ctx.auth.claims?.email === "string" ? ctx.auth.claims.email : "";
+  const email = requireEmailFromClaims(ctx);
   const name = typeof ctx.auth.claims?.name === "string" ? ctx.auth.claims.name : undefined;
   const imageUrl = typeof ctx.auth.claims?.picture === "string" ? ctx.auth.claims.picture : undefined;
 

@@ -2,30 +2,11 @@ import { eq, and, gte } from "drizzle-orm";
 import { db } from "../db/client";
 import { users, subscriptions, subscriptionPlans, products, orders, originCalculations } from "../db/schema";
 import type { AuthContext } from "../auth/clerk";
+import { DEFAULT_PLAN_LIMITS, type PlanLimits } from "./planLimits";
 
 export type UserRole = "buyer" | "seller" | "admin";
 
-export interface PlanLimits {
-  maxProducts: number;
-  maxMonthlyOrders: number;
-  maxOriginCalculations: number;
-  maxHsCodeLookups: number;
-  maxTeamMembers: number;
-  prioritySupport: "none" | "email" | "chat" | "dedicated";
-  analytics: "basic" | "advanced" | "full" | "custom";
-  apiAccess: "none" | "limited" | "full";
-}
-
-export const DEFAULT_PLAN_LIMITS: PlanLimits = {
-  maxProducts: 10,
-  maxMonthlyOrders: 50,
-  maxOriginCalculations: 5,
-  maxHsCodeLookups: 10,
-  maxTeamMembers: 1,
-  prioritySupport: "none",
-  analytics: "basic",
-  apiAccess: "none"
-};
+const FALLBACK_LIMITS = DEFAULT_PLAN_LIMITS.starter;
 
 export interface RequestContext {
   auth: AuthContext;
@@ -33,6 +14,15 @@ export interface RequestContext {
 
 function nowMs() {
   return Date.now();
+}
+
+export function requireEmailFromClaims(ctx: RequestContext) {
+  const raw = typeof ctx.auth.claims?.email === "string" ? ctx.auth.claims.email.trim() : "";
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!raw || !emailPattern.test(raw)) {
+    throw new Error("Valid email is required");
+  }
+  return raw;
 }
 
 export async function getCurrentUser(ctx: RequestContext) {
@@ -50,7 +40,7 @@ export async function getOrCreateUser(ctx: RequestContext) {
   if (existing[0]) return existing[0];
 
   const userId = crypto.randomUUID();
-  const email = typeof ctx.auth.claims?.email === "string" ? ctx.auth.claims.email : "";
+  const email = requireEmailFromClaims(ctx);
   const name = typeof ctx.auth.claims?.name === "string" ? ctx.auth.claims.name : undefined;
   const imageUrl = typeof ctx.auth.claims?.picture === "string" ? ctx.auth.claims.picture : undefined;
 
@@ -107,33 +97,33 @@ export async function getBusinessPlanLimits(businessId: string): Promise<PlanLim
 
   const sub = subscription[0];
   if (!sub || sub.status === "cancelled" || sub.status === "expired") {
-    return DEFAULT_PLAN_LIMITS;
+    return FALLBACK_LIMITS;
   }
 
   const plan = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, sub.planId)).limit(1);
-  if (!plan[0]) return DEFAULT_PLAN_LIMITS;
+  if (!plan[0]) return FALLBACK_LIMITS;
 
   try {
     const parsed = JSON.parse(plan[0].limits ?? "{}");
     const validated: PlanLimits = {
-      maxProducts: typeof parsed.maxProducts === "number" ? parsed.maxProducts : DEFAULT_PLAN_LIMITS.maxProducts,
-      maxMonthlyOrders: typeof parsed.maxMonthlyOrders === "number" ? parsed.maxMonthlyOrders : DEFAULT_PLAN_LIMITS.maxMonthlyOrders,
-      maxOriginCalculations: typeof parsed.maxOriginCalculations === "number" ? parsed.maxOriginCalculations : DEFAULT_PLAN_LIMITS.maxOriginCalculations,
-      maxHsCodeLookups: typeof parsed.maxHsCodeLookups === "number" ? parsed.maxHsCodeLookups : DEFAULT_PLAN_LIMITS.maxHsCodeLookups,
-      maxTeamMembers: typeof parsed.maxTeamMembers === "number" ? parsed.maxTeamMembers : DEFAULT_PLAN_LIMITS.maxTeamMembers,
+      maxProducts: typeof parsed.maxProducts === "number" ? parsed.maxProducts : FALLBACK_LIMITS.maxProducts,
+      maxMonthlyOrders: typeof parsed.maxMonthlyOrders === "number" ? parsed.maxMonthlyOrders : FALLBACK_LIMITS.maxMonthlyOrders,
+      maxOriginCalculations: typeof parsed.maxOriginCalculations === "number" ? parsed.maxOriginCalculations : FALLBACK_LIMITS.maxOriginCalculations,
+      maxHsCodeLookups: typeof parsed.maxHsCodeLookups === "number" ? parsed.maxHsCodeLookups : FALLBACK_LIMITS.maxHsCodeLookups,
+      maxTeamMembers: typeof parsed.maxTeamMembers === "number" ? parsed.maxTeamMembers : FALLBACK_LIMITS.maxTeamMembers,
       prioritySupport: ["none", "email", "chat", "dedicated"].includes(parsed.prioritySupport)
         ? parsed.prioritySupport
-        : DEFAULT_PLAN_LIMITS.prioritySupport,
+        : FALLBACK_LIMITS.prioritySupport,
       analytics: ["basic", "advanced", "full", "custom"].includes(parsed.analytics)
         ? parsed.analytics
-        : DEFAULT_PLAN_LIMITS.analytics,
+        : FALLBACK_LIMITS.analytics,
       apiAccess: ["none", "limited", "full"].includes(parsed.apiAccess)
         ? parsed.apiAccess
-        : DEFAULT_PLAN_LIMITS.apiAccess
+        : FALLBACK_LIMITS.apiAccess
     };
     return validated;
   } catch {
-    return DEFAULT_PLAN_LIMITS;
+    return FALLBACK_LIMITS;
   }
 }
 
@@ -149,7 +139,7 @@ export async function checkProductLimit(userId: string) {
   const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   const businessId = user[0]?.businessId ?? null;
 
-  let limits = DEFAULT_PLAN_LIMITS;
+  let limits = FALLBACK_LIMITS;
   if (businessId) {
     limits = await getBusinessPlanLimits(businessId);
   }
@@ -184,7 +174,7 @@ export async function checkOrderLimit(sellerId: string) {
   const businessId = seller[0]?.businessId ?? null;
 
   if (!businessId) {
-    return { allowed: true, current: 0, limit: DEFAULT_PLAN_LIMITS.maxMonthlyOrders, unlimited: false };
+    return { allowed: true, current: 0, limit: FALLBACK_LIMITS.maxMonthlyOrders, unlimited: false };
   }
 
   const monthStart = new Date();

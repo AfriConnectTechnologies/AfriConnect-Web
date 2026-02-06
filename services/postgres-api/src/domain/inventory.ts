@@ -28,7 +28,7 @@ export async function list(
 ) {
   const user = await requireSeller(ctx);
 
-  const productsList = await db.select().from(products).where(eq(products.sellerId, user.clerkId));
+  const productsList = await db.select().from(products).where(eq(products.sellerId, user.id));
   const enriched = productsList.map((product) => {
     const threshold = product.lowStockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
     const stockStatus = getStockStatus(product.quantity, threshold);
@@ -53,7 +53,7 @@ export async function getTransactions(
   let transactions: typeof inventoryTransactions.$inferSelect[] = [];
   if (args.productId) {
     const product = await db.select().from(products).where(eq(products.id, args.productId)).limit(1);
-    if (!product[0] || product[0].sellerId !== user.clerkId) {
+    if (!product[0] || product[0].sellerId !== user.id) {
       throw new Error("Unauthorized");
     }
     transactions = await db
@@ -64,7 +64,7 @@ export async function getTransactions(
     transactions = await db
       .select()
       .from(inventoryTransactions)
-      .where(eq(inventoryTransactions.sellerId, user.clerkId));
+    .where(eq(inventoryTransactions.sellerId, user.id));
   }
 
   const sorted = transactions.sort((a, b) => b.createdAt - a.createdAt);
@@ -94,7 +94,7 @@ export async function adjustStock(
   if (args.delta === 0) throw new Error("Adjustment must be non-zero");
 
   const product = await db.select().from(products).where(eq(products.id, args.productId)).limit(1);
-  if (!product[0] || product[0].sellerId !== user.clerkId) throw new Error("Unauthorized");
+  if (!product[0] || product[0].sellerId !== user.id) throw new Error("Unauthorized");
 
   const previousQuantity = product[0].quantity;
   const newQuantity = previousQuantity + args.delta;
@@ -130,7 +130,7 @@ export async function updateThresholds(
 ) {
   const user = await requireSellerForMutation(ctx);
   const product = await db.select().from(products).where(eq(products.id, args.productId)).limit(1);
-  if (!product[0] || product[0].sellerId !== user.clerkId) throw new Error("Unauthorized");
+  if (!product[0] || product[0].sellerId !== user.id) throw new Error("Unauthorized");
 
   if (args.lowStockThreshold !== undefined && args.lowStockThreshold < 0) {
     throw new Error("Low stock threshold must be 0 or greater");

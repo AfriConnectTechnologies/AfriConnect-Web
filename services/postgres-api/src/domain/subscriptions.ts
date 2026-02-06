@@ -1,7 +1,7 @@
 import { and, eq, lt, ne } from "drizzle-orm";
 import { db } from "../db/client";
 import { businesses, orders, originCalculations, products, subscriptionPlans, subscriptions, users } from "../db/schema";
-import { DEFAULT_PLAN_LIMITS, PlanLimits } from "./subscriptionPlans";
+import { DEFAULT_PLAN_LIMITS, type PlanLimits } from "./planLimits";
 import { getCurrentUser, requireAdmin, requireUser, toDoc, type RequestContext } from "./helpers";
 
 export async function getCurrentSubscription(ctx: RequestContext) {

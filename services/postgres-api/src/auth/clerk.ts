@@ -21,19 +21,23 @@ export async function verifyClerkAuthHeader(authorization?: string): Promise<Aut
     return { userId: null, sessionId: null, claims: null };
   }
 
-  const payload = (await verifyToken(token, {
-    secretKey: env.CLERK_SECRET_KEY,
-    audience: env.CLERK_JWT_TEMPLATE
-  })) as { sub?: string; sid?: string; [key: string]: unknown } | undefined;
+  try {
+    const payload = (await verifyToken(token, {
+      secretKey: env.CLERK_SECRET_KEY,
+      audience: env.CLERK_JWT_TEMPLATE
+    })) as { sub?: string; sid?: string; [key: string]: unknown } | undefined;
 
-  const userId = typeof payload?.sub === "string" ? payload.sub : null;
-  const sessionId = typeof payload?.sid === "string" ? payload.sid : null;
+    const userId = typeof payload?.sub === "string" ? payload.sub : null;
+    const sessionId = typeof payload?.sid === "string" ? payload.sid : null;
 
-  return {
-    userId,
-    sessionId,
-    claims: (payload ?? null) as Record<string, unknown> | null
-  };
+    return {
+      userId,
+      sessionId,
+      claims: (payload ?? null) as Record<string, unknown> | null
+    };
+  } catch {
+    return { userId: null, sessionId: null, claims: null };
+  }
 }
 
 export async function getClerkUser(userId: string) {

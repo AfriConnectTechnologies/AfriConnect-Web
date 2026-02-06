@@ -81,7 +81,7 @@ export async function create(
     const existingSku = await db
       .select()
       .from(products)
-      .where(and(eq(products.sellerId, user.clerkId), eq(products.sku, args.sku)))
+      .where(and(eq(products.sellerId, user.id), eq(products.sku, args.sku)))
       .limit(1);
     if (existingSku[0]) {
       throw new Error("SKU already exists for another product");
@@ -93,7 +93,7 @@ export async function create(
 
   await db.insert(products).values({
     id: productId,
-    sellerId: user.clerkId,
+    sellerId: user.id,
     name: args.name,
     description: args.description,
     price: args.price,
@@ -115,7 +115,7 @@ export async function create(
     await db.insert(inventoryTransactions).values({
       id: crypto.randomUUID(),
       productId,
-      sellerId: user.clerkId,
+      sellerId: user.id,
       type: "restock",
       direction: "in",
       quantity: args.quantity,
@@ -170,7 +170,7 @@ export async function update(
     const existingSku = await db
       .select()
       .from(products)
-      .where(and(eq(products.sellerId, user[0].clerkId), eq(products.sku, args.sku)))
+      .where(and(eq(products.sellerId, user[0].id), eq(products.sku, args.sku)))
       .limit(1);
     if (existingSku[0] && existingSku[0].id !== args.id) {
       throw new Error("SKU already exists for another product");
