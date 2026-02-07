@@ -43,6 +43,12 @@ export default defineSchema({
     hasImportExportPermit: v.optional(v.boolean()),
     importExportPermitImageUrl: v.optional(v.string()),
     importExportPermitNumber: v.optional(v.string()),
+    payoutBankCode: v.optional(v.string()),
+    payoutBankName: v.optional(v.string()),
+    payoutAccountNumber: v.optional(v.string()),
+    payoutAccountName: v.optional(v.string()),
+    payoutEnabled: v.optional(v.boolean()),
+    payoutUpdatedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -59,6 +65,7 @@ export default defineSchema({
     userId: v.string(), // buyerId for marketplace orders
     buyerId: v.optional(v.string()), // explicit buyer ID
     sellerId: v.optional(v.string()), // seller ID for marketplace orders
+    paymentId: v.optional(v.id("payments")),
     title: v.string(),
     customer: v.string(),
     amount: v.number(),
@@ -169,6 +176,7 @@ export default defineSchema({
     chapaTrxRef: v.optional(v.string()), // trx_ref returned by Chapa
     amount: v.number(),
     currency: v.string(),
+    processorFeeTotal: v.optional(v.number()),
     status: v.union(
       v.literal("pending"),
       v.literal("success"),
@@ -199,6 +207,37 @@ export default defineSchema({
     .index("by_chapa_ref", ["chapaTransactionRef"])
     .index("by_status", ["status"])
     .index("by_idempotency", ["userId", "idempotencyKey"]),
+
+  payouts: defineTable({
+    orderId: v.id("orders"),
+    sellerId: v.string(),
+    paymentId: v.optional(v.id("payments")),
+    amountGross: v.number(),
+    platformFeeSeller: v.number(),
+    processorFeeAllocated: v.number(),
+    amountNet: v.number(),
+    currency: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("queued"),
+      v.literal("success"),
+      v.literal("failed"),
+      v.literal("reverted")
+    ),
+    reference: v.string(),
+    chapaReference: v.optional(v.string()),
+    bankReference: v.optional(v.string()),
+    attempts: v.number(),
+    lastError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_order", ["orderId"])
+    .index("by_seller", ["sellerId"])
+    .index("by_status", ["status"])
+    .index("by_reference", ["reference"])
+    .index("by_chapa_reference", ["chapaReference"]),
 
   verificationTokens: defineTable({
     userId: v.id("users"),

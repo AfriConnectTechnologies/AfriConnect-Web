@@ -55,6 +55,39 @@ interface ChapaVerifyResponse {
   };
 }
 
+interface ChapaTransferPayload {
+  amount: string;
+  currency: string;
+  account_name: string;
+  account_number: string;
+  bank_code: string;
+  reference: string;
+}
+
+interface ChapaTransferResponse {
+  message: string;
+  status: string;
+  data?: {
+    reference?: string;
+    chapa_reference?: string;
+    bank_reference?: string;
+    status?: string;
+  };
+}
+
+interface ChapaTransferVerifyResponse {
+  message: string;
+  status: string;
+  data?: {
+    reference?: string;
+    chapa_reference?: string;
+    bank_reference?: string;
+    status?: string;
+    amount?: number;
+    currency?: string;
+  };
+}
+
 export class ChapaError extends Error {
   constructor(
     message: string,
@@ -174,6 +207,66 @@ export async function getBanks(): Promise<unknown> {
 }
 
 /**
+ * Create a transfer to a bank account
+ */
+export async function createTransfer(
+  payload: ChapaTransferPayload
+): Promise<ChapaTransferResponse> {
+  const secretKey = getSecretKey();
+
+  const response = await fetch(`${CHAPA_BASE_URL}/transfers`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.status !== "success") {
+    let errorMessage = "Failed to create transfer";
+    if (data.message) {
+      errorMessage = typeof data.message === "string"
+        ? data.message
+        : JSON.stringify(data.message);
+    }
+    throw new ChapaError(errorMessage, response.status, data);
+  }
+
+  return data as ChapaTransferResponse;
+}
+
+/**
+ * Verify a transfer status
+ */
+export async function verifyTransfer(
+  reference: string
+): Promise<ChapaTransferVerifyResponse> {
+  const secretKey = getSecretKey();
+
+  const response = await fetch(`${CHAPA_BASE_URL}/transfers/verify/${reference}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new ChapaError(
+      data.message || "Failed to verify transfer",
+      response.status,
+      data
+    );
+  }
+
+  return data as ChapaTransferVerifyResponse;
+}
+
+/**
  * Generate callback and return URLs
  */
 export function getPaymentUrls(baseUrl: string, txRef: string) {
@@ -270,4 +363,3 @@ export async function processRefund(
 
   return data as ChapaRefundResponse;
 }
-

@@ -71,7 +71,7 @@ export const get = query({
 
     // Check if user is buyer or seller
     const isBuyer = order.userId === user._id || order.buyerId === user._id;
-    const isSeller = order.sellerId === user._id;
+    const isSeller = order.sellerId === user.clerkId;
 
     if (!isBuyer && !isSeller) {
       throw new Error("Unauthorized");
@@ -398,17 +398,75 @@ export const sales = query({
       orders = await ctx.db
         .query("orders")
         .withIndex("by_seller_status", (q) =>
-          q.eq("sellerId", user._id).eq("status", args.status!)
+          q.eq("sellerId", user.clerkId).eq("status", args.status!)
         )
         .collect();
     } else {
       orders = await ctx.db
         .query("orders")
-        .withIndex("by_seller", (q) => q.eq("sellerId", user._id))
+        .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
         .collect();
     }
 
     return orders.sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// Mark an order completed by the seller (seller only)
+export const completeBySeller = mutation({
+  args: { id: v.id("orders") },
+  handler: async (ctx, args) => {
+    const log = createLogger("orders.completeBySeller");
+
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity === null) {
+        throw new Error("Not authenticated");
+      }
+
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+
+      if (!user) {
+        throw new Error("Unauthorized");
+      }
+
+      const order = await ctx.db.get(args.id);
+      if (!order) {
+        throw new Error("Order not found");
+      }
+
+      if (order.sellerId !== user.clerkId) {
+        throw new Error("Unauthorized");
+      }
+
+      if (order.status === "cancelled") {
+        throw new Error("Cannot complete a cancelled order");
+      }
+
+      if (order.status === "completed") {
+        return order;
+      }
+
+      await ctx.db.patch(args.id, {
+        status: "completed",
+        updatedAt: Date.now(),
+      });
+
+      log.info("Order marked completed by seller", {
+        orderId: args.id,
+        sellerId: user.clerkId,
+      });
+
+      await flushLogs();
+      return await ctx.db.get(args.id);
+    } catch (error) {
+      log.error("Order completion by seller failed", error, { orderId: args.id });
+      await flushLogs();
+      throw error;
+    }
   },
 });
 
@@ -421,6 +479,13 @@ export const checkout = mutation({
 
       const user = await getOrCreateUser(ctx);
       log.setContext({ userId: user.clerkId });
+
+      // DEBUG: Log buyer identity
+      console.log("[DEBUG CHECKOUT] Buyer info:", {
+        convexId: user._id,
+        clerkId: user.clerkId,
+        email: user.email,
+      });
 
       // Get cart items
       const cartItems = await ctx.db
@@ -468,6 +533,18 @@ export const checkout = mutation({
         }
 
         const sellerId = product.sellerId;
+        
+        // DEBUG: Log product seller info
+        console.log("[DEBUG CHECKOUT] Product seller info:", {
+          productId: cartItem.productId,
+          productName: product.name,
+          productSellerId: sellerId,
+          buyerClerkId: user.clerkId,
+          buyerConvexId: user._id,
+          isSamePerson: sellerId === user.clerkId,
+          sellerIdType: typeof sellerId,
+        });
+        
         if (!itemsBySeller.has(sellerId)) {
           itemsBySeller.set(sellerId, []);
         }
@@ -503,12 +580,34 @@ export const checkout = mutation({
           });
         }
 
-        // Get seller info for order title
+        // Get seller info for order title (sellerId is stored as clerkId)
         const seller = await ctx.db
           .query("users")
-          .filter((q) => q.eq(q.field("_id"), sellerId))
+          .withIndex("by_clerk_id", (q) => q.eq("clerkId", sellerId))
           .first();
         const sellerName = seller?.name || seller?.email || "Unknown Seller";
+
+        // DEBUG: Log seller lookup result
+        console.log("[DEBUG CHECKOUT] Seller lookup:", {
+          searchedClerkId: sellerId,
+          foundSeller: seller ? {
+            convexId: seller._id,
+            clerkId: seller.clerkId,
+            email: seller.email,
+            name: seller.name,
+          } : null,
+          sellerName,
+        });
+
+        // DEBUG: Log what we're about to store
+        console.log("[DEBUG CHECKOUT] Creating order with:", {
+          buyerId: user._id,
+          buyerIdType: typeof user._id,
+          sellerId: sellerId,
+          sellerIdType: typeof sellerId,
+          areTheyEqual: user._id === sellerId,
+          buyerClerkIdEqualsSellerId: user.clerkId === sellerId,
+        });
 
         // Create order
         const orderId = await ctx.db.insert("orders", {
@@ -522,6 +621,14 @@ export const checkout = mutation({
           description: `Order containing ${items.length} item(s)`,
           createdAt: now,
           updatedAt: now,
+        });
+
+        // DEBUG: Verify what was stored
+        const createdOrder = await ctx.db.get(orderId);
+        console.log("[DEBUG CHECKOUT] Order created:", {
+          orderId,
+          storedBuyerId: createdOrder?.buyerId,
+          storedSellerId: createdOrder?.sellerId,
         });
 
         log.info("Order created during checkout", {

@@ -14,27 +14,24 @@ export const list = query({
       throw new Error("Not authenticated");
     }
 
+    // Use the provided sellerId or default to the current user's ID
+    // This ensures users only see their own products by default
+    const effectiveSellerId = args.sellerId ?? identity.subject;
+
     let products;
 
-    if (args.sellerId && args.status) {
+    if (args.status) {
       products = await ctx.db
         .query("products")
         .withIndex("by_seller_status", (q) =>
-          q.eq("sellerId", args.sellerId!).eq("status", args.status!)
+          q.eq("sellerId", effectiveSellerId).eq("status", args.status!)
         )
         .collect();
-    } else if (args.sellerId) {
-      products = await ctx.db
-        .query("products")
-        .withIndex("by_seller", (q) => q.eq("sellerId", args.sellerId!))
-        .collect();
-    } else if (args.status) {
-      products = await ctx.db
-        .query("products")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .collect();
     } else {
-      products = await ctx.db.query("products").collect();
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_seller", (q) => q.eq("sellerId", effectiveSellerId))
+        .collect();
     }
 
     return products.sort((a, b) => b.createdAt - a.createdAt);
@@ -229,11 +226,12 @@ export const update = mutation({
         .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
         .first();
 
-      if (!user || product.sellerId !== user._id) {
+      // sellerId is stored as clerkId, not the Convex _id
+      if (!user || product.sellerId !== user.clerkId) {
         log.warn("Product update failed - unauthorized", {
           productId: args.id,
           productOwnerId: product.sellerId,
-          requestingUserId: user?._id,
+          requestingUserId: user?.clerkId,
         });
         await flushLogs();
         throw new Error("Unauthorized");
@@ -327,11 +325,12 @@ export const remove = mutation({
         .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
         .first();
 
-      if (!user || product.sellerId !== user._id) {
+      // sellerId is stored as clerkId, not the Convex _id
+      if (!user || product.sellerId !== user.clerkId) {
         log.warn("Product removal failed - unauthorized", {
           productId: args.id,
           productOwnerId: product.sellerId,
-          requestingUserId: user?._id,
+          requestingUserId: user?.clerkId,
         });
         await flushLogs();
         throw new Error("Unauthorized");
@@ -627,8 +626,21 @@ export const getProductWithImages = query({
 
     const sortedImages = images.sort((a, b) => a.order - b.order);
 
-    // Get seller information
-    const seller = await ctx.db.get(product.sellerId as unknown as import("./_generated/dataModel").Id<"users">);
+    // Get seller information (sellerId is stored as clerkId, not Convex _id)
+    let seller = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", product.sellerId))
+      .first();
+    
+    // Fallback: try looking up by _id if clerkId lookup failed (legacy data)
+    if (!seller) {
+      try {
+        seller = await ctx.db.get(product.sellerId as unknown as import("./_generated/dataModel").Id<"users">);
+      } catch {
+        // Invalid ID format, seller not found
+        seller = null;
+      }
+    }
     
     // Get seller's business if they have one
     let business = null;
