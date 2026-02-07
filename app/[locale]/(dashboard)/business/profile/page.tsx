@@ -36,6 +36,7 @@ import {
   Pencil,
   Shield,
   ArrowRight,
+  Landmark,
 } from "lucide-react";
 import { useRouter as useNextIntlRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -150,6 +151,13 @@ export default function BusinessProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [country, setCountry] = useState<string>("");
   const [category, setCategory] = useState<string>("");
+  const [banks, setBanks] = useState<Array<{ name: string; code: string }>>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
+  const [payoutBankCode, setPayoutBankCode] = useState("");
+  const [payoutBankName, setPayoutBankName] = useState("");
+  const [payoutAccountNumber, setPayoutAccountNumber] = useState("");
+  const [payoutAccountName, setPayoutAccountName] = useState("");
+  const [savingPayout, setSavingPayout] = useState(false);
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const business = useQuery(api.businesses.getMyBusiness);
@@ -158,6 +166,16 @@ export default function BusinessProfilePage() {
     COMPLIANCE_ENABLED ? undefined : "skip"
   );
   const updateBusiness = useMutation(api.businesses.updateBusiness);
+  const updatePayoutSettings = useMutation(api.businesses.updatePayoutSettings);
+
+  // Compute effective values - prefer state (for edits), fallback to business data
+  const businessData = business as typeof business & { payoutBankName?: string };
+  const effectiveBankCode = payoutBankCode || business?.payoutBankCode || "";
+  const effectiveBankName = payoutBankName || businessData?.payoutBankName || "";
+  const effectiveAccountName = payoutAccountName || business?.payoutAccountName || "";
+  const effectiveAccountNumber = payoutAccountNumber || business?.payoutAccountNumber || "";
+  const selectedBankName = effectiveBankName || 
+    (effectiveBankCode ? banks.find((b) => String(b.code) === String(effectiveBankCode))?.name : undefined);
 
   // Redirect if user doesn't have a business
   useEffect(() => {
@@ -169,10 +187,65 @@ export default function BusinessProfilePage() {
   // Set initial values when business data loads
   useEffect(() => {
     if (business) {
+      const biz = business as typeof business & { payoutBankName?: string };
       setCountry(business.country);
       setCategory(business.category);
+      setPayoutBankCode(business.payoutBankCode || "");
+      setPayoutBankName(biz.payoutBankName || "");
+      setPayoutAccountNumber(business.payoutAccountNumber || "");
+      setPayoutAccountName(business.payoutAccountName || "");
     }
   }, [business]);
+
+  useEffect(() => {
+    const loadBanks = async () => {
+      setLoadingBanks(true);
+      try {
+        const response = await fetch("/api/payouts/banks");
+        const data = await response.json();
+        const rawBanks =
+          data?.data?.data ||
+          data?.data ||
+          data?.banks ||
+          data?.bank;
+
+        const normalized = Array.isArray(rawBanks)
+          ? rawBanks
+              .map((bank) => ({
+                name: bank.name || bank.bank_name || bank.bankName || bank.bank || "",
+                code: bank.code || bank.id || bank.bank_code || "",
+              }))
+              .filter((bank) => bank.name && bank.code)
+          : [];
+
+        setBanks(normalized);
+      } catch (error) {
+        console.error("Failed to load banks", error);
+        setBanks([]);
+      } finally {
+        setLoadingBanks(false);
+      }
+    };
+
+    loadBanks();
+  }, []);
+
+  // Update bank name when banks load and we have a code but no name
+  useEffect(() => {
+    if (payoutBankCode && !payoutBankName && banks.length > 0) {
+      const bank = banks.find((b) => String(b.code) === String(payoutBankCode));
+      if (bank) {
+        setPayoutBankName(bank.name);
+      }
+    }
+  }, [banks, payoutBankCode, payoutBankName]);
+
+  // Handler for bank selection
+  const handleBankSelect = (code: string) => {
+    setPayoutBankCode(code);
+    const bank = banks.find((b) => b.code === code);
+    setPayoutBankName(bank?.name || "");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -201,6 +274,28 @@ export default function BusinessProfilePage() {
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSavePayoutSettings = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (savingPayout) return;
+
+    setSavingPayout(true);
+    try {
+      await updatePayoutSettings({
+        payoutBankCode: effectiveBankCode,
+        payoutBankName: effectiveBankName || selectedBankName || "",
+        payoutAccountNumber: effectiveAccountNumber,
+        payoutAccountName: effectiveAccountName,
+      });
+      toast.success("Payout settings updated");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update payout settings";
+      toast.error(errorMessage);
+    } finally {
+      setSavingPayout(false);
     }
   };
 
@@ -493,6 +588,93 @@ export default function BusinessProfilePage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Payout Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Landmark className="h-5 w-5" />
+            Payout Settings
+          </CardTitle>
+          <CardDescription>
+            Add your bank details to receive marketplace payouts.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSavePayoutSettings} className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="payoutBank">Bank *</Label>
+              <Select
+                value={effectiveBankCode}
+                onValueChange={handleBankSelect}
+                disabled={loadingBanks || savingPayout}
+              >
+                <SelectTrigger id="payoutBank" className="w-full">
+                  <SelectValue placeholder={loadingBanks ? "Loading banks..." : "Select bank"}>
+                    {selectedBankName}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {banks.map((bank) => (
+                    <SelectItem key={bank.code} value={bank.code}>
+                      {bank.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!loadingBanks && banks.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Unable to load banks right now.
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="payoutAccountName">Account Name *</Label>
+              <Input
+                id="payoutAccountName"
+                value={effectiveAccountName}
+                onChange={(e) => setPayoutAccountName(e.target.value)}
+                disabled={savingPayout}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="payoutAccountNumber">Account Number *</Label>
+              <Input
+                id="payoutAccountNumber"
+                value={effectiveAccountNumber}
+                onChange={(e) => setPayoutAccountNumber(e.target.value)}
+                disabled={savingPayout}
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                {business.payoutEnabled ? "Payouts enabled" : "Payouts not enabled yet"}
+              </div>
+              <Button
+                type="submit"
+                disabled={
+                  savingPayout ||
+                  !effectiveBankCode ||
+                  !effectiveAccountNumber ||
+                  !effectiveAccountName
+                }
+              >
+                {savingPayout ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Payout Settings"
+                )}
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 

@@ -75,10 +75,25 @@ export const add = mutation({
         throw new Error("Product not found");
       }
 
-      if (product.sellerId === user._id) {
+      // Check if user is trying to buy their own product
+      // sellerId can be either clerkId (correct) or Convex _id (legacy/mobile data)
+      const isOwnProduct = product.sellerId === user.clerkId || product.sellerId === user._id;
+      
+      // DEBUG: Log IDs for self-purchase check
+      console.log("[DEBUG ADD TO CART] Self-purchase check:", {
+        productId: args.productId,
+        productName: product.name,
+        productSellerId: product.sellerId,
+        buyerClerkId: user.clerkId,
+        buyerConvexId: user._id,
+        isOwnProduct,
+      });
+
+      if (isOwnProduct) {
         log.warn("Add to cart failed - user tried to buy own product", {
           productId: args.productId,
           productName: product.name,
+          productSellerId: product.sellerId,
         });
         await flushLogs();
         throw new Error("You can't purchase your own products. This item belongs to you!");

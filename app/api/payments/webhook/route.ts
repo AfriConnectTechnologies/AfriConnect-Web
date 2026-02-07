@@ -288,9 +288,13 @@ export async function POST(request: NextRequest) {
 
     // Double-verify payment status with Chapa API
     let verifiedStatus = status;
+    let processorFeeTotal: number | undefined;
     try {
       const verification = await verifyPayment(tx_ref);
       verifiedStatus = verification.data.status;
+      if (typeof verification.data.charge === "number") {
+        processorFeeTotal = verification.data.charge;
+      }
     } catch (verifyError) {
       console.error("Error verifying payment with Chapa:", verifyError);
       // Log but continue with webhook status if API verification fails
@@ -327,6 +331,7 @@ export async function POST(request: NextRequest) {
       txRef: tx_ref,
       status: paymentStatus,
       chapaTrxRef: trx_ref,
+      processorFeeTotal,
     });
 
     // Log successful webhook processing
@@ -430,11 +435,15 @@ export async function GET(request: NextRequest) {
   try {
     const verification = await verifyPayment(txRef);
     const paymentStatus = verification.data.status === "success" ? "success" : "failed";
+    const processorFeeTotal = typeof verification.data.charge === "number"
+      ? verification.data.charge
+      : undefined;
 
     await convex.mutation(api.payments.updateStatus, {
       txRef,
       status: paymentStatus,
       chapaTrxRef: verification.data.reference,
+      processorFeeTotal,
     });
 
     await logAuditEvent(

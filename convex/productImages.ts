@@ -24,7 +24,8 @@ export const saveImage = mutation({
       throw new Error("Product not found");
     }
 
-    if (product.sellerId !== user._id) {
+    // sellerId is stored as clerkId, not the Convex _id
+    if (product.sellerId !== user.clerkId) {
       throw new Error("Unauthorized: You don't own this product");
     }
 
@@ -83,8 +84,9 @@ export const deleteImage = mutation({
     }
 
     // Verify ownership through product
+    // sellerId is stored as clerkId, not the Convex _id
     const product = await ctx.db.get(image.productId);
-    if (!product || product.sellerId !== user._id) {
+    if (!product || product.sellerId !== user.clerkId) {
       throw new Error("Unauthorized");
     }
 
@@ -137,8 +139,9 @@ export const reorderImages = mutation({
     const user = await getOrCreateUser(ctx);
 
     // Verify product ownership
+    // sellerId is stored as clerkId, not the Convex _id
     const product = await ctx.db.get(args.productId);
-    if (!product || product.sellerId !== user._id) {
+    if (!product || product.sellerId !== user.clerkId) {
       throw new Error("Unauthorized");
     }
 
@@ -170,8 +173,9 @@ export const setPrimaryImage = mutation({
     }
 
     // Verify ownership through product
+    // sellerId is stored as clerkId, not the Convex _id
     const product = await ctx.db.get(image.productId);
-    if (!product || product.sellerId !== user._id) {
+    if (!product || product.sellerId !== user.clerkId) {
       throw new Error("Unauthorized");
     }
 

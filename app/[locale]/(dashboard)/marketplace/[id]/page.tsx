@@ -72,7 +72,8 @@ export default function ProductDetailPage() {
   };
 
   // Check if current user is the owner of this product
-  const isOwnProduct = currentUser && productData && productData.sellerId === currentUser._id;
+  // sellerId is stored as clerkId, not the Convex _id
+  const isOwnProduct = currentUser && productData && productData.sellerId === currentUser.clerkId;
 
   const handleAddToCart = async () => {
     if (!productData) return;
