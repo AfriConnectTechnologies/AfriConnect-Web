@@ -109,18 +109,20 @@ describe("Products Business Logic", () => {
 
   describe("Authorization checks", () => {
     it("should only allow product owner to update", () => {
-      const product = { sellerId: "user-123" };
-      const currentUser = { _id: "user-123" };
+      // sellerId stores clerkId, not _id
+      const product = { sellerId: "clerk-user-123" };
+      const currentUser = { _id: "convex-id-abc", clerkId: "clerk-user-123" };
       
-      const isAuthorized = product.sellerId === currentUser._id;
+      const isAuthorized = product.sellerId === currentUser.clerkId;
       expect(isAuthorized).toBe(true);
     });
 
     it("should reject update from non-owner", () => {
-      const product = { sellerId: "user-123" };
-      const currentUser = { _id: "user-456" };
+      // sellerId stores clerkId, not _id
+      const product = { sellerId: "clerk-user-123" };
+      const currentUser = { _id: "convex-id-xyz", clerkId: "clerk-user-456" };
       
-      const isAuthorized = product.sellerId === currentUser._id;
+      const isAuthorized = product.sellerId === currentUser.clerkId;
       expect(isAuthorized).toBe(false);
     });
   });
