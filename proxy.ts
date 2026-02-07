@@ -17,7 +17,7 @@ const isPublicRoute = createRouteMatcher([
   '/api(.*)',
 ])
 
-export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
+export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { pathname } = request.nextUrl
   
   // Skip i18n middleware for API routes - they don't need locale handling
