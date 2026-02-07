@@ -63,11 +63,13 @@ export default function CartPage() {
 
     setIsCheckingOut(true);
     try {
-      // Calculate total from cart (orders will be created after successful payment)
-      const totalAmount = cart.reduce((sum, item) => {
+      // Calculate subtotal from cart (orders will be created after successful payment)
+      const subtotalAmount = cart.reduce((sum, item) => {
         if (!item.product) return sum;
         return sum + item.product.price * item.quantity;
       }, 0);
+      const buyerFee = Math.round(subtotalAmount * 0.01 * 100) / 100;
+      const totalAmount = subtotalAmount + buyerFee;
 
       if (totalAmount <= 0) {
         throw new Error("Invalid cart total");
@@ -111,10 +113,13 @@ export default function CartPage() {
     );
   }
 
-  const total = cart.reduce((sum, item) => {
+  const subtotal = cart.reduce((sum, item) => {
     if (!item.product) return sum;
     return sum + item.product.price * item.quantity;
   }, 0);
+
+  const buyerFee = Math.round(subtotal * 0.01 * 100) / 100;
+  const total = subtotal + buyerFee;
 
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -248,7 +253,11 @@ export default function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t("subtotal")}</span>
-                    <span>${total.toLocaleString()}</span>
+                    <span>${subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Buyer fee (1%)</span>
+                    <span>${buyerFee.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="border-t pt-4">

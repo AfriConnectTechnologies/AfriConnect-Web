@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
@@ -46,12 +46,25 @@ import { ComingSoonPage } from "@/components/ui/coming-soon";
 
 type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
 type OrderTab = "purchases" | "sales";
+type PayoutStatus = "pending" | "approved" | "queued" | "success" | "failed" | "reverted";
 
 const statusColors: Record<OrderStatus, "default" | "secondary" | "outline" | "destructive"> = {
   pending: "secondary",
   processing: "default",
   completed: "outline",
   cancelled: "destructive",
+};
+
+const payoutStatusColors: Record<
+  PayoutStatus,
+  "default" | "secondary" | "outline" | "destructive"
+> = {
+  pending: "secondary",
+  approved: "default",
+  queued: "default",
+  success: "outline",
+  failed: "destructive",
+  reverted: "destructive",
 };
 
 export default function OrdersPage() {
@@ -64,6 +77,7 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [deleteConfirm, setDeleteConfirm] = useState<Id<"orders"> | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Id<"orders"> | null>(null);
+  const [payoutProcessing, setPayoutProcessing] = useState<string | null>(null);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const purchases = useQuery(api.orders.purchases, {
@@ -72,11 +86,17 @@ export default function OrdersPage() {
   const sales = useQuery(api.orders.sales, {
     status: statusFilter !== "all" ? statusFilter : undefined,
   });
+  const payouts = useQuery(api.payouts.listForSeller);
   const deleteOrder = useMutation(api.orders.remove);
   const updateOrder = useMutation(api.orders.update);
+  const completeBySeller = useMutation(api.orders.completeBySeller);
   const orderDetails = useQuery(
     api.orders.get,
     selectedOrder ? { id: selectedOrder } : "skip"
+  );
+  const orderPayout = useQuery(
+    api.payouts.getByOrder,
+    selectedOrder ? { orderId: selectedOrder } : "skip"
   );
 
   useEffect(() => {
@@ -94,6 +114,15 @@ export default function OrdersPage() {
         order.customer.toLowerCase().includes(searchQuery.toLowerCase())
     ) ?? [];
 
+  const payoutByOrderId = useMemo(() => {
+    type PayoutType = NonNullable<typeof payouts>[number];
+    const map = new Map<string, PayoutType>();
+    payouts?.forEach((payout: PayoutType) => {
+      map.set(payout.orderId.toString(), payout);
+    });
+    return map;
+  }, [payouts]);
+
   const handleDelete = async () => {
     if (!deleteConfirm) return;
     try {
@@ -108,14 +137,53 @@ export default function OrdersPage() {
 
   const handleStatusUpdate = async (orderId: Id<"orders">, newStatus: OrderStatus) => {
     try {
-      await updateOrder({
-        id: orderId,
-        status: newStatus,
-      });
-      toast.success(tToast("orderStatusUpdated"));
+      if (newStatus === "completed" && activeTab === "sales") {
+        await completeBySeller({ id: orderId });
+        toast.success(tToast("orderStatusUpdated"));
+
+        setPayoutProcessing(orderId.toString());
+        const response = await fetch("/api/payouts/transfer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data?.error || "Failed to initiate payout");
+        }
+      } else {
+        await updateOrder({
+          id: orderId,
+          status: newStatus,
+        });
+        toast.success(tToast("orderStatusUpdated"));
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : tToast("failedToUpdateOrder");
       toast.error(errorMessage);
+    } finally {
+      setPayoutProcessing(null);
+    }
+  };
+
+  const handleRetryPayout = async (orderId: Id<"orders">) => {
+    setPayoutProcessing(orderId.toString());
+    try {
+      const response = await fetch("/api/payouts/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to retry payout");
+      }
+      toast.success("Payout retry initiated");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to retry payout";
+      toast.error(errorMessage);
+    } finally {
+      setPayoutProcessing(null);
     }
   };
 
@@ -226,6 +294,19 @@ export default function OrdersPage() {
                             </Badge>
                           </TableCell>
                           <TableCell>
+                            {(() => {
+                              const payout = payoutByOrderId.get(order._id.toString());
+                              if (!payout) {
+                                return <span className="text-muted-foreground">Not started</span>;
+                              }
+                              return (
+                                <Badge variant={payoutStatusColors[payout.status as PayoutStatus]}>
+                                  {payout.status}
+                                </Badge>
+                              );
+                            })()}
+                          </TableCell>
+                          <TableCell>
                             {new Date(order.createdAt).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="text-right">
@@ -304,6 +385,7 @@ export default function OrdersPage() {
                         <TableHead>{t("buyer")}</TableHead>
                         <TableHead>{t("amount")}</TableHead>
                         <TableHead>{tCommon("status")}</TableHead>
+                        <TableHead>Payout</TableHead>
                         <TableHead>{tCommon("created")}</TableHead>
                         <TableHead className="text-right">{tCommon("actions")}</TableHead>
                       </TableRow>
@@ -318,6 +400,19 @@ export default function OrdersPage() {
                             <Badge variant={statusColors[order.status]}>
                               {t(order.status)}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const payout = payoutByOrderId.get(order._id.toString());
+                              if (!payout) {
+                                return <span className="text-muted-foreground">Not started</span>;
+                              }
+                              return (
+                                <Badge variant={payoutStatusColors[payout.status as PayoutStatus]}>
+                                  {payout.status}
+                                </Badge>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             {new Date(order.createdAt).toLocaleDateString()}
@@ -345,7 +440,9 @@ export default function OrdersPage() {
                                     <DropdownMenuItem
                                       onClick={() => handleStatusUpdate(order._id, "completed")}
                                     >
-                                      {t("markAsCompleted")}
+                                      {payoutProcessing === order._id.toString()
+                                        ? "Processing..."
+                                        : t("markAsCompleted")}
                                     </DropdownMenuItem>
                                   </>
                                 )}
@@ -353,9 +450,24 @@ export default function OrdersPage() {
                                   <DropdownMenuItem
                                     onClick={() => handleStatusUpdate(order._id, "completed")}
                                   >
-                                    {t("markAsCompleted")}
+                                    {payoutProcessing === order._id.toString()
+                                      ? "Processing..."
+                                      : t("markAsCompleted")}
                                   </DropdownMenuItem>
                                 )}
+                                {(() => {
+                                  const payout = payoutByOrderId.get(order._id.toString());
+                                  if (order.status === "completed" && payout?.status === "failed") {
+                                    return (
+                                      <DropdownMenuItem
+                                        onClick={() => handleRetryPayout(order._id)}
+                                      >
+                                        Retry payout
+                                      </DropdownMenuItem>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -393,6 +505,20 @@ export default function OrdersPage() {
                     <div className="text-sm text-muted-foreground">{t("totalAmount")}</div>
                     <div className="font-semibold">${orderDetails.amount.toLocaleString()}</div>
                   </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Payout</div>
+                    {orderPayout === undefined ? (
+                      <span className="text-muted-foreground">{tCommon("loading")}</span>
+                    ) : orderPayout ? (
+                      <Badge
+                        variant={payoutStatusColors[orderPayout.status as PayoutStatus]}
+                      >
+                        {orderPayout.status}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">Not started</span>
+                    )}
+                  </div>
                 </div>
                 {orderDetails.description && (
                   <div>
@@ -423,6 +549,31 @@ export default function OrdersPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+                {orderPayout && (
+                  <div className="border-t pt-4">
+                    <div className="text-sm font-semibold mb-3">Payout Breakdown</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <span className="text-muted-foreground">Gross Amount:</span>
+                      <span className="text-right">${orderPayout.amountGross.toLocaleString()}</span>
+                      <span className="text-muted-foreground">Platform Fee (1%):</span>
+                      <span className="text-right text-destructive">-${orderPayout.platformFeeSeller.toLocaleString()}</span>
+                      <span className="text-muted-foreground">Processor Fee:</span>
+                      <span className="text-right text-destructive">-${orderPayout.processorFeeAllocated.toLocaleString()}</span>
+                      <span className="font-semibold pt-2 border-t">Net Payout:</span>
+                      <span className="font-semibold text-right pt-2 border-t">${orderPayout.amountNet.toLocaleString()}</span>
+                    </div>
+                    {orderPayout.reference && (
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        Reference: {orderPayout.reference}
+                      </div>
+                    )}
+                    {orderPayout.lastError && (
+                      <div className="mt-2 text-xs text-destructive">
+                        Error: {orderPayout.lastError}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
