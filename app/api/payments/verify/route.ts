@@ -75,6 +75,9 @@ export async function GET(request: NextRequest) {
     const status = chapaResponse.data.status === "success" ? "success" : "failed";
     const verifiedTxRef = validation.data.tx_ref;
     const chapaTrxRef = chapaResponse.data.reference;
+    const processorFeeTotal = typeof chapaResponse.data.charge === "number"
+      ? chapaResponse.data.charge
+      : undefined;
 
     // Isolate DB update so Chapa verification and DB updates are handled separately
     try {
@@ -82,6 +85,7 @@ export async function GET(request: NextRequest) {
         txRef: verifiedTxRef,
         status,
         chapaTrxRef,
+        processorFeeTotal,
       });
     } catch (updateError) {
       console.error("Chapa verification succeeded but DB update failed:", {

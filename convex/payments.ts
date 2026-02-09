@@ -87,7 +87,17 @@ export const create = mutation({
             productName: product.name,
           });
         }
-        cartSnapshot = JSON.stringify(cartData);
+        const subtotal = cartData.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+        const buyerFee = Math.round(subtotal * 0.01 * 100) / 100;
+
+        cartSnapshot = JSON.stringify({
+          items: cartData,
+          subtotal,
+          buyerFee,
+        });
 
         log.debug("Cart snapshot created", {
           itemCount: cartData.length,
@@ -186,6 +196,7 @@ export const updateStatus = mutation({
       v.literal("cancelled")
     ),
     chapaTrxRef: v.optional(v.string()),
+    processorFeeTotal: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const log = createLogger("payments.updateStatus");
@@ -215,8 +226,18 @@ export const updateStatus = mutation({
         paymentType: payment.paymentType,
       });
 
-      // Don't re-process if already successful
+      // Don't re-process if already successful, but allow fee updates
       if (payment.status === "success") {
+        if (
+          args.processorFeeTotal !== undefined &&
+          payment.processorFeeTotal !== args.processorFeeTotal
+        ) {
+          await ctx.db.patch(payment._id, {
+            processorFeeTotal: args.processorFeeTotal,
+            updatedAt: Date.now(),
+          });
+        }
+
         log.info("Payment already successful, skipping re-processing", {
           paymentId: payment._id,
           txRef: args.txRef,
@@ -228,6 +249,9 @@ export const updateStatus = mutation({
       await ctx.db.patch(payment._id, {
         status: args.status,
         chapaTrxRef: args.chapaTrxRef,
+        ...(args.processorFeeTotal !== undefined
+          ? { processorFeeTotal: args.processorFeeTotal }
+          : {}),
         updatedAt: Date.now(),
       });
 
@@ -328,7 +352,14 @@ export const updateStatus = mutation({
           }>;
 
           try {
-            cartData = JSON.parse(payment.metadata);
+            const parsed = JSON.parse(payment.metadata);
+            if (Array.isArray(parsed)) {
+              cartData = parsed;
+            } else if (parsed && Array.isArray(parsed.items)) {
+              cartData = parsed.items;
+            } else {
+              cartData = [];
+            }
             log.debug("Cart snapshot parsed", { itemCount: cartData.length });
           } catch (parseError) {
             log.error("Failed to parse cart snapshot", parseError, { paymentId: payment._id });
@@ -382,11 +413,18 @@ export const updateStatus = mutation({
               });
             }
 
-            // Get seller info
-            const seller = await ctx.db
-              .query("users")
-              .filter((q) => q.eq(q.field("_id"), sellerId))
-              .first();
+            // Get seller info (sellerId can be clerkId or Convex _id depending on how product was created)
+            const normalizedSellerId = ctx.db.normalizeId("users", sellerId);
+            let seller = normalizedSellerId
+              ? await ctx.db.get(normalizedSellerId)
+              : null;
+
+            if (!seller) {
+              seller = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", sellerId))
+                .first();
+            }
             const sellerName = seller?.name || seller?.email || "Unknown Seller";
 
             // Create order
@@ -394,6 +432,7 @@ export const updateStatus = mutation({
               userId: user._id,
               buyerId: user._id,
               sellerId: sellerId,
+              paymentId: payment._id,
               title: `Order from ${sellerName}`,
               customer: user.name || user.email,
               amount: totalAmount,
@@ -832,4 +871,3 @@ export const listSubscriptionPayments = query({
     return paymentsWithUsers;
   },
 });
-

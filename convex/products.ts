@@ -229,11 +229,12 @@ export const update = mutation({
         .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
         .first();
 
-      if (!user || product.sellerId !== user._id) {
+      // sellerId is stored as clerkId, not the Convex _id
+      if (!user || product.sellerId !== user.clerkId) {
         log.warn("Product update failed - unauthorized", {
           productId: args.id,
           productOwnerId: product.sellerId,
-          requestingUserId: user?._id,
+          requestingUserId: user?.clerkId,
         });
         await flushLogs();
         throw new Error("Unauthorized");
@@ -327,11 +328,12 @@ export const remove = mutation({
         .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
         .first();
 
-      if (!user || product.sellerId !== user._id) {
+      // sellerId is stored as clerkId, not the Convex _id
+      if (!user || product.sellerId !== user.clerkId) {
         log.warn("Product removal failed - unauthorized", {
           productId: args.id,
           productOwnerId: product.sellerId,
-          requestingUserId: user?._id,
+          requestingUserId: user?.clerkId,
         });
         await flushLogs();
         throw new Error("Unauthorized");
@@ -627,8 +629,18 @@ export const getProductWithImages = query({
 
     const sortedImages = images.sort((a, b) => a.order - b.order);
 
-    // Get seller information
-    const seller = await ctx.db.get(product.sellerId as unknown as import("./_generated/dataModel").Id<"users">);
+    // Get seller information (sellerId can be clerkId or Convex _id depending on legacy data)
+    const normalizedSellerId = ctx.db.normalizeId("users", product.sellerId);
+    let seller = normalizedSellerId
+      ? await ctx.db.get(normalizedSellerId)
+      : null;
+
+    if (!seller) {
+      seller = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", product.sellerId))
+        .first();
+    }
     
     // Get seller's business if they have one
     let business = null;

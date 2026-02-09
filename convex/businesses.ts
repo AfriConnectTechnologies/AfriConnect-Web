@@ -129,6 +129,11 @@ export const updateBusiness = mutation({
     hasImportExportPermit: v.optional(v.boolean()),
     importExportPermitImageUrl: v.optional(v.string()),
     importExportPermitNumber: v.optional(v.string()),
+    payoutBankCode: v.optional(v.string()),
+    payoutBankName: v.optional(v.string()),
+    payoutAccountNumber: v.optional(v.string()),
+    payoutAccountName: v.optional(v.string()),
+    payoutEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const log = createLogger("businesses.updateBusiness");
@@ -168,7 +173,7 @@ export const updateBusiness = mutation({
         throw new Error("Unauthorized: You can only update your own business");
       }
 
-      const updates: Partial<typeof args & { updatedAt: number }> = {
+      const updates: Partial<typeof args & { updatedAt: number; payoutUpdatedAt: number }> = {
         updatedAt: Date.now(),
       };
 
@@ -189,6 +194,20 @@ export const updateBusiness = mutation({
       if (args.hasImportExportPermit !== undefined) updates.hasImportExportPermit = args.hasImportExportPermit;
       if (args.importExportPermitImageUrl !== undefined) updates.importExportPermitImageUrl = args.importExportPermitImageUrl;
       if (args.importExportPermitNumber !== undefined) updates.importExportPermitNumber = args.importExportPermitNumber;
+      if (args.payoutBankCode !== undefined) updates.payoutBankCode = args.payoutBankCode;
+      if (args.payoutBankName !== undefined) updates.payoutBankName = args.payoutBankName;
+      if (args.payoutAccountNumber !== undefined) updates.payoutAccountNumber = args.payoutAccountNumber;
+      if (args.payoutAccountName !== undefined) updates.payoutAccountName = args.payoutAccountName;
+      if (args.payoutEnabled !== undefined) updates.payoutEnabled = args.payoutEnabled;
+      if (
+        args.payoutBankCode !== undefined ||
+        args.payoutBankName !== undefined ||
+        args.payoutAccountNumber !== undefined ||
+        args.payoutAccountName !== undefined ||
+        args.payoutEnabled !== undefined
+      ) {
+        updates.payoutUpdatedAt = Date.now();
+      }
 
       await ctx.db.patch(user.businessId, updates);
 
@@ -202,6 +221,60 @@ export const updateBusiness = mutation({
       return await ctx.db.get(user.businessId);
     } catch (error) {
       log.error("Business update failed", error);
+      await flushLogs();
+      throw error;
+    }
+  },
+});
+
+// Update payout settings (seller only)
+export const updatePayoutSettings = mutation({
+  args: {
+    payoutBankCode: v.string(),
+    payoutBankName: v.string(),
+    payoutAccountNumber: v.string(),
+    payoutAccountName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const log = createLogger("businesses.updatePayoutSettings");
+
+    try {
+      const user = await requireUser(ctx);
+      log.setContext({ userId: user.clerkId });
+
+      if (!user.businessId) {
+        throw new Error("You don't have a registered business");
+      }
+
+      const business = await ctx.db.get(user.businessId);
+      if (!business) {
+        throw new Error("Business not found");
+      }
+
+      if (business.ownerId !== user._id) {
+        throw new Error("Unauthorized: You can only update your own business");
+      }
+
+      const now = Date.now();
+      await ctx.db.patch(user.businessId, {
+        payoutBankCode: args.payoutBankCode,
+        payoutBankName: args.payoutBankName,
+        payoutAccountNumber: args.payoutAccountNumber,
+        payoutAccountName: args.payoutAccountName,
+        payoutEnabled: true,
+        payoutUpdatedAt: now,
+        updatedAt: now,
+      });
+
+      log.info("Payout settings updated", {
+        businessId: user.businessId,
+        payoutBankCode: args.payoutBankCode,
+      });
+
+      await flushLogs();
+      return await ctx.db.get(user.businessId);
+    } catch (error) {
+      log.error("Payout settings update failed", error);
       await flushLogs();
       throw error;
     }

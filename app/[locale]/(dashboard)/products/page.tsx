@@ -73,9 +73,16 @@ export default function ProductsPage() {
   const isSubmittingRef = useRef(false);
   const createFormRef = useRef<HTMLFormElement>(null);
 
-  const products = useQuery(api.products.list, {
-    status: statusFilter !== "all" ? statusFilter : undefined,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const products = useQuery(
+    api.products.list,
+    currentUser
+      ? {
+          sellerId: currentUser.clerkId,
+          status: statusFilter !== "all" ? statusFilter : undefined,
+        }
+      : "skip"
+  );
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
