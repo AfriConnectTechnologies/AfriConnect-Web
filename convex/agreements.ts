@@ -101,14 +101,16 @@ export const getUserAgreements = query({
     const acceptancesWithVersion = await Promise.all(
       acceptances.map(async (acceptance) => {
         const version = await ctx.db.get(acceptance.agreementVersionId);
-        return {
-          ...acceptance,
-          version,
-        };
+        if (!version) {
+          return null;
+        }
+        return { ...acceptance, version };
       })
     );
 
-    return acceptancesWithVersion.sort((a, b) => b.acceptedAt - a.acceptedAt);
+    return acceptancesWithVersion
+      .filter((row): row is NonNullable<typeof row> => row !== null)
+      .sort((a, b) => b.acceptedAt - a.acceptedAt);
   },
 });
 
@@ -120,7 +122,7 @@ export const acceptAgreement = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getOrCreateUser(ctx);
-    let activeVersion = await ctx.db
+    const activeVersion = await ctx.db
       .query("agreementVersions")
       .withIndex("by_type_active", (q) =>
         q.eq("type", args.type).eq("isActive", true)
@@ -128,20 +130,9 @@ export const acceptAgreement = mutation({
       .first();
 
     if (!activeVersion) {
-      const now = Date.now();
-      const versionId = await ctx.db.insert("agreementVersions", {
-        type: args.type,
-        version: "1.0",
-        contentKey: getDefaultAgreementContentKey(args.type),
-        isActive: true,
-        effectiveDate: now,
-        createdAt: now,
-      });
-      activeVersion = await ctx.db.get(versionId);
-    }
-
-    if (!activeVersion) {
-      throw new Error("Failed to resolve active agreement version");
+      throw new Error(
+        "No active agreement version is configured. Please contact an administrator."
+      );
     }
 
     const existingAcceptance = await ctx.db
