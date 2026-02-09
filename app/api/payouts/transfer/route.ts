@@ -49,9 +49,13 @@ export async function POST(request: NextRequest) {
 
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
     const token = await getToken({ template: "convex" });
-    if (token) {
-      convex.setAuth(token);
+    if (!token) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401, headers: SECURITY_HEADERS }
+      );
     }
+    convex.setAuth(token);
 
     const payout = await convex.action(api.payouts.transferForOrder, {
       orderId: body.orderId,

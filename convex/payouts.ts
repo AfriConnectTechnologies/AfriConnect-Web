@@ -327,6 +327,7 @@ async function performTransfer(
   const platformFeeSeller = roundCurrency(amountGross * 0.01);
   const paymentTotal = context.payment.amount || amountGross;
   const processorFeeTotal = context.payment.processorFeeTotal || 0;
+  // Allocate processor fees proportionally by this order's share of the total payment.
   const processorFeeAllocated =
     paymentTotal > 0
       ? roundCurrency(processorFeeTotal * (amountGross / paymentTotal))
