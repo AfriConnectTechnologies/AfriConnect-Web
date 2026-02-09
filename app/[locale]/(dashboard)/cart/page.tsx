@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 import { COMMERCE_ENABLED } from "@/lib/features";
@@ -19,6 +19,7 @@ import { AgreementDialog } from "@/components/agreements/AgreementDialog";
 export default function CartPage() {
   const t = useTranslations("cart");
   const tCommon = useTranslations("common");
+  const router = useRouter();
   
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showBuyerAgreementDialog, setShowBuyerAgreementDialog] = useState(false);
@@ -117,6 +118,12 @@ export default function CartPage() {
       return;
     }
 
+    if (buyerAgreementState.status === "unauthenticated") {
+      toast.error("Please sign in to continue checkout.");
+      router.push("/sign-in");
+      return;
+    }
+
     if (buyerAgreementState.status === "missing_active_version") {
       toast.error("Buyer agreement is not configured. Please contact support.");
       return;
@@ -169,6 +176,10 @@ export default function CartPage() {
 
             if (updatedState.status === "missing_active_version") {
               throw new Error("Buyer agreement is not configured. Please contact support.");
+            }
+
+            if (updatedState.status === "unauthenticated") {
+              throw new Error("Please sign in to continue checkout.");
             }
 
             if (updatedState.status !== "accepted") {

@@ -30,7 +30,7 @@ export const hasAcceptedCurrentAgreement = query({
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     if (!user) {
-      return { status: "not_accepted" as const, accepted: false };
+      return { status: "unauthenticated" as const, accepted: false };
     }
 
     const activeVersion = await ctx.db
@@ -164,7 +164,7 @@ export const acceptAgreement = mutation({
     });
 
     // Race-safe dedupe: concurrent calls can both pass the pre-check.
-    // Keep a single deterministic winner (smallest _id), delete the rest.
+    // Keep the earliest acceptance by acceptedAt; use _id only as tie-breaker.
     const duplicates = await ctx.db
       .query("agreementAcceptances")
       .withIndex("by_user_type_version", (q) =>
@@ -176,7 +176,12 @@ export const acceptAgreement = mutation({
       .collect();
 
     if (duplicates.length > 1) {
-      duplicates.sort((a, b) => (a._id < b._id ? -1 : 1));
+      duplicates.sort((a, b) => {
+        if (a.acceptedAt !== b.acceptedAt) {
+          return a.acceptedAt - b.acceptedAt;
+        }
+        return a._id < b._id ? -1 : 1;
+      });
       const winner = duplicates[0];
 
       if (winner._id !== acceptanceId) {
@@ -190,7 +195,21 @@ export const acceptAgreement = mutation({
       return winner;
     }
 
-    return await ctx.db.get(acceptanceId);
+    const canonicalAcceptance = await ctx.db
+      .query("agreementAcceptances")
+      .withIndex("by_user_type_version", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("agreementType", args.type)
+          .eq("agreementVersionId", activeVersion._id)
+      )
+      .first();
+
+    if (!canonicalAcceptance) {
+      throw new Error("Failed to persist agreement acceptance");
+    }
+
+    return canonicalAcceptance;
   },
 });
 
