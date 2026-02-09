@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { COMMERCE_ENABLED } from "@/lib/features";
 
 const SECURITY_HEADERS = {
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     convex.setAuth(token);
 
     const payout = await convex.action(api.payouts.transferForOrder, {
-      orderId: body.orderId,
+      orderId: body.orderId as Id<"orders">,
     });
 
     return NextResponse.json(
