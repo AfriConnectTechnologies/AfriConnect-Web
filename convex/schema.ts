@@ -342,6 +342,30 @@ export default defineSchema({
     .index("by_channel_reporter", ["channelId", "reporterId"])
     .index("by_status", ["status"]),
 
+  agreementVersions: defineTable({
+    type: v.union(v.literal("seller"), v.literal("buyer")),
+    version: v.string(),
+    contentKey: v.string(),
+    isActive: v.boolean(),
+    requireReacceptance: v.optional(v.boolean()),
+    effectiveDate: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_type", ["type"])
+    .index("by_type_active", ["type", "isActive"]),
+
+  agreementAcceptances: defineTable({
+    userId: v.id("users"),
+    agreementType: v.union(v.literal("seller"), v.literal("buyer")),
+    agreementVersionId: v.id("agreementVersions"),
+    acceptedAt: v.number(),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_type", ["userId", "agreementType"])
+    .index("by_user_type_version", ["userId", "agreementType", "agreementVersionId"]),
+
   // AfCFTA Compliance - Business Products with HS Codes
   businessProducts: defineTable({
     businessId: v.id("businesses"),
