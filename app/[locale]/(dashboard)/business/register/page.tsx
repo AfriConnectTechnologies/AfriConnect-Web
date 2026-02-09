@@ -130,7 +130,6 @@ export default function BusinessRegisterPage() {
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const createBusiness = useMutation(api.businesses.createBusiness);
-  const acceptAgreement = useMutation(api.agreements.acceptAgreement);
 
   // Redirect if user already has a business
   useEffect(() => {
@@ -164,11 +163,6 @@ export default function BusinessRegisterPage() {
     const city = (formData.get("city") as string) || undefined;
 
     try {
-      await acceptAgreement({
-        type: "seller",
-        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
-      });
-
       const hasPermit = hasImportExportPermit === "yes";
       const result = await createBusiness({
         name: businessName,
@@ -187,6 +181,9 @@ export default function BusinessRegisterPage() {
         hasImportExportPermit: hasPermit,
         importExportPermitImageUrl: hasPermit ? (importExportPermitImageUrl ?? undefined) : undefined,
         importExportPermitNumber: hasPermit ? (importExportPermitNumber || undefined) : undefined,
+        sellerAgreementAccepted: sellerAgreementAccepted,
+        sellerAgreementUserAgent:
+          typeof navigator !== "undefined" ? navigator.userAgent : undefined,
       });
 
       // Send registration confirmation email to business owner

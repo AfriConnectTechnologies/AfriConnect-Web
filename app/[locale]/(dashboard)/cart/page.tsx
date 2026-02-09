@@ -112,6 +112,11 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
+    if (hasBuyerAgreementAccepted === undefined) {
+      toast.error(tCommon("loading"));
+      return;
+    }
+
     if (hasBuyerAgreementAccepted === false) {
       toast.error(t("buyerAgreementRequired"));
       setShowBuyerAgreementDialog(true);
@@ -316,7 +321,12 @@ export default function CartPage() {
                 <Button
                   className="w-full gap-2"
                   onClick={handleCheckout}
-                  disabled={isCheckingOut || cart.length === 0 || !COMMERCE_ENABLED}
+                  disabled={
+                    isCheckingOut ||
+                    cart.length === 0 ||
+                    !COMMERCE_ENABLED ||
+                    hasBuyerAgreementAccepted === undefined
+                  }
                 >
                   {isCheckingOut ? (
                     <>
