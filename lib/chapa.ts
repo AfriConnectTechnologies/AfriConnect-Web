@@ -100,7 +100,10 @@ export class ChapaError extends Error {
 }
 
 function getSecretKey(): string {
-  const key = process.env.CHAPA_TEST_SECRET_KEY || process.env.CHAPA_SECRET_KEY;
+  const isProduction = process.env.NODE_ENV === "production";
+  const key =
+    process.env.CHAPA_SECRET_KEY ||
+    (!isProduction ? process.env.CHAPA_TEST_SECRET_KEY : undefined);
   if (!key) {
     throw new ChapaError("Chapa secret key is not configured");
   }

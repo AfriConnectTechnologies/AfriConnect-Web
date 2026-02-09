@@ -30,8 +30,7 @@ export async function POST(request: NextRequest) {
       request.headers.get("chapa-signature") ||
       "";
 
-    const approvalSecret =
-      process.env.CHAPA_TRANSFER_APPROVAL_SECRET || process.env.CHAPA_ENCRYPTION_KEY;
+    const approvalSecret = process.env.CHAPA_TRANSFER_APPROVAL_SECRET;
 
     if (!approvalSecret) {
       return NextResponse.json(
@@ -86,8 +85,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const amount = (payload?.amount as number | undefined) ?? (payloadData?.amount as number | undefined);
-    if (typeof amount === "number" && Math.abs(amount - payout.amountNet) > 0.01) {
+    const rawAmount = (payload?.amount as unknown) ?? (payloadData?.amount as unknown);
+    const parsedAmount =
+      typeof rawAmount === "number"
+        ? rawAmount
+        : typeof rawAmount === "string"
+          ? Number(rawAmount)
+          : undefined;
+    if (parsedAmount === undefined || Number.isNaN(parsedAmount)) {
+      return NextResponse.json(
+        { error: "Invalid payout amount" },
+        { status: 400, headers: SECURITY_HEADERS }
+      );
+    }
+    if (Math.abs(parsedAmount - payout.amountNet) > 0.01) {
       return NextResponse.json(
         { error: "Payout amount mismatch" },
         { status: 400, headers: SECURITY_HEADERS }
