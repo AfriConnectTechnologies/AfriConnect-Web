@@ -480,13 +480,6 @@ export const checkout = mutation({
       const user = await getOrCreateUser(ctx);
       log.setContext({ userId: user.clerkId });
 
-      // DEBUG: Log buyer identity
-      console.log("[DEBUG CHECKOUT] Buyer info:", {
-        convexId: user._id,
-        clerkId: user.clerkId,
-        email: user.email,
-      });
-
       // Get cart items
       const cartItems = await ctx.db
         .query("cartItems")
@@ -534,17 +527,6 @@ export const checkout = mutation({
 
         const sellerId = product.sellerId;
         
-        // DEBUG: Log product seller info
-        console.log("[DEBUG CHECKOUT] Product seller info:", {
-          productId: cartItem.productId,
-          productName: product.name,
-          productSellerId: sellerId,
-          buyerClerkId: user.clerkId,
-          buyerConvexId: user._id,
-          isSamePerson: sellerId === user.clerkId,
-          sellerIdType: typeof sellerId,
-        });
-        
         if (!itemsBySeller.has(sellerId)) {
           itemsBySeller.set(sellerId, []);
         }
@@ -587,28 +569,6 @@ export const checkout = mutation({
           .first();
         const sellerName = seller?.name || seller?.email || "Unknown Seller";
 
-        // DEBUG: Log seller lookup result
-        console.log("[DEBUG CHECKOUT] Seller lookup:", {
-          searchedClerkId: sellerId,
-          foundSeller: seller ? {
-            convexId: seller._id,
-            clerkId: seller.clerkId,
-            email: seller.email,
-            name: seller.name,
-          } : null,
-          sellerName,
-        });
-
-        // DEBUG: Log what we're about to store
-        console.log("[DEBUG CHECKOUT] Creating order with:", {
-          buyerId: user._id,
-          buyerIdType: typeof user._id,
-          sellerId: sellerId,
-          sellerIdType: typeof sellerId,
-          areTheyEqual: user._id === sellerId,
-          buyerClerkIdEqualsSellerId: user.clerkId === sellerId,
-        });
-
         // Create order
         const orderId = await ctx.db.insert("orders", {
           userId: user._id,
@@ -621,14 +581,6 @@ export const checkout = mutation({
           description: `Order containing ${items.length} item(s)`,
           createdAt: now,
           updatedAt: now,
-        });
-
-        // DEBUG: Verify what was stored
-        const createdOrder = await ctx.db.get(orderId);
-        console.log("[DEBUG CHECKOUT] Order created:", {
-          orderId,
-          storedBuyerId: createdOrder?.buyerId,
-          storedSellerId: createdOrder?.sellerId,
         });
 
         log.info("Order created during checkout", {

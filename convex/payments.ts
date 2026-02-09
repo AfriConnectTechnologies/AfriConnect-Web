@@ -414,16 +414,15 @@ export const updateStatus = mutation({
             }
 
             // Get seller info (sellerId can be clerkId or Convex _id depending on how product was created)
-            let seller = await ctx.db
-              .query("users")
-              .withIndex("by_clerk_id", (q) => q.eq("clerkId", sellerId))
-              .first();
-            
-            // Fallback: try looking up by _id if clerkId lookup failed (legacy data)
+            const normalizedSellerId = ctx.db.normalizeId("users", sellerId);
+            let seller = normalizedSellerId
+              ? await ctx.db.get(normalizedSellerId)
+              : null;
+
             if (!seller) {
               seller = await ctx.db
                 .query("users")
-                .filter((q) => q.eq(q.field("_id"), sellerId))
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", sellerId))
                 .first();
             }
             const sellerName = seller?.name || seller?.email || "Unknown Seller";

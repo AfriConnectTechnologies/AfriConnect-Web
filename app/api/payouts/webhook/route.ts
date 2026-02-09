@@ -81,12 +81,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let verifiedStatus = status;
+    let verifiedStatus: string | undefined;
     let chapaReference = (payload?.chapa_reference as string | undefined) || (payloadData?.chapa_reference as string | undefined);
     let bankReference = (payload?.bank_reference as string | undefined) || (payloadData?.bank_reference as string | undefined);
 
     try {
       const verification = await verifyTransfer(reference);
+      if (!verification?.data?.status) {
+        return NextResponse.json(
+          { error: "Transfer verification unavailable" },
+          { status: 502, headers: SECURITY_HEADERS }
+        );
+      }
       if (verification?.data?.status) {
         verifiedStatus = verification.data.status;
       }
@@ -102,6 +108,17 @@ export async function POST(request: NextRequest) {
       } else {
         console.error("Transfer verification failed:", error);
       }
+      return NextResponse.json(
+        { error: "Transfer verification failed" },
+        { status: 502, headers: SECURITY_HEADERS }
+      );
+    }
+
+    if (!verifiedStatus) {
+      return NextResponse.json(
+        { error: "Transfer verification unavailable" },
+        { status: 502, headers: SECURITY_HEADERS }
+      );
     }
 
     let payoutStatus: "queued" | "approved" | "success" | "failed" | "reverted";

@@ -43,6 +43,13 @@ async function getChapaSecret() {
   return key;
 }
 
+const TRANSFER_TIMEOUT_MS = 15_000;
+const TRANSFER_RETRY_BACKOFFS_MS = [500, 1500];
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function createTransfer(payload: {
   amount: number;
   currency: string;
@@ -53,32 +60,75 @@ async function createTransfer(payload: {
 }) {
   const secretKey = await getChapaSecret();
 
-  const response = await fetch("https://api.chapa.co/v1/transfers", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      amount: payload.amount.toString(),
-      currency: payload.currency,
-      account_name: payload.account_name,
-      account_number: payload.account_number,
-      bank_code: payload.bank_code,
-      reference: payload.reference,
-    }),
-  });
+  const maxAttempts = TRANSFER_RETRY_BACKOFFS_MS.length + 1;
+  let lastErrorMessage = "Transfer request failed";
 
-  const data = await response.json();
-  if (!response.ok || data.status !== "success") {
-    const message =
-      typeof data?.message === "string"
-        ? data.message
-        : "Transfer initiation failed";
-    throw new Error(message);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TRANSFER_TIMEOUT_MS);
+
+    try {
+      const response = await fetch("https://api.chapa.co/v1/transfers", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          amount: payload.amount.toString(),
+          currency: payload.currency,
+          account_name: payload.account_name,
+          account_number: payload.account_number,
+          bank_code: payload.bank_code,
+          reference: payload.reference,
+        }),
+      });
+
+      let data: any = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok || data?.status !== "success") {
+        const message =
+          typeof data?.message === "string"
+            ? data.message
+            : `Transfer initiation failed (status ${response.status})`;
+        throw new Error(message);
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        lastErrorMessage = `Transfer request timed out after ${TRANSFER_TIMEOUT_MS}ms`;
+      } else if (error instanceof Error) {
+        lastErrorMessage = error.message;
+      } else {
+        lastErrorMessage = "Transfer request failed";
+      }
+
+      if (attempt < maxAttempts) {
+        const backoffMs = TRANSFER_RETRY_BACKOFFS_MS[attempt - 1] ?? 0;
+        if (backoffMs > 0) {
+          await sleep(backoffMs);
+        }
+        continue;
+      }
+
+      throw new Error(
+        `${lastErrorMessage}. Reference: ${payload.reference}. Attempts: ${maxAttempts}.`
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
-  return data;
+  throw new Error(
+    `Transfer request failed. Reference: ${payload.reference}. Attempts: ${maxAttempts}.`
+  );
 }
 
 export const getTransferContext = internalQuery({
@@ -270,44 +320,13 @@ async function performTransfer(
     throw new Error("Seller payout bank details are required");
   }
 
-  if (context.existingPayout) {
-    if (["success", "queued", "approved"].includes(context.existingPayout.status)) {
-      return context.existingPayout;
-    }
-    if (context.existingPayout.status === "pending" && args.initiatedByClerkId) {
-      return context.existingPayout;
-    }
-  }
-
-  if (context.existingPayout && context.existingPayout.attempts >= MAX_ATTEMPTS) {
-    throw new Error("Maximum payout attempts reached");
-  }
-
   const amountGross = context.order.amount;
   const platformFeeSeller = roundCurrency(amountGross * 0.01);
-  const paymentSubtotal = (() => {
-    if (!context.payment?.metadata) return amountGross;
-    try {
-      const parsed = JSON.parse(context.payment.metadata);
-      if (parsed && typeof parsed.subtotal === "number") {
-        return parsed.subtotal;
-      }
-      if (parsed && typeof parsed.subtotal === "string") {
-        const asNumber = Number(parsed.subtotal);
-        if (!Number.isNaN(asNumber)) {
-          return asNumber;
-        }
-      }
-    } catch {
-      return amountGross;
-    }
-    return amountGross;
-  })();
-
+  const paymentTotal = context.payment.amount || amountGross;
   const processorFeeTotal = context.payment.processorFeeTotal || 0;
   const processorFeeAllocated =
-    paymentSubtotal > 0
-      ? roundCurrency(processorFeeTotal * (amountGross / paymentSubtotal))
+    paymentTotal > 0
+      ? roundCurrency(processorFeeTotal * (amountGross / paymentTotal))
       : 0;
   const amountNet = Math.max(
     0,
@@ -316,6 +335,33 @@ async function performTransfer(
 
   if (amountNet <= 0) {
     throw new Error("Net payout amount must be greater than zero");
+  }
+
+  const payoutCurrency = context.payment.currency || "ETB";
+
+  if (context.existingPayout) {
+    if (["success", "queued", "approved"].includes(context.existingPayout.status)) {
+      return context.existingPayout;
+    }
+
+    if (context.existingPayout.attempts >= MAX_ATTEMPTS) {
+      throw new Error("Maximum payout attempts reached");
+    }
+
+    if (context.existingPayout.status === "pending" && args.initiatedByClerkId) {
+      const payoutMatchesCurrent =
+        context.existingPayout.amountGross === amountGross &&
+        context.existingPayout.platformFeeSeller === platformFeeSeller &&
+        context.existingPayout.processorFeeAllocated === processorFeeAllocated &&
+        context.existingPayout.amountNet === amountNet &&
+        context.existingPayout.currency === payoutCurrency;
+
+      if (!payoutMatchesCurrent) {
+        throw new Error("Payout details have changed; please contact support");
+      }
+
+      return context.existingPayout;
+    }
   }
 
   const attemptNumber = (context.existingPayout?.attempts || 0) + 1;
@@ -331,7 +377,7 @@ async function performTransfer(
       platformFeeSeller,
       processorFeeAllocated,
       amountNet,
-      currency: context.payment.currency || "ETB",
+      currency: payoutCurrency,
       reference,
     }
   );
@@ -343,7 +389,7 @@ async function performTransfer(
   try {
     const transferResponse = await createTransfer({
       amount: amountNet,
-      currency: context.payment.currency || "ETB",
+      currency: payoutCurrency,
       account_name: payoutAccountName,
       account_number: payoutAccountNumber,
       bank_code: payoutBankCode,

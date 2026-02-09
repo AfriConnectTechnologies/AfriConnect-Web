@@ -626,20 +626,17 @@ export const getProductWithImages = query({
 
     const sortedImages = images.sort((a, b) => a.order - b.order);
 
-    // Get seller information (sellerId is stored as clerkId, not Convex _id)
-    let seller = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", product.sellerId))
-      .first();
-    
-    // Fallback: try looking up by _id if clerkId lookup failed (legacy data)
+    // Get seller information (sellerId can be clerkId or Convex _id depending on legacy data)
+    const normalizedSellerId = ctx.db.normalizeId("users", product.sellerId);
+    let seller = normalizedSellerId
+      ? await ctx.db.get(normalizedSellerId)
+      : null;
+
     if (!seller) {
-      try {
-        seller = await ctx.db.get(product.sellerId as unknown as import("./_generated/dataModel").Id<"users">);
-      } catch {
-        // Invalid ID format, seller not found
-        seller = null;
-      }
+      seller = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", product.sellerId))
+        .first();
     }
     
     // Get seller's business if they have one
