@@ -14,18 +14,23 @@ import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { ComingSoonBanner } from "@/components/ui/coming-soon";
+import { AgreementDialog } from "@/components/agreements/AgreementDialog";
 
 export default function CartPage() {
   const t = useTranslations("cart");
   const tCommon = useTranslations("common");
-  const tNav = useTranslations("navigation");
   
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showBuyerAgreementDialog, setShowBuyerAgreementDialog] = useState(false);
 
   const ensureUser = useMutation(api.users.ensureUser);
   const cart = useQuery(api.cart.get);
   const updateCartItem = useMutation(api.cart.update);
   const removeCartItem = useMutation(api.cart.remove);
+  const acceptAgreement = useMutation(api.agreements.acceptAgreement);
+  const hasBuyerAgreementAccepted = useQuery(api.agreements.hasAcceptedCurrentAgreement, {
+    type: "buyer",
+  });
 
   useEffect(() => {
     ensureUser().catch(() => {
@@ -55,7 +60,7 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckout = async () => {
+  const proceedToCheckout = async () => {
     if (!cart || cart.length === 0) {
       toast.error(t("emptyCart"));
       return;
@@ -105,6 +110,16 @@ export default function CartPage() {
     }
   };
 
+  const handleCheckout = async () => {
+    if (hasBuyerAgreementAccepted === false) {
+      toast.error(t("buyerAgreementRequired"));
+      setShowBuyerAgreementDialog(true);
+      return;
+    }
+
+    await proceedToCheckout();
+  };
+
   if (cart === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -125,6 +140,19 @@ export default function CartPage() {
 
   return (
     <div className="space-y-6">
+      <AgreementDialog
+        open={showBuyerAgreementDialog}
+        onOpenChange={setShowBuyerAgreementDialog}
+        type="buyer"
+        onAccept={async () => {
+          await acceptAgreement({
+            type: "buyer",
+            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+          });
+          await proceedToCheckout();
+        }}
+      />
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">
