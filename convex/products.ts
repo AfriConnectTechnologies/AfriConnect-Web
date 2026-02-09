@@ -14,24 +14,27 @@ export const list = query({
       throw new Error("Not authenticated");
     }
 
-    // Use the provided sellerId or default to the current user's ID
-    // This ensures users only see their own products by default
-    const effectiveSellerId = args.sellerId ?? identity.subject;
-
     let products;
 
-    if (args.status) {
+    if (args.sellerId && args.status) {
       products = await ctx.db
         .query("products")
         .withIndex("by_seller_status", (q) =>
-          q.eq("sellerId", effectiveSellerId).eq("status", args.status!)
+          q.eq("sellerId", args.sellerId!).eq("status", args.status!)
         )
         .collect();
-    } else {
+    } else if (args.sellerId) {
       products = await ctx.db
         .query("products")
-        .withIndex("by_seller", (q) => q.eq("sellerId", effectiveSellerId))
+        .withIndex("by_seller", (q) => q.eq("sellerId", args.sellerId!))
         .collect();
+    } else if (args.status) {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .collect();
+    } else {
+      products = await ctx.db.query("products").collect();
     }
 
     return products.sort((a, b) => b.createdAt - a.createdAt);

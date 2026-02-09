@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     if (payout.status === "success") {
       return NextResponse.json(
-        { status: "approved", reference },
+        { status: payout.status, reference },
         { headers: SECURITY_HEADERS }
       );
     }
