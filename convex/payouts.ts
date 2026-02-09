@@ -360,6 +360,13 @@ async function performTransfer(
         throw new Error("Payout details have changed; please contact support");
       }
 
+      if (
+        context.business.payoutUpdatedAt !== undefined &&
+        context.business.payoutUpdatedAt > context.existingPayout.createdAt
+      ) {
+        throw new Error("Payout details have changed; please contact support");
+      }
+
       return context.existingPayout;
     }
   }
