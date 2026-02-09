@@ -50,6 +50,8 @@ export function AgreementDialog({
     try {
       await onAccept();
       onOpenChange(false);
+    } catch {
+      // Keep dialog open so users can retry after transient failures.
     } finally {
       setIsSubmitting(false);
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ export default function CartPage() {
   
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [showBuyerAgreementDialog, setShowBuyerAgreementDialog] = useState(false);
+  const convex = useConvex();
 
   const ensureUser = useMutation(api.users.ensureUser);
   const cart = useQuery(api.cart.get);
@@ -145,11 +146,29 @@ export default function CartPage() {
         onOpenChange={setShowBuyerAgreementDialog}
         type="buyer"
         onAccept={async () => {
-          await acceptAgreement({
-            type: "buyer",
-            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
-          });
-          await proceedToCheckout();
+          try {
+            await acceptAgreement({
+              type: "buyer",
+              userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+            });
+
+            const confirmed = await convex.query(
+              api.agreements.hasAcceptedCurrentAgreement,
+              { type: "buyer" }
+            );
+
+            if (!confirmed) {
+              toast.error(t("buyerAgreementRequired"));
+              throw new Error("Buyer agreement acceptance was not confirmed.");
+            }
+
+            await proceedToCheckout();
+          } catch (error: unknown) {
+            const message =
+              error instanceof Error ? error.message : t("buyerAgreementRequired");
+            toast.error(message);
+            throw error;
+          }
         }}
       />
 
