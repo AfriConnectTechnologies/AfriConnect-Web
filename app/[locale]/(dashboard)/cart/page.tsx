@@ -29,7 +29,7 @@ export default function CartPage() {
   const updateCartItem = useMutation(api.cart.update);
   const removeCartItem = useMutation(api.cart.remove);
   const acceptAgreement = useMutation(api.agreements.acceptAgreement);
-  const hasBuyerAgreementAccepted = useQuery(api.agreements.hasAcceptedCurrentAgreement, {
+  const buyerAgreementState = useQuery(api.agreements.hasAcceptedCurrentAgreement, {
     type: "buyer",
   });
 
@@ -112,12 +112,17 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    if (hasBuyerAgreementAccepted === undefined) {
+    if (buyerAgreementState === undefined) {
       toast.error(tCommon("loading"));
       return;
     }
 
-    if (hasBuyerAgreementAccepted === false) {
+    if (buyerAgreementState.status === "missing_active_version") {
+      toast.error("Buyer agreement is not configured. Please contact support.");
+      return;
+    }
+
+    if (buyerAgreementState.status !== "accepted") {
       toast.error(t("buyerAgreementRequired"));
       setShowBuyerAgreementDialog(true);
       return;
@@ -157,13 +162,16 @@ export default function CartPage() {
               userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
             });
 
-            const confirmed = await convex.query(
+            const updatedState = await convex.query(
               api.agreements.hasAcceptedCurrentAgreement,
               { type: "buyer" }
             );
 
-            if (!confirmed) {
-              toast.error(t("buyerAgreementRequired"));
+            if (updatedState.status === "missing_active_version") {
+              throw new Error("Buyer agreement is not configured. Please contact support.");
+            }
+
+            if (updatedState.status !== "accepted") {
               throw new Error("Buyer agreement acceptance was not confirmed.");
             }
 
@@ -325,7 +333,8 @@ export default function CartPage() {
                     isCheckingOut ||
                     cart.length === 0 ||
                     !COMMERCE_ENABLED ||
-                    hasBuyerAgreementAccepted === undefined
+                    buyerAgreementState === undefined ||
+                    buyerAgreementState?.status === "missing_active_version"
                   }
                 >
                   {isCheckingOut ? (

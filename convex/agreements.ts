@@ -30,7 +30,7 @@ export const hasAcceptedCurrentAgreement = query({
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
     if (!user) {
-      return false;
+      return { status: "not_accepted" as const, accepted: false };
     }
 
     const activeVersion = await ctx.db
@@ -41,7 +41,10 @@ export const hasAcceptedCurrentAgreement = query({
       .first();
 
     if (!activeVersion) {
-      return false;
+      return {
+        status: "missing_active_version" as const,
+        accepted: false,
+      };
     }
 
     const acceptance = await ctx.db
@@ -54,7 +57,11 @@ export const hasAcceptedCurrentAgreement = query({
       )
       .first();
 
-    return !!acceptance;
+    if (acceptance) {
+      return { status: "accepted" as const, accepted: true };
+    }
+
+    return { status: "not_accepted" as const, accepted: false };
   },
 });
 
@@ -117,7 +124,6 @@ export const getUserAgreements = query({
 export const acceptAgreement = mutation({
   args: {
     type: agreementTypeValidator,
-    ipAddress: v.optional(v.string()),
     userAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -154,7 +160,6 @@ export const acceptAgreement = mutation({
       agreementType: args.type,
       agreementVersionId: activeVersion._id,
       acceptedAt: Date.now(),
-      ipAddress: args.ipAddress,
       userAgent: args.userAgent,
     });
 

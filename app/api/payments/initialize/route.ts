@@ -102,11 +102,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (paymentType === "order") {
-      const hasBuyerAgreementAccepted = await convex.query(
+      const buyerAgreementState = await convex.query(
         api.agreements.hasAcceptedCurrentAgreement,
         { type: "buyer" }
       );
-      if (!hasBuyerAgreementAccepted) {
+      if (buyerAgreementState.status === "missing_active_version") {
+        return NextResponse.json(
+          { error: "Buyer agreement is not configured. Please contact support." },
+          { status: 503, headers: SECURITY_HEADERS }
+        );
+      }
+      if (buyerAgreementState.status !== "accepted") {
         return NextResponse.json(
           { error: "Buyer agreement must be accepted before checkout" },
           { status: 403, headers: SECURITY_HEADERS }
