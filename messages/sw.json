@@ -211,7 +211,10 @@
     "importExportPermitNumber": "Nambari ya kibali",
     "importExportPermitNumberPlaceholder": "Ingiza nambari ya kibali (si lazima)",
     "upload": "Pakia",
-    "uploaded": "Imepakiwa"
+    "uploaded": "Imepakiwa",
+    "sellerAgreementLabel": "Nimesoma na ninakubali",
+    "sellerAgreementLink": "Mkataba wa Muuzaji",
+    "sellerAgreementRequired": "Ni lazima ukubali Mkataba wa Muuzaji ili kusajili biashara yako."
   },
   "directory": {
     "title": "Saraka ya Biashara",
@@ -238,7 +241,8 @@
     "total": "Jumla",
     "checkout": "Lipia",
     "removeItem": "Ondoa kitu",
-    "updateQuantity": "Sasisha kiasi"
+    "updateQuantity": "Sasisha kiasi",
+    "buyerAgreementRequired": "Ni lazima ukubali Mkataba wa Mnunuzi kabla ya kulipia."
   },
   "dashboard": {
     "title": "Dashibodi",
@@ -698,6 +702,102 @@
       "dpo": {
         "title": "Afisa wa Ulinzi wa Data",
         "content": "Tumeteuwa Afisa wa Ulinzi wa Data (DPO) anayesimamia mkakati wetu wa ulinzi wa data na uzingatiaji. Kwa maswali yoyote yanayohusiana na faragha, wasiwasi, au kutekeleza haki zako za data, tafadhali wasiliana na DPO wetu."
+      }
+    }
+  },
+  "agreements": {
+    "dialog": {
+      "reviewAndAccept": "Tafadhali soma na ukubali mkataba huu kabla ya kuendelea.",
+      "accept": "Kubali na Uendelee",
+      "accepting": "Inakubali...",
+      "decline": "Kataa"
+    },
+    "seller": {
+      "title": "Mkataba wa Muuzaji",
+      "pageDescription": "Masharti yanayotumika unapoorodhesha bidhaa na kuuza kupitia AfriConnect.",
+      "lastUpdated": "Mara ya Mwisho Kusasishwa",
+      "lastUpdatedDate": "February 2026",
+      "introduction": "Mkataba huu wa Muuzaji unaongoza matumizi yako ya AfriConnect kama muuzaji. Kwa kuukubali, unathibitisha kuwa biashara yako ina mamlaka ya kuuza bidhaa zilizoainishwa na kwamba utazingatia masharti ya soko, malipo, na biashara.",
+      "acceptanceLabel": "Nimesoma na ninakubali Mkataba wa Muuzaji.",
+      "sections": {
+        "eligibility": {
+          "title": "Ustahiki",
+          "content": "Lazima uwe biashara iliyosajiliwa au mwakilishi aliyeidhinishwa. Lazima utoe taarifa sahihi za usajili na kudumisha kumbukumbu halali za biashara."
+        },
+        "productListings": {
+          "title": "Orodha za Bidhaa",
+          "content": "Lazima utoe majina sahihi ya bidhaa, maelezo, bei, kiwango cha stok, taarifa za asili, na picha. Orodha za kupotosha zinaweza kuondolewa."
+        },
+        "fulfillment": {
+          "title": "Utekelezaji wa Oda",
+          "content": "Una jukumu la kushughulikia oda kwa wakati, kusafirisha, na kuratibu uwasilishaji baada ya malipo kuthibitishwa. Lazima utoe taarifa ya ucheleweshaji mapema."
+        },
+        "qualityStandards": {
+          "title": "Viwango vya Ubora",
+          "content": "Bidhaa lazima zilingane na maelezo ya orodha, ziwe halali kuuzwa, na zitimize viwango vinavyotumika vya ubora na usalama katika mamlaka husika."
+        },
+        "feesCommissions": {
+          "title": "Ada na Kamisheni",
+          "content": "Ada za jukwaa na za uchakataji zinaweza kutumika kwa mauzo na malipo ya muuzaji. Kuendelea kutumia huduma za muuzaji kunaonyesha umekubali ratiba za ada husika."
+        },
+        "returnsRefunds": {
+          "title": "Marejesho na Rejesho la Fedha",
+          "content": "Lazima ushirikiane na maombi halali ya marejesho ya bidhaa na fedha kulingana na sera ya jukwaa, kumbukumbu za muamala, na matokeo ya migogoro."
+        },
+        "prohibitedItems": {
+          "title": "Bidhaa Zilizopigwa Marufuku",
+          "content": "Hauruhusiwi kuorodhesha bidhaa haramu, bandia, zilizo chini ya vikwazo, au zilizodhibitiwa. Ukiukaji unaweza kusababisha kuondolewa kwa orodha, kusimamishwa kwa akaunti, na taarifa za kisheria."
+        },
+        "intellectualProperty": {
+          "title": "Hakimiliki na Umiliki wa Ubunifu",
+          "content": "Unathibitisha kuwa una haki juu ya maudhui yote ya orodha na nyenzo za bidhaa. Unatoa ruhusa kwa AfriConnect kuonyesha na kutangaza orodha zako kwenye jukwaa."
+        },
+        "accountSuspension": {
+          "title": "Kusimamishwa kwa Akaunti",
+          "content": "AfriConnect inaweza kusimamisha au kusitisha ufikiaji wa muuzaji kwa udanganyifu, ukiukaji wa sera, kushindwa kwa uthibitishaji, au hitilafu za mara kwa mara za kiutendaji."
+        },
+        "liabilityIndemnification": {
+          "title": "Dhima na Fidia",
+          "content": "Unabaki kuwajibika kwa bidhaa zako, mwenendo wa biashara, na uzingatiaji wa sheria. Unakubali kufidia AfriConnect dhidi ya madai ya wahusika wa tatu yanayotokana na orodha au miamala yako."
+        }
+      }
+    },
+    "buyer": {
+      "title": "Mkataba wa Mnunuzi",
+      "pageDescription": "Masharti yanayotumika unapofanya ununuzi wa bidhaa kupitia AfriConnect.",
+      "lastUpdated": "Mara ya Mwisho Kusasishwa",
+      "lastUpdatedDate": "February 2026",
+      "introduction": "Mkataba huu wa Mnunuzi unaongoza matumizi yako ya AfriConnect kama mnunuzi. Kwa kuukubali, unathibitisha kuwa umeidhinishwa kuweka oda na utatimiza wajibu wa malipo na muamala.",
+      "acceptanceLabel": "Nimesoma na ninakubali Mkataba wa Mnunuzi.",
+      "sections": {
+        "purchaseCommitments": {
+          "title": "Ahadi za Ununuzi",
+          "content": "Oda zinazowasilishwa kupitia jukwaa ni ahadi zinazofunga za kununua, kulingana na masharti yaliyotajwa, upatikanaji wa bidhaa, na matokeo ya migogoro ya jukwaa."
+        },
+        "paymentTerms": {
+          "title": "Masharti ya Malipo",
+          "content": "Lazima ukamilishe malipo kwa njia zilizoidhinishwa na utoe taarifa sahihi za malipo. Malipo yaliyoshindikana au yaliyorejeshwa yanaweza kusababisha kufutwa kwa oda au vizuizi vya akaunti."
+        },
+        "deliveryInspection": {
+          "title": "Uwasilishaji na Ukaguzi",
+          "content": "Unapaswa kukagua bidhaa zilizowasilishwa kwa wakati na kuripoti matatizo ndani ya muda wa ukaguzi unaotumika, pamoja na ushahidi pale unapohitajika."
+        },
+        "disputes": {
+          "title": "Migogoro",
+          "content": "Migogoro inapaswa kuwasilishwa kupitia njia rasmi za jukwaa. AfriConnect inaweza kukagua kumbukumbu na mawasiliano na kutekeleza maamuzi kulingana na sera za soko."
+        },
+        "returns": {
+          "title": "Marejesho",
+          "content": "Marejesho yanategemea masharti ya muuzaji, aina ya bidhaa, na sera ya jukwaa. Si bidhaa zote zinaweza kurejeshwa baada ya kukubaliwa au kutumika."
+        },
+        "communication": {
+          "title": "Mawasiliano",
+          "content": "Unakubali kudumisha mawasiliano ya kitaalamu na wauzaji na kujibu kwa haraka pale maelezo ya ziada ya ununuzi au uwasilishaji yanapohitajika."
+        },
+        "accountResponsibilities": {
+          "title": "Majukumu ya Akaunti",
+          "content": "Una jukumu la usalama wa akaunti, taarifa sahihi za mpokeaji, na matumizi halali ya jukwaa. Shughuli zisizoidhinishwa lazima ziripotiwe mara moja."
+        }
       }
     }
   },

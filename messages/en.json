@@ -211,7 +211,10 @@
     "importExportPermitNumber": "Import/export permit number",
     "importExportPermitNumberPlaceholder": "Enter permit number (optional)",
     "upload": "Upload",
-    "uploaded": "Uploaded"
+    "uploaded": "Uploaded",
+    "sellerAgreementLabel": "I have read and agree to the",
+    "sellerAgreementLink": "Seller Agreement",
+    "sellerAgreementRequired": "You must accept the Seller Agreement to register your business."
   },
   "directory": {
     "title": "Business Directory",
@@ -238,7 +241,8 @@
     "total": "Total",
     "checkout": "Checkout",
     "removeItem": "Remove item",
-    "updateQuantity": "Update quantity"
+    "updateQuantity": "Update quantity",
+    "buyerAgreementRequired": "You must accept the Buyer Agreement before checkout."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -698,6 +702,102 @@
       "dpo": {
         "title": "Data Protection Officer",
         "content": "We have appointed a Data Protection Officer (DPO) responsible for overseeing our data protection strategy and compliance. For any privacy-related questions, concerns, or to exercise your data rights, please contact our DPO."
+      }
+    }
+  },
+  "agreements": {
+    "dialog": {
+      "reviewAndAccept": "Please review and accept this agreement before continuing.",
+      "accept": "Accept and Continue",
+      "accepting": "Accepting...",
+      "decline": "Decline"
+    },
+    "seller": {
+      "title": "Seller Agreement",
+      "pageDescription": "Terms that apply when listing products and selling through AfriConnect.",
+      "lastUpdated": "Last Updated",
+      "lastUpdatedDate": "February 2026",
+      "introduction": "This Seller Agreement governs your use of AfriConnect as a seller. By accepting this agreement, you confirm that your business has authority to sell listed products and that you will comply with marketplace, payment, and trade requirements.",
+      "acceptanceLabel": "I have read and agree to the Seller Agreement.",
+      "sections": {
+        "eligibility": {
+          "title": "Eligibility",
+          "content": "You must be a registered business or an authorized representative. You must provide accurate registration details and maintain valid business records."
+        },
+        "productListings": {
+          "title": "Product Listings",
+          "content": "You must provide accurate product names, descriptions, pricing, stock levels, origin details, and images. Misleading listings may be removed."
+        },
+        "fulfillment": {
+          "title": "Fulfillment",
+          "content": "You are responsible for timely processing, shipment, and delivery coordination after payment confirmation. You must communicate delays promptly."
+        },
+        "qualityStandards": {
+          "title": "Quality Standards",
+          "content": "Products must match listing details, be lawful to trade, and meet applicable quality and safety requirements in relevant jurisdictions."
+        },
+        "feesCommissions": {
+          "title": "Fees and Commissions",
+          "content": "Platform and processing fees may apply to sales and payouts. Continued use of seller features indicates acceptance of applicable fee schedules."
+        },
+        "returnsRefunds": {
+          "title": "Returns and Refunds",
+          "content": "You must cooperate with valid return and refund requests based on platform policy, transaction records, and dispute outcomes."
+        },
+        "prohibitedItems": {
+          "title": "Prohibited Items",
+          "content": "You may not list illegal, counterfeit, sanctioned, or restricted goods. Violations can result in listing removal, account suspension, and legal reporting."
+        },
+        "intellectualProperty": {
+          "title": "Intellectual Property",
+          "content": "You warrant you have rights to all listing content and product materials. You grant AfriConnect a license to display and promote your listings on the platform."
+        },
+        "accountSuspension": {
+          "title": "Account Suspension",
+          "content": "AfriConnect may suspend or terminate seller access for fraud, policy violations, failed verification checks, or repeated operational failures."
+        },
+        "liabilityIndemnification": {
+          "title": "Liability and Indemnification",
+          "content": "You remain responsible for your products, business conduct, and legal compliance. You agree to indemnify AfriConnect against third-party claims arising from your listings or transactions."
+        }
+      }
+    },
+    "buyer": {
+      "title": "Buyer Agreement",
+      "pageDescription": "Terms that apply when purchasing products through AfriConnect.",
+      "lastUpdated": "Last Updated",
+      "lastUpdatedDate": "February 2026",
+      "introduction": "This Buyer Agreement governs your use of AfriConnect as a buyer. By accepting this agreement, you confirm that you are authorized to place orders and will meet payment and transaction obligations.",
+      "acceptanceLabel": "I have read and agree to the Buyer Agreement.",
+      "sections": {
+        "purchaseCommitments": {
+          "title": "Purchase Commitments",
+          "content": "Orders submitted through the platform are binding commitments to purchase, subject to listed terms, availability, and platform dispute outcomes."
+        },
+        "paymentTerms": {
+          "title": "Payment Terms",
+          "content": "You must complete payment using approved methods and provide accurate billing details. Failed or reversed payments may lead to order cancellation or account restrictions."
+        },
+        "deliveryInspection": {
+          "title": "Delivery and Inspection",
+          "content": "You should review delivered goods promptly and report issues within the applicable review window, including evidence where required."
+        },
+        "disputes": {
+          "title": "Disputes",
+          "content": "Disputes should be filed through platform channels. AfriConnect may review records and communications and apply outcomes under marketplace policies."
+        },
+        "returns": {
+          "title": "Returns",
+          "content": "Returns are subject to seller terms, product type, and platform policy. Not all goods may be eligible for return once accepted or consumed."
+        },
+        "communication": {
+          "title": "Communication",
+          "content": "You agree to maintain professional communication with sellers and respond promptly when additional purchase or delivery details are required."
+        },
+        "accountResponsibilities": {
+          "title": "Account Responsibilities",
+          "content": "You are responsible for account security, accurate recipient details, and lawful use of the platform. Unauthorized activities must be reported immediately."
+        }
       }
     }
   },
