@@ -163,6 +163,33 @@ export const acceptAgreement = mutation({
       userAgent: args.userAgent,
     });
 
+    // Race-safe dedupe: concurrent calls can both pass the pre-check.
+    // Keep a single deterministic winner (smallest _id), delete the rest.
+    const duplicates = await ctx.db
+      .query("agreementAcceptances")
+      .withIndex("by_user_type_version", (q) =>
+        q
+          .eq("userId", user._id)
+          .eq("agreementType", args.type)
+          .eq("agreementVersionId", activeVersion._id)
+      )
+      .collect();
+
+    if (duplicates.length > 1) {
+      duplicates.sort((a, b) => (a._id < b._id ? -1 : 1));
+      const winner = duplicates[0];
+
+      if (winner._id !== acceptanceId) {
+        await ctx.db.delete(acceptanceId);
+        return winner;
+      }
+
+      for (const duplicate of duplicates.slice(1)) {
+        await ctx.db.delete(duplicate._id);
+      }
+      return winner;
+    }
+
     return await ctx.db.get(acceptanceId);
   },
 });

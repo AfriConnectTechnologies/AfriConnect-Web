@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { api } from "@/convex/_generated/api";
@@ -114,6 +114,7 @@ export default function BusinessRegisterPage() {
   const locale = useLocale();
   
   const router = useRouter();
+  const convex = useConvex();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [country, setCountry] = useState<string>("");
   const [category, setCategory] = useState<string>("");
@@ -168,6 +169,17 @@ export default function BusinessRegisterPage() {
         type: "seller",
         userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
       });
+
+      const sellerAgreementState = await convex.query(
+        api.agreements.hasAcceptedCurrentAgreement,
+        { type: "seller" }
+      );
+      if (sellerAgreementState.status === "missing_active_version") {
+        throw new Error("Seller agreement is not configured. Please contact support.");
+      }
+      if (sellerAgreementState.status !== "accepted") {
+        throw new Error("Seller agreement acceptance was not confirmed. Please try again.");
+      }
 
       const hasPermit = hasImportExportPermit === "yes";
       const result = await createBusiness({
