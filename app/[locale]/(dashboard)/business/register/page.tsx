@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { useRouter } from "@/i18n/navigation";
+import { useConvex, useMutation, useQuery } from "convex/react";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -114,6 +114,7 @@ export default function BusinessRegisterPage() {
   const locale = useLocale();
   
   const router = useRouter();
+  const convex = useConvex();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [country, setCountry] = useState<string>("");
   const [category, setCategory] = useState<string>("");
@@ -126,9 +127,11 @@ export default function BusinessRegisterPage() {
   const [hasImportExportPermit, setHasImportExportPermit] = useState<string>("");
   const [importExportPermitImageUrl, setImportExportPermitImageUrl] = useState<string | null>(null);
   const [importExportPermitNumber, setImportExportPermitNumber] = useState<string>("");
+  const [sellerAgreementAccepted, setSellerAgreementAccepted] = useState(false);
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const createBusiness = useMutation(api.businesses.createBusiness);
+  const acceptAgreement = useMutation(api.agreements.acceptAgreement);
 
   // Redirect if user already has a business
   useEffect(() => {
@@ -151,12 +154,33 @@ export default function BusinessRegisterPage() {
       return;
     }
 
+    if (!sellerAgreementAccepted) {
+      toast.error(t("sellerAgreementRequired"));
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = new FormData(e.currentTarget);
     const businessName = formData.get("name") as string;
     const city = (formData.get("city") as string) || undefined;
 
     try {
+      await acceptAgreement({
+        type: "seller",
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+      });
+
+      const sellerAgreementState = await convex.query(
+        api.agreements.hasAcceptedCurrentAgreement,
+        { type: "seller" }
+      );
+      if (sellerAgreementState.status === "missing_active_version") {
+        throw new Error("Seller agreement is not configured. Please contact support.");
+      }
+      if (sellerAgreementState.status !== "accepted") {
+        throw new Error("Seller agreement acceptance was not confirmed. Please try again.");
+      }
+
       const hasPermit = hasImportExportPermit === "yes";
       const result = await createBusiness({
         name: businessName,
@@ -457,6 +481,24 @@ export default function BusinessRegisterPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="rounded-lg border p-4">
+              <label className="flex items-start gap-3 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border border-input"
+                  checked={sellerAgreementAccepted}
+                  onChange={(e) => setSellerAgreementAccepted(e.target.checked)}
+                  disabled={isSubmitting}
+                />
+                <span>
+                  {t("sellerAgreementLabel")}{" "}
+                  <Link href="/agreements/seller" className="font-medium text-primary underline">
+                    {t("sellerAgreementLink")}
+                  </Link>
+                </span>
+              </label>
+            </div>
 
             <div className="flex gap-4">
               <Button

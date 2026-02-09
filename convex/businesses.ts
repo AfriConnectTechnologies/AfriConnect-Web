@@ -37,6 +37,35 @@ export const createBusiness = mutation({
       const user = await getOrCreateUser(ctx);
       log.setContext({ userId: user.clerkId });
 
+      const activeSellerAgreement = await ctx.db
+        .query("agreementVersions")
+        .withIndex("by_type_active", (q) =>
+          q.eq("type", "seller").eq("isActive", true)
+        )
+        .first();
+
+      if (!activeSellerAgreement) {
+        log.warn("Business creation blocked - no active seller agreement");
+        await flushLogs();
+        throw new Error("Seller agreement is unavailable. Please try again.");
+      }
+
+      const sellerAgreementAcceptance = await ctx.db
+        .query("agreementAcceptances")
+        .withIndex("by_user_type_version", (q) =>
+          q
+            .eq("userId", user._id)
+            .eq("agreementType", "seller")
+            .eq("agreementVersionId", activeSellerAgreement._id)
+        )
+        .first();
+
+      if (!sellerAgreementAcceptance) {
+        log.warn("Business creation blocked - seller agreement not accepted");
+        await flushLogs();
+        throw new Error("You must accept the Seller Agreement before registering.");
+      }
+
       // Check if user already has a business
       if (user.businessId) {
         log.warn("Business creation failed - user already has a business", {

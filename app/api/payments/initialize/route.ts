@@ -101,6 +101,25 @@ export async function POST(request: NextRequest) {
       convex.setAuth(token);
     }
 
+    if (paymentType === "order") {
+      const buyerAgreementState = await convex.query(
+        api.agreements.hasAcceptedCurrentAgreement,
+        { type: "buyer" }
+      );
+      if (buyerAgreementState.status === "missing_active_version") {
+        return NextResponse.json(
+          { error: "Buyer agreement is not configured. Please contact support." },
+          { status: 503, headers: SECURITY_HEADERS }
+        );
+      }
+      if (buyerAgreementState.status !== "accepted") {
+        return NextResponse.json(
+          { error: "Buyer agreement must be accepted before checkout" },
+          { status: 403, headers: SECURITY_HEADERS }
+        );
+      }
+    }
+
     // Check for existing payment with idempotency key
     if (idempotencyKey) {
       const existingPayment = await convex.query(api.payments.getByIdempotencyKey, {

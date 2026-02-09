@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,23 +9,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { ComingSoonBanner } from "@/components/ui/coming-soon";
+import { AgreementDialog } from "@/components/agreements/AgreementDialog";
 
 export default function CartPage() {
   const t = useTranslations("cart");
   const tCommon = useTranslations("common");
-  const tNav = useTranslations("navigation");
+  const router = useRouter();
   
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showBuyerAgreementDialog, setShowBuyerAgreementDialog] = useState(false);
+  const convex = useConvex();
 
   const ensureUser = useMutation(api.users.ensureUser);
   const cart = useQuery(api.cart.get);
   const updateCartItem = useMutation(api.cart.update);
   const removeCartItem = useMutation(api.cart.remove);
+  const acceptAgreement = useMutation(api.agreements.acceptAgreement);
+  const buyerAgreementState = useQuery(api.agreements.hasAcceptedCurrentAgreement, {
+    type: "buyer",
+  });
 
   useEffect(() => {
     ensureUser().catch(() => {
@@ -55,7 +62,7 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckout = async () => {
+  const proceedToCheckout = async () => {
     if (!cart || cart.length === 0) {
       toast.error(t("emptyCart"));
       return;
@@ -105,6 +112,32 @@ export default function CartPage() {
     }
   };
 
+  const handleCheckout = async () => {
+    if (buyerAgreementState === undefined) {
+      toast.error(tCommon("loading"));
+      return;
+    }
+
+    if (buyerAgreementState.status === "unauthenticated") {
+      toast.error("Please sign in to continue checkout.");
+      router.push("/sign-in");
+      return;
+    }
+
+    if (buyerAgreementState.status === "missing_active_version") {
+      toast.error("Buyer agreement is not configured. Please contact support.");
+      return;
+    }
+
+    if (buyerAgreementState.status !== "accepted") {
+      toast.error(t("buyerAgreementRequired"));
+      setShowBuyerAgreementDialog(true);
+      return;
+    }
+
+    await proceedToCheckout();
+  };
+
   if (cart === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -125,6 +158,44 @@ export default function CartPage() {
 
   return (
     <div className="space-y-6">
+      <AgreementDialog
+        open={showBuyerAgreementDialog}
+        onOpenChange={setShowBuyerAgreementDialog}
+        type="buyer"
+        onAccept={async () => {
+          try {
+            await acceptAgreement({
+              type: "buyer",
+              userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+            });
+
+            const updatedState = await convex.query(
+              api.agreements.hasAcceptedCurrentAgreement,
+              { type: "buyer" }
+            );
+
+            if (updatedState.status === "missing_active_version") {
+              throw new Error("Buyer agreement is not configured. Please contact support.");
+            }
+
+            if (updatedState.status === "unauthenticated") {
+              throw new Error("Please sign in to continue checkout.");
+            }
+
+            if (updatedState.status !== "accepted") {
+              throw new Error("Buyer agreement acceptance was not confirmed.");
+            }
+
+            await proceedToCheckout();
+          } catch (error: unknown) {
+            const message =
+              error instanceof Error ? error.message : t("buyerAgreementRequired");
+            toast.error(message);
+            throw error;
+          }
+        }}
+      />
+
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">
@@ -269,7 +340,13 @@ export default function CartPage() {
                 <Button
                   className="w-full gap-2"
                   onClick={handleCheckout}
-                  disabled={isCheckingOut || cart.length === 0 || !COMMERCE_ENABLED}
+                  disabled={
+                    isCheckingOut ||
+                    cart.length === 0 ||
+                    !COMMERCE_ENABLED ||
+                    buyerAgreementState === undefined ||
+                    buyerAgreementState?.status === "missing_active_version"
+                  }
                 >
                   {isCheckingOut ? (
                     <>
