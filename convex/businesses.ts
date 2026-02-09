@@ -22,8 +22,6 @@ export const createBusiness = mutation({
     hasImportExportPermit: v.optional(v.boolean()),
     importExportPermitImageUrl: v.optional(v.string()),
     importExportPermitNumber: v.optional(v.string()),
-    sellerAgreementAccepted: v.boolean(),
-    sellerAgreementUserAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const log = createLogger("businesses.createBusiness");
@@ -52,12 +50,6 @@ export const createBusiness = mutation({
         throw new Error("Seller agreement is unavailable. Please try again.");
       }
 
-      if (!args.sellerAgreementAccepted) {
-        log.warn("Business creation blocked - seller agreement checkbox not accepted");
-        await flushLogs();
-        throw new Error("You must accept the Seller Agreement before registering.");
-      }
-
       const sellerAgreementAcceptance = await ctx.db
         .query("agreementAcceptances")
         .withIndex("by_user_type_version", (q) =>
@@ -67,6 +59,12 @@ export const createBusiness = mutation({
             .eq("agreementVersionId", activeSellerAgreement._id)
         )
         .first();
+
+      if (!sellerAgreementAcceptance) {
+        log.warn("Business creation blocked - seller agreement not accepted");
+        await flushLogs();
+        throw new Error("You must accept the Seller Agreement before registering.");
+      }
 
       // Check if user already has a business
       if (user.businessId) {
@@ -108,16 +106,6 @@ export const createBusiness = mutation({
         role: "seller",
         businessId: businessId,
       });
-
-      if (!sellerAgreementAcceptance) {
-        await ctx.db.insert("agreementAcceptances", {
-          userId: user._id,
-          agreementType: "seller",
-          agreementVersionId: activeSellerAgreement._id,
-          acceptedAt: now,
-          userAgent: args.sellerAgreementUserAgent,
-        });
-      }
 
       log.info("Business created successfully", {
         businessId,
