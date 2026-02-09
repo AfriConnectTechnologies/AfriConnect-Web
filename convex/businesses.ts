@@ -130,6 +130,7 @@ export const updateBusiness = mutation({
     importExportPermitImageUrl: v.optional(v.string()),
     importExportPermitNumber: v.optional(v.string()),
     payoutBankCode: v.optional(v.string()),
+    payoutBankName: v.optional(v.string()),
     payoutAccountNumber: v.optional(v.string()),
     payoutAccountName: v.optional(v.string()),
     payoutEnabled: v.optional(v.boolean()),
@@ -194,11 +195,13 @@ export const updateBusiness = mutation({
       if (args.importExportPermitImageUrl !== undefined) updates.importExportPermitImageUrl = args.importExportPermitImageUrl;
       if (args.importExportPermitNumber !== undefined) updates.importExportPermitNumber = args.importExportPermitNumber;
       if (args.payoutBankCode !== undefined) updates.payoutBankCode = args.payoutBankCode;
+      if (args.payoutBankName !== undefined) updates.payoutBankName = args.payoutBankName;
       if (args.payoutAccountNumber !== undefined) updates.payoutAccountNumber = args.payoutAccountNumber;
       if (args.payoutAccountName !== undefined) updates.payoutAccountName = args.payoutAccountName;
       if (args.payoutEnabled !== undefined) updates.payoutEnabled = args.payoutEnabled;
       if (
         args.payoutBankCode !== undefined ||
+        args.payoutBankName !== undefined ||
         args.payoutAccountNumber !== undefined ||
         args.payoutAccountName !== undefined ||
         args.payoutEnabled !== undefined

@@ -36,7 +36,10 @@ function roundCurrency(value: number) {
 }
 
 async function getChapaSecret() {
-  const key = process.env.CHAPA_TEST_SECRET_KEY || process.env.CHAPA_SECRET_KEY;
+  const isProduction = process.env.NODE_ENV === "production";
+  const key =
+    process.env.CHAPA_SECRET_KEY ||
+    (!isProduction ? process.env.CHAPA_TEST_SECRET_KEY : undefined);
   if (!key) {
     throw new Error("Chapa secret key is not configured");
   }

@@ -31,8 +31,7 @@ export async function POST(request: NextRequest) {
       request.headers.get("chapa-signature") ||
       "";
 
-    const webhookSecret =
-      process.env.CHAPA_TRANSFER_WEBHOOK_SECRET || process.env.CHAPA_ENCRYPTION_KEY;
+    const webhookSecret = process.env.CHAPA_TRANSFER_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
       return NextResponse.json(
