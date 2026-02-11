@@ -15,7 +15,7 @@ import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED, COMPLIANCE_ENABLED } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageRefunds" | "compliance";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageProducts" | "manageRefunds" | "compliance";
 
 type NavItem = {
   href: string;
@@ -55,6 +55,7 @@ const buyerNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { href: "/admin/users", labelKey: "manageUsers", icon: Users },
   { href: "/admin/businesses", labelKey: "manageBusinesses", icon: Building },
+  { href: "/admin/products", labelKey: "manageProducts", icon: Package },
   { href: "/admin/refunds", labelKey: "manageRefunds", icon: RefreshCw },
 ];
 

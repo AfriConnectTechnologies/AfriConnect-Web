@@ -132,6 +132,7 @@ export default function ProductDetailPage() {
 
   const maxQuantity = Math.min(productData.quantity, 100);
   const minQuantity = productData.minOrderQuantity || 1;
+  const isOrderable = productData.isOrderable !== false;
 
   // Parse specifications if available
   let specifications: Record<string, string> = {};
@@ -186,7 +187,7 @@ export default function ProductDetailPage() {
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-muted-foreground" />
-              {productData.quantity > 0 ? (
+                {productData.quantity > 0 ? (
                 <span>
                   {productData.quantity} {productData.quantity === 1 ? "item" : "items"} in stock
                 </span>
@@ -194,6 +195,12 @@ export default function ProductDetailPage() {
                 <span className="text-destructive">Out of stock</span>
               )}
             </div>
+              {!isOrderable && (
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Not orderable</span>
+                </div>
+              )}
             {productData.minOrderQuantity && productData.minOrderQuantity > 1 && (
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-muted-foreground" />
@@ -285,15 +292,20 @@ export default function ProductDetailPage() {
                   className="w-full"
                   size="lg"
                   onClick={handleAddToCart}
-                  disabled={productData.quantity === 0 || quantity > productData.quantity || !COMMERCE_ENABLED}
+                  disabled={productData.quantity === 0 || quantity > productData.quantity || !isOrderable || !COMMERCE_ENABLED}
                 >
                   <ShoppingCart className="mr-2 h-4 w-4" />
-                  {COMMERCE_ENABLED ? "Add to Cart" : "Coming Soon"}
+                  {COMMERCE_ENABLED ? (isOrderable ? "Add to Cart" : "Not Orderable") : "Coming Soon"}
                 </Button>
                 {!COMMERCE_ENABLED && (
                   <p className="text-sm text-muted-foreground text-center flex items-center justify-center gap-1">
                     <Clock className="h-3 w-3" />
                     Shopping cart feature is coming soon
+                  </p>
+                )}
+                {COMMERCE_ENABLED && !isOrderable && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    This product is visible in catalog but currently not available for purchase.
                   </p>
                 )}
                 {COMMERCE_ENABLED && productData.quantity === 0 && (

@@ -98,6 +98,7 @@ export default defineSchema({
     reorderQuantity: v.optional(v.number()),
     category: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("inactive")),
+    isOrderable: v.optional(v.boolean()),
     country: v.optional(v.string()),
     minOrderQuantity: v.optional(v.number()),
     specifications: v.optional(v.string()), // JSON string for key-value specs

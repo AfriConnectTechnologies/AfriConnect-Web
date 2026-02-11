@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getOrCreateUser, checkProductLimit, PlanLimitError } from "./helpers";
+import { getOrCreateUser, checkProductLimit, PlanLimitError, requireAdmin } from "./helpers";
 import { createLogger, flushLogs } from "./lib/logger";
 
 export const list = query({
@@ -137,6 +137,7 @@ export const create = mutation({
         reorderQuantity: args.reorderQuantity,
         category: args.category,
         status: args.status ?? "active",
+        isOrderable: true,
         country: args.country,
         minOrderQuantity: args.minOrderQuantity,
         specifications: args.specifications,
@@ -369,6 +370,137 @@ export const remove = mutation({
       await flushLogs();
       throw error;
     }
+  },
+});
+
+export const generateDummyProducts = mutation({
+  args: {
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const adminUser = await requireAdmin(ctx);
+    const now = Date.now();
+    const count = Math.min(Math.max(Math.floor(args.count ?? 12), 1), 100);
+    const countries = ["Ethiopia", "Kenya", "Ghana", "Nigeria", "Rwanda", "Tanzania"];
+    const seedProducts = [
+      {
+        name: "Single-Origin Arabica Coffee Beans",
+        description: "Premium grade Arabica beans sourced from highland farms.",
+        category: "Food & Beverages",
+        price: 420,
+      },
+      {
+        name: "Cold-Pressed Avocado Oil (5L)",
+        description: "Refined avocado oil suitable for food processing and export.",
+        category: "Food & Beverages",
+        price: 260,
+      },
+      {
+        name: "Organic Dried Hibiscus Flowers",
+        description: "Sun-dried hibiscus calyx ready for tea and beverage blending.",
+        category: "Agriculture",
+        price: 190,
+      },
+      {
+        name: "Industrial Grade Cotton Yarn Spools",
+        description: "Consistent-strength yarn for textile manufacturing lines.",
+        category: "Textiles",
+        price: 315,
+      },
+      {
+        name: "Woven Polypropylene Feed Sacks",
+        description: "Heavy-duty sacks for grain, feed, and fertilizer packaging.",
+        category: "Industrial Equipment",
+        price: 145,
+      },
+      {
+        name: "Solar Inverter 5kVA (Hybrid)",
+        description: "Hybrid inverter designed for SME facilities and warehouse backup.",
+        category: "Electronics",
+        price: 980,
+      },
+      {
+        name: "Deep-Cycle AGM Battery 200Ah",
+        description: "Long-life battery optimized for backup and solar storage systems.",
+        category: "Electronics",
+        price: 760,
+      },
+      {
+        name: "Galvanized Roofing Sheets (0.5mm)",
+        description: "Corrosion-resistant roofing sheets for commercial construction.",
+        category: "Construction",
+        price: 215,
+      },
+      {
+        name: "Portland Cement 50kg Bags",
+        description: "General purpose cement for structural and masonry applications.",
+        category: "Construction",
+        price: 88,
+      },
+      {
+        name: "Processed Shea Butter Blocks",
+        description: "Cosmetic and food-grade shea butter blocks for bulk buyers.",
+        category: "Agriculture",
+        price: 335,
+      },
+      {
+        name: "Stainless Steel Water Storage Tank 2000L",
+        description: "Food-safe stainless steel tank for commercial water storage.",
+        category: "Industrial Equipment",
+        price: 1240,
+      },
+      {
+        name: "Natural Rubber Gasket Sheets",
+        description: "Durable gasket sheets for sealing and light industrial use.",
+        category: "Industrial Equipment",
+        price: 170,
+      },
+      {
+        name: "Instant Ginger Drink Mix",
+        description: "Concentrated ginger blend for hot and cold beverage preparation.",
+        category: "Food & Beverages",
+        price: 132,
+      },
+      {
+        name: "Premium Sesame Seed (Hulled)",
+        description: "Cleaned hulled sesame seed for food manufacturing and export.",
+        category: "Agriculture",
+        price: 275,
+      },
+      {
+        name: "Commercial LED Floodlight 200W",
+        description: "Energy-efficient outdoor floodlight for yards and logistics sites.",
+        category: "Electronics",
+        price: 155,
+      },
+    ];
+
+    for (let i = 0; i < count; i += 1) {
+      const index = i + 1;
+      const productTemplate = seedProducts[i % seedProducts.length];
+      const quantity = 12 + ((i * 17) % 137);
+      await ctx.db.insert("products", {
+        sellerId: adminUser.clerkId,
+        name: `${productTemplate.name} - Batch ${index}`,
+        description: `${productTemplate.description} Seeded for catalog demonstration and intentionally non-orderable.`,
+        price: productTemplate.price + ((i * 9) % 65),
+        quantity,
+        sku: `DEMO-${now}-${index}`,
+        category: productTemplate.category,
+        status: "active",
+        isOrderable: false,
+        country: countries[i % countries.length],
+        minOrderQuantity: 1,
+        tags: ["demo", "seeded", "non-orderable"],
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return {
+      inserted: count,
+      nonOrderable: true,
+    };
   },
 });
 

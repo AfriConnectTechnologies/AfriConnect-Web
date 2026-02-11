@@ -402,6 +402,14 @@ export default function MarketplacePage() {
                           </Badge>
                         </div>
                       )}
+
+                      {product.isOrderable === false && (
+                        <div className="absolute bottom-3 left-3">
+                          <Badge variant="outline" className="bg-background/90">
+                            Not orderable
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
                     <CardHeader className="p-4 pb-2">
@@ -430,7 +438,7 @@ export default function MarketplacePage() {
                           size="sm" 
                           variant="secondary"
                           className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                          disabled={product.quantity === 0}
+                          disabled={product.quantity === 0 || product.isOrderable === false}
                         >
                           <ShoppingCart className="h-4 w-4" />
                         </Button>

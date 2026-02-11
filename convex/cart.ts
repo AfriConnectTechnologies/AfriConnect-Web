@@ -109,6 +109,15 @@ export const add = mutation({
         throw new Error("Sorry, this product is no longer available for purchase");
       }
 
+      if (product.isOrderable === false) {
+        log.warn("Add to cart failed - product marked non-orderable", {
+          productId: args.productId,
+          productName: product.name,
+        });
+        await flushLogs();
+        throw new Error("Sorry, this product is not available for purchase");
+      }
+
       if (args.quantity > product.quantity) {
         log.warn("Add to cart failed - insufficient stock", {
           productId: args.productId,
@@ -209,6 +218,10 @@ export const update = mutation({
     const product = await ctx.db.get(cartItem.productId);
     if (!product) {
       throw new Error("Product not found");
+    }
+
+    if (product.isOrderable === false) {
+      throw new Error("Sorry, this product is not available for purchase");
     }
 
     if (args.quantity > product.quantity) {
