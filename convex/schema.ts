@@ -92,6 +92,7 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     price: v.number(),
+    usdPrice: v.optional(v.number()),
     quantity: v.number(),
     sku: v.optional(v.string()),
     lowStockThreshold: v.optional(v.number()),

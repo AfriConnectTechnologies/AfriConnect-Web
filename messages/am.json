@@ -135,7 +135,11 @@
     "updateDetails": "የምርት ዝርዝሮችን ያዘምኑ እና ምስሎችን ያስተዳድሩ።",
     "saveChanges": "ለውጦችን አስቀምጥ",
     "deleteProduct": "ምርት ሰርዝ",
-    "deleteConfirmation": "ይህን ምርት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት? ይህ ሁሉንም ተያያዥ ምስሎችንም ይሰርዛል። ይህ እርምጃ መቀልበስ አይቻልም።"
+    "deleteConfirmation": "ይህን ምርት መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት? ይህ ሁሉንም ተያያዥ ምስሎችንም ይሰርዛል። ይህ እርምጃ መቀልበስ አይቻልም።",
+    "firstProductPricingPromptTitle": "የመጀመሪያ ምርትዎ ተለቋል",
+    "firstProductPricingPromptDescription": "ጥሩ ጅምር! ተጨማሪ የሽያጭ ባህሪያትን ለመክፈት የዋጋ ገጹን ይጎብኙ።",
+    "firstProductPricingPromptStay": "በኋላ እመለሳለሁ",
+    "firstProductPricingPromptGo": "ወደ ዋጋ ገጽ ሂድ"
   },
   "orders": {
     "title": "ትዕዛዞች",

@@ -243,8 +243,11 @@ export default function CartPage() {
                           {item.product.description || tCommon("noDescription")}
                         </p>
                         <div className="flex items-center gap-4">
-                          <div className="text-lg font-semibold">
-                            ${item.product.price.toLocaleString()}
+                          <div className="flex flex-col">
+                            <div className="text-lg font-semibold">{item.product.price.toLocaleString()} ETB</div>
+                            {item.product.usdPrice !== undefined && (
+                              <div className="text-xs text-muted-foreground">${item.product.usdPrice.toLocaleString()}</div>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <Package className="h-3 w-3 text-muted-foreground" />
@@ -301,7 +304,7 @@ export default function CartPage() {
                         <div className="text-right">
                           <div className="text-sm text-muted-foreground">{t("subtotal")}</div>
                           <div className="font-semibold">
-                            ${(item.product.price * item.quantity).toLocaleString()}
+                            {(item.product.price * item.quantity).toLocaleString()} ETB
                           </div>
                         </div>
                       </div>
@@ -324,17 +327,17 @@ export default function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t("subtotal")}</span>
-                    <span>${subtotal.toLocaleString()}</span>
+                    <span>{subtotal.toLocaleString()} ETB</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Buyer fee (1%)</span>
-                    <span>${buyerFee.toLocaleString()}</span>
+                    <span>{buyerFee.toLocaleString()} ETB</span>
                   </div>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-semibold">
                     <span>{t("total")}</span>
-                    <span>${total.toLocaleString()}</span>
+                    <span>{total.toLocaleString()} ETB</span>
                   </div>
                 </div>
                 <Button

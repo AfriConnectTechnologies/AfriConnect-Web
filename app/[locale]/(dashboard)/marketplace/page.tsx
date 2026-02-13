@@ -271,7 +271,7 @@ export default function MarketplacePage() {
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {t("price")}: ${priceRange[0].toLocaleString()} - ${priceRange[1].toLocaleString()}
+                      {t("price")}: {priceRange[0].toLocaleString()} ETB - {priceRange[1].toLocaleString()} ETB
                     </span>
                   </div>
                   <Slider
@@ -321,7 +321,7 @@ export default function MarketplacePage() {
                 )}
                 {isPriceFilterActive && (
                   <Badge variant="secondary" className="gap-1">
-                    {t("price")}: ${userPriceRange![0]} - ${userPriceRange![1]}
+                    {t("price")}: {userPriceRange![0]} ETB - {userPriceRange![1]} ETB
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => setUserPriceRange(null)}
@@ -424,9 +424,10 @@ export default function MarketplacePage() {
                     <CardContent className="p-4 pt-0">
                       <div className="flex items-end justify-between">
                         <div>
-                          <div className="text-2xl font-bold">
-                            ${product.price.toLocaleString()}
-                          </div>
+                          <div className="text-2xl font-bold">{product.price.toLocaleString()} ETB</div>
+                          {product.usdPrice !== undefined && (
+                            <div className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</div>
+                          )}
                           {product.quantity > 0 && (
                             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                               <Package className="h-3 w-3" />

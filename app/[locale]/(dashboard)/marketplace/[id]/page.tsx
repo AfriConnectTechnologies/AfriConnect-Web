@@ -178,9 +178,12 @@ export default function ProductDetailPage() {
               )}
             </div>
             <h1 className="text-3xl font-bold">{productData.name}</h1>
-            <p className="text-3xl font-bold text-primary mt-2">
-              ${productData.price.toLocaleString()}
-            </p>
+            <div className="mt-2">
+              <p className="text-3xl font-bold text-primary">{productData.price.toLocaleString()} ETB</p>
+              {productData.usdPrice !== undefined && (
+                <p className="text-sm text-muted-foreground">${productData.usdPrice.toLocaleString()}</p>
+              )}
+            </div>
           </div>
 
           {/* Stock & Min Order */}
@@ -285,7 +288,7 @@ export default function ProductDetailPage() {
                 <div className="flex justify-between text-sm py-2">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-bold text-lg">
-                    ${(productData.price * quantity).toLocaleString()}
+                    {(productData.price * quantity).toLocaleString()} ETB
                   </span>
                 </div>
                 <Button
@@ -433,8 +436,11 @@ export default function ProductDetailPage() {
                   <CardHeader className="p-4">
                     <CardTitle className="text-sm line-clamp-1">{product.name}</CardTitle>
                     <CardDescription className="font-bold text-foreground">
-                      ${product.price.toLocaleString()}
+                      {product.price.toLocaleString()} ETB
                     </CardDescription>
+                    {product.usdPrice !== undefined && (
+                      <div className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</div>
+                    )}
                   </CardHeader>
                 </Card>
               </Link>

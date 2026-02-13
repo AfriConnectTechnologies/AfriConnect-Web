@@ -42,7 +42,7 @@ export const paymentInitializeSchema = z.object({
 }).superRefine((data, ctx) => {
   // Apply currency-specific limits consistent with validateAmountForCurrency
   const limits: Record<SupportedCurrency, { min: number; max: number }> = {
-    ETB: { min: 1, max: 10000000 }, // 1 ETB to 10 million ETB
+    ETB: { min: 1, max: 1000000 }, // 1 ETB to 1 million ETB (Chapa limit)
     USD: { min: 1, max: 100000 }, // 1 USD to 100,000 USD
   };
   
@@ -56,9 +56,14 @@ export const paymentInitializeSchema = z.object({
       });
     }
     if (data.amount > limit.max) {
+      const maxFormatted = limit.max.toLocaleString();
+      const message =
+        data.currency === "ETB"
+          ? `Order total exceeds the checkout limit of ETB ${maxFormatted}. Please reduce quantity or split your order.`
+          : `Maximum amount for ${data.currency} is ${maxFormatted}`;
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Maximum amount for ${data.currency} is ${limit.max}`,
+        message,
         path: ["amount"],
       });
     }
@@ -157,7 +162,7 @@ export function validateAmountForCurrency(
   currency: SupportedCurrency
 ): { valid: boolean; error?: string } {
   const limits: Record<SupportedCurrency, { min: number; max: number }> = {
-    ETB: { min: 1, max: 10000000 }, // 1 ETB to 10 million ETB
+    ETB: { min: 1, max: 1000000 }, // 1 ETB to 1 million ETB (Chapa limit)
     USD: { min: 1, max: 100000 }, // 1 USD to 100,000 USD
   };
   
@@ -168,7 +173,14 @@ export function validateAmountForCurrency(
   }
   
   if (amount > limit.max) {
-    return { valid: false, error: `Maximum amount for ${currency} is ${limit.max}` };
+    const maxFormatted = limit.max.toLocaleString();
+    if (currency === "ETB") {
+      return {
+        valid: false,
+        error: `Order total exceeds the checkout limit of ETB ${maxFormatted}. Please reduce quantity or split your order.`,
+      };
+    }
+    return { valid: false, error: `Maximum amount for ${currency} is ${maxFormatted}` };
   }
   
   return { valid: true };

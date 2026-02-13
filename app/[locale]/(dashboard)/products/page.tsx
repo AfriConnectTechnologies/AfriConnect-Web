@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ const statusColors: Record<ProductStatus, "default" | "secondary" | "outline" | 
 };
 
 export default function ProductsPage() {
+  const router = useRouter();
   const t = useTranslations("products");
   const tCommon = useTranslations("common");
   const tToast = useTranslations("toast");
@@ -70,6 +72,8 @@ export default function ProductsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editTab, setEditTab] = useState("details");
   const [imagesKey, setImagesKey] = useState(0);
+  const [shouldPromptPricingAfterCreate, setShouldPromptPricingAfterCreate] = useState(false);
+  const [showFirstProductPricingPrompt, setShowFirstProductPricingPrompt] = useState(false);
   const isSubmittingRef = useRef(false);
   const createFormRef = useRef<HTMLFormElement>(null);
 
@@ -86,6 +90,14 @@ export default function ProductsPage() {
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
+  const allProducts = useQuery(
+    api.products.list,
+    currentUser
+      ? {
+          sellerId: currentUser.clerkId,
+        }
+      : "skip"
+  );
 
   // Get images for the product being created or edited
   const productImages = useQuery(
@@ -112,12 +124,16 @@ export default function ProductsPage() {
     setIsSubmitting(true);
     
     const formData = new FormData(e.currentTarget);
+    const isFirstProduct = Array.isArray(allProducts) && allProducts.length === 0;
     
     try {
       const result = await createProduct({
         name: formData.get("name") as string,
         description: (formData.get("description") as string) || undefined,
-        price: parseFloat(formData.get("price") as string),
+        price: parseFloat(formData.get("priceEtb") as string),
+        usdPrice: formData.get("priceUsd")
+          ? parseFloat(formData.get("priceUsd") as string)
+          : undefined,
         quantity: parseInt(formData.get("quantity") as string),
         sku: (formData.get("sku") as string) || undefined,
         lowStockThreshold: formData.get("lowStockThreshold")
@@ -137,6 +153,9 @@ export default function ProductsPage() {
       if (result?._id) {
         setCreatedProductId(result._id);
         setCreateStep(2);
+        if (isFirstProduct) {
+          setShouldPromptPricingAfterCreate(true);
+        }
         toast.success(tToast("productCreated"));
       }
     } catch (error) {
@@ -156,6 +175,10 @@ export default function ProductsPage() {
       toast.warning(tToast("addImageSuggestion"));
     }
     resetCreateDialog();
+    if (shouldPromptPricingAfterCreate) {
+      setShowFirstProductPricingPrompt(true);
+      setShouldPromptPricingAfterCreate(false);
+    }
     toast.success(tToast("productListingComplete"));
   };
 
@@ -177,7 +200,10 @@ export default function ProductsPage() {
         id: editingProduct,
         name: formData.get("name") as string,
         description: (formData.get("description") as string) || undefined,
-        price: parseFloat(formData.get("price") as string),
+        price: parseFloat(formData.get("priceEtb") as string),
+        usdPrice: formData.get("priceUsd")
+          ? parseFloat(formData.get("priceUsd") as string)
+          : undefined,
         quantity: parseInt(formData.get("quantity") as string),
         sku: (formData.get("sku") as string) || undefined,
         lowStockThreshold: formData.get("lowStockThreshold")
@@ -406,16 +432,27 @@ export default function ProductsPage() {
                     placeholder={t("describeProduct")}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="grid gap-2">
-                    <Label htmlFor="create-price">{t("price")} *</Label>
+                    <Label htmlFor="create-price-etb">{t("price")} (ETB) *</Label>
                     <Input
-                      id="create-price"
-                      name="price"
+                      id="create-price-etb"
+                      name="priceEtb"
                       type="number"
                       step="0.01"
                       placeholder="0.00"
                       required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="create-price-usd">{t("price")} (USD)</Label>
+                    <Input
+                      id="create-price-usd"
+                      name="priceUsd"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
                     />
                   </div>
                   <div className="grid gap-2">
@@ -599,16 +636,27 @@ export default function ProductsPage() {
                           defaultValue={productToEdit.description || ""}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-price">{t("price")} *</Label>
+                          <Label htmlFor="edit-price-etb">{t("price")} (ETB) *</Label>
                           <Input
-                            id="edit-price"
-                            name="price"
+                            id="edit-price-etb"
+                            name="priceEtb"
                             type="number"
                             step="0.01"
                             defaultValue={productToEdit.price}
                             required
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="edit-price-usd">{t("price")} (USD)</Label>
+                          <Input
+                            id="edit-price-usd"
+                            name="priceUsd"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            defaultValue={productToEdit.usdPrice ?? ""}
                           />
                         </div>
                         <div className="grid gap-2">
@@ -758,6 +806,34 @@ export default function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* First Product Pricing Prompt */}
+      <Dialog open={showFirstProductPricingPrompt} onOpenChange={setShowFirstProductPricingPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("firstProductPricingPromptTitle")}</DialogTitle>
+            <DialogDescription>{t("firstProductPricingPromptDescription")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowFirstProductPricingPrompt(false)}
+            >
+              {t("firstProductPricingPromptStay")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setShowFirstProductPricingPrompt(false);
+                router.push("/pricing");
+              }}
+            >
+              {t("firstProductPricingPromptGo")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -775,6 +851,7 @@ function ProductRow({
     description?: string;
     category?: string;
     price: number;
+    usdPrice?: number;
     quantity: number;
     status: ProductStatus;
     createdAt: number;
@@ -812,7 +889,14 @@ function ProductRow({
           <span className="text-muted-foreground">-</span>
         )}
       </TableCell>
-      <TableCell>${product.price.toLocaleString()}</TableCell>
+      <TableCell>
+        <div className="flex flex-col">
+          <span>{product.price.toLocaleString()} ETB</span>
+          {product.usdPrice !== undefined && (
+            <span className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</span>
+          )}
+        </div>
+      </TableCell>
       <TableCell>
         <div className="flex items-center gap-1">
           <Package className="h-3 w-3 text-muted-foreground" />

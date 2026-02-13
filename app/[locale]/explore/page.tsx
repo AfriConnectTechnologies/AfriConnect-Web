@@ -209,9 +209,10 @@ export default function ExplorePage() {
                     </CardHeader>
                     <CardContent className="flex flex-1 flex-col justify-between gap-4">
                       <div>
-                        <div className="text-2xl font-bold text-primary">
-                          ${product.price.toLocaleString()}
-                        </div>
+                        <div className="text-2xl font-bold text-primary">{product.price.toLocaleString()} ETB</div>
+                        {product.usdPrice !== undefined && (
+                          <div className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</div>
+                        )}
                         <div className="mt-1 text-sm text-muted-foreground">
                           {product.quantity > 0 ? (
                             <span className="flex items-center gap-1">

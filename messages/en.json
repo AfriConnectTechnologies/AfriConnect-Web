@@ -135,7 +135,11 @@
     "updateDetails": "Update product details and manage images.",
     "saveChanges": "Save Changes",
     "deleteProduct": "Delete Product",
-    "deleteConfirmation": "Are you sure you want to delete this product? This will also delete all associated images. This action cannot be undone."
+    "deleteConfirmation": "Are you sure you want to delete this product? This will also delete all associated images. This action cannot be undone.",
+    "firstProductPricingPromptTitle": "Your first product is live",
+    "firstProductPricingPromptDescription": "Great start! Visit the pricing page to explore plans and unlock more selling features.",
+    "firstProductPricingPromptStay": "Maybe later",
+    "firstProductPricingPromptGo": "Go to Pricing"
   },
   "orders": {
     "title": "Orders",

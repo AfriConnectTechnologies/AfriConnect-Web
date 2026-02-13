@@ -63,6 +63,7 @@ export const create = mutation({
     name: v.string(),
     description: v.optional(v.string()),
     price: v.number(),
+    usdPrice: v.optional(v.number()),
     quantity: v.number(),
     sku: v.optional(v.string()),
     lowStockThreshold: v.optional(v.number()),
@@ -81,6 +82,7 @@ export const create = mutation({
       log.info("Product creation initiated", {
         name: args.name,
         price: args.price,
+        usdPrice: args.usdPrice,
         quantity: args.quantity,
         category: args.category,
         country: args.country,
@@ -112,6 +114,9 @@ export const create = mutation({
       if (args.reorderQuantity !== undefined && args.reorderQuantity < 0) {
         throw new Error("Reorder quantity must be 0 or greater");
       }
+      if (args.usdPrice !== undefined && args.usdPrice < 0) {
+        throw new Error("USD price must be 0 or greater");
+      }
 
       if (args.sku && args.sku.trim()) {
         const existingSku = await ctx.db
@@ -131,6 +136,7 @@ export const create = mutation({
         name: args.name,
         description: args.description,
         price: args.price,
+        usdPrice: args.usdPrice,
         quantity: args.quantity,
         sku: args.sku,
         lowStockThreshold: args.lowStockThreshold,
@@ -165,6 +171,7 @@ export const create = mutation({
         productId,
         name: args.name,
         price: args.price,
+        usdPrice: args.usdPrice,
         quantity: args.quantity,
         category: args.category,
         status: args.status ?? "active",
@@ -176,6 +183,7 @@ export const create = mutation({
       log.error("Product creation failed", error, {
         name: args.name,
         price: args.price,
+        usdPrice: args.usdPrice,
       });
       await flushLogs();
       throw error;
@@ -189,6 +197,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     description: v.optional(v.string()),
     price: v.optional(v.number()),
+    usdPrice: v.optional(v.number()),
     quantity: v.optional(v.number()),
     sku: v.optional(v.string()),
     lowStockThreshold: v.optional(v.number()),
@@ -246,6 +255,9 @@ export const update = mutation({
       }
       if (args.reorderQuantity !== undefined && args.reorderQuantity < 0) {
         throw new Error("Reorder quantity must be 0 or greater");
+      }
+      if (args.usdPrice !== undefined && args.usdPrice < 0) {
+        throw new Error("USD price must be 0 or greater");
       }
 
       if (args.sku && args.sku.trim() && args.sku !== product.sku) {

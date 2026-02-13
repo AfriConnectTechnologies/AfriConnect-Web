@@ -12,6 +12,7 @@ interface Product {
   name: string;
   description?: string;
   price: number;
+  usdPrice?: number;
   quantity: number;
   category?: string;
   country?: string;
@@ -120,9 +121,16 @@ export function ProductGrid({ products, isLoading }: ProductGridProps) {
                 {product.description || tCommon("noDescription")}
               </p>
               <div className="flex items-center justify-between mt-2">
-                <span className="text-lg font-bold text-primary">
-                  ${product.price.toLocaleString()}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-primary">
+                    {product.price.toLocaleString()} ETB
+                  </span>
+                  {product.usdPrice !== undefined && (
+                    <span className="text-xs text-muted-foreground">
+                      ${product.usdPrice.toLocaleString()}
+                    </span>
+                  )}
+                </div>
                 {product.quantity > 0 && (
                   <span className="text-xs text-muted-foreground">
                     {product.quantity} in stock

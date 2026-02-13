@@ -135,7 +135,11 @@
     "updateDetails": "Sasisha maelezo ya bidhaa na simamia picha.",
     "saveChanges": "Hifadhi Mabadiliko",
     "deleteProduct": "Futa Bidhaa",
-    "deleteConfirmation": "Una uhakika unataka kufuta bidhaa hii? Hii pia itafuta picha zote zinazohusiana. Kitendo hiki hakiwezi kutenduliwa."
+    "deleteConfirmation": "Una uhakika unataka kufuta bidhaa hii? Hii pia itafuta picha zote zinazohusiana. Kitendo hiki hakiwezi kutenduliwa.",
+    "firstProductPricingPromptTitle": "Bidhaa yako ya kwanza ipo hewani",
+    "firstProductPricingPromptDescription": "Mwanzo mzuri! Tembelea ukurasa wa bei kuona mipango na kufungua vipengele zaidi vya uuzaji.",
+    "firstProductPricingPromptStay": "Labda baadaye",
+    "firstProductPricingPromptGo": "Nenda kwenye Bei"
   },
   "orders": {
     "title": "Maagizo",

@@ -317,9 +317,10 @@ export default function BusinessProfilePage() {
                     <CardContent className="p-4 pt-0">
                       <div className="flex items-end justify-between">
                         <div>
-                          <div className="text-2xl font-bold">
-                            ${product.price.toLocaleString()}
-                          </div>
+                          <div className="text-2xl font-bold">{product.price.toLocaleString()} ETB</div>
+                          {product.usdPrice !== undefined && (
+                            <div className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</div>
+                          )}
                           {product.quantity > 0 && (
                             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                               <Package className="h-3 w-3" />
