@@ -56,6 +56,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [updatingUserId, setUpdatingUserId] = useState<Id<"users"> | null>(null);
   const [impersonatingUserId, setImpersonatingUserId] = useState<Id<"users"> | null>(null);
+  const [isSeedingAgreements, setIsSeedingAgreements] = useState(false);
 
   const users = useQuery(
     api.users.listUsers,
@@ -68,6 +69,17 @@ export default function AdminUsersPage() {
   );
 
   const setUserRole = useMutation(api.users.setUserRole);
+  const seedDefaultAgreementVersions = useMutation(
+    api.agreements.seedDefaultAgreementVersions
+  );
+  const activeBuyerAgreement = useQuery(
+    api.agreements.getActiveAgreement,
+    isAuthorized ? { type: "buyer" } : "skip"
+  );
+  const activeSellerAgreement = useQuery(
+    api.agreements.getActiveAgreement,
+    isAuthorized ? { type: "seller" } : "skip"
+  );
 
   const handleRoleChange = async (userId: Id<"users">, newRole: UserRole) => {
     setUpdatingUserId(userId);
@@ -116,6 +128,27 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleSeedAgreements = async () => {
+    if (isSeedingAgreements) return;
+    setIsSeedingAgreements(true);
+    try {
+      const seededIds = await seedDefaultAgreementVersions({});
+      if (seededIds.length === 0) {
+        toast.success("Agreement versions already exist and are active.");
+      } else {
+        toast.success(
+          `Seeded ${seededIds.length} agreement version${seededIds.length > 1 ? "s" : ""}.`
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to seed agreement versions";
+      toast.error(message);
+    } finally {
+      setIsSeedingAgreements(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -136,6 +169,49 @@ export default function AdminUsersPage() {
           View and manage user accounts and roles
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Agreement Setup (Temporary)</CardTitle>
+          <CardDescription>
+            Seed missing buyer/seller agreement versions for this environment.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1 text-sm">
+            <p>
+              Buyer active:{" "}
+              <span className="font-medium">
+                {activeBuyerAgreement === undefined
+                  ? "Loading..."
+                  : activeBuyerAgreement
+                    ? `Yes (v${activeBuyerAgreement.version})`
+                    : "No"}
+              </span>
+            </p>
+            <p>
+              Seller active:{" "}
+              <span className="font-medium">
+                {activeSellerAgreement === undefined
+                  ? "Loading..."
+                  : activeSellerAgreement
+                    ? `Yes (v${activeSellerAgreement.version})`
+                    : "No"}
+              </span>
+            </p>
+          </div>
+          <Button onClick={handleSeedAgreements} disabled={isSeedingAgreements}>
+            {isSeedingAgreements ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Seeding...
+              </>
+            ) : (
+              "Seed Default Agreement Versions"
+            )}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
