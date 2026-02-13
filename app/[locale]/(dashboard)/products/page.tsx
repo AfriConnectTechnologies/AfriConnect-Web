@@ -74,6 +74,7 @@ export default function ProductsPage() {
   const [imagesKey, setImagesKey] = useState(0);
   const [shouldPromptPricingAfterCreate, setShouldPromptPricingAfterCreate] = useState(false);
   const [showFirstProductPricingPrompt, setShowFirstProductPricingPrompt] = useState(false);
+  const [showSubscriptionRequiredPrompt, setShowSubscriptionRequiredPrompt] = useState(false);
   const isSubmittingRef = useRef(false);
   const createFormRef = useRef<HTMLFormElement>(null);
 
@@ -90,6 +91,7 @@ export default function ProductsPage() {
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);
   const deleteProduct = useMutation(api.products.remove);
+  const currentSubscription = useQuery(api.subscriptions.getCurrentSubscription);
   const allProducts = useQuery(
     api.products.list,
     currentUser
@@ -98,6 +100,9 @@ export default function ProductsPage() {
         }
       : "skip"
   );
+  const hasExistingProducts = Array.isArray(allProducts) && allProducts.length > 0;
+  const hasPaidSubscription = currentSubscription?.status === "active";
+  const canCreateProduct = !hasExistingProducts || hasPaidSubscription;
 
   // Get images for the product being created or edited
   const productImages = useQuery(
@@ -115,6 +120,11 @@ export default function ProductsPage() {
   // Handle Step 1: Create product
   const handleCreateStep1 = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!canCreateProduct) {
+      setShowSubscriptionRequiredPrompt(true);
+      return;
+    }
     
     if (isSubmitting || isSubmittingRef.current) {
       return;
@@ -161,6 +171,9 @@ export default function ProductsPage() {
     } catch (error) {
       console.error("Create product error:", error);
       const errorMessage = error instanceof Error ? error.message : tToast("failedToCreate");
+      if (errorMessage === "Paid subscription required to add additional products") {
+        setShowSubscriptionRequiredPrompt(true);
+      }
       toast.error(errorMessage);
     } finally {
       isSubmittingRef.current = false;
@@ -273,6 +286,14 @@ export default function ProductsPage() {
     setImagesKey(prev => prev + 1);
   };
 
+  const handleOpenCreateDialog = () => {
+    if (!canCreateProduct) {
+      setShowSubscriptionRequiredPrompt(true);
+      return;
+    }
+    setIsCreateOpen(true);
+  };
+
   if (products === undefined) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -288,7 +309,7 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
+        <Button onClick={handleOpenCreateDialog}>
           <Plus className="mr-2 h-4 w-4" />
           {t("addProduct")}
         </Button>
@@ -830,6 +851,34 @@ export default function ProductsPage() {
               }}
             >
               {t("firstProductPricingPromptGo")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Subscription Required Prompt */}
+      <Dialog open={showSubscriptionRequiredPrompt} onOpenChange={setShowSubscriptionRequiredPrompt}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("subscriptionRequiredPromptTitle")}</DialogTitle>
+            <DialogDescription>{t("subscriptionRequiredPromptDescription")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowSubscriptionRequiredPrompt(false)}
+            >
+              {t("subscriptionRequiredPromptStay")}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setShowSubscriptionRequiredPrompt(false);
+                router.push("/pricing");
+              }}
+            >
+              {t("subscriptionRequiredPromptGo")}
             </Button>
           </DialogFooter>
         </DialogContent>

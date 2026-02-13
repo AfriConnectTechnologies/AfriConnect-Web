@@ -92,6 +92,32 @@ export const create = mutation({
       const user = await getOrCreateUser(ctx);
       log.setContext({ userId: user.clerkId });
 
+      // Allow the first product without a paid subscription, but require payment afterwards.
+      const existingProducts = await ctx.db
+        .query("products")
+        .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
+        .collect();
+
+      if (existingProducts.length > 0) {
+        let hasPaidSubscription = false;
+        if (user.businessId) {
+          const subscription = await ctx.db
+            .query("subscriptions")
+            .withIndex("by_business", (q) => q.eq("businessId", user.businessId!))
+            .first();
+          hasPaidSubscription = subscription?.status === "active";
+        }
+
+        if (!hasPaidSubscription) {
+          log.warn("Product creation failed - paid subscription required", {
+            existingProducts: existingProducts.length,
+            hasBusiness: !!user.businessId,
+          });
+          await flushLogs();
+          throw new Error("Paid subscription required to add additional products");
+        }
+      }
+
       // Check product limit based on subscription plan
       const productLimit = await checkProductLimit(ctx, user._id);
       if (!productLimit.allowed) {

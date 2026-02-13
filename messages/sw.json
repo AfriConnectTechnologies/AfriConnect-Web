@@ -139,7 +139,11 @@
     "firstProductPricingPromptTitle": "Bidhaa yako ya kwanza ipo hewani",
     "firstProductPricingPromptDescription": "Mwanzo mzuri! Tembelea ukurasa wa bei kuona mipango na kufungua vipengele zaidi vya uuzaji.",
     "firstProductPricingPromptStay": "Labda baadaye",
-    "firstProductPricingPromptGo": "Nenda kwenye Bei"
+    "firstProductPricingPromptGo": "Nenda kwenye Bei",
+    "subscriptionRequiredPromptTitle": "Usajili unahitajika",
+    "subscriptionRequiredPromptDescription": "Ili kuongeza bidhaa nyingine, unahitaji usajili wa malipo ulio hai. Chagua mpango ili uendelee.",
+    "subscriptionRequiredPromptStay": "Siyo sasa",
+    "subscriptionRequiredPromptGo": "Angalia bei"
   },
   "orders": {
     "title": "Maagizo",

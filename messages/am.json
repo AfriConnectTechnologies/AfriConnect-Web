@@ -139,7 +139,11 @@
     "firstProductPricingPromptTitle": "የመጀመሪያ ምርትዎ ተለቋል",
     "firstProductPricingPromptDescription": "ጥሩ ጅምር! ተጨማሪ የሽያጭ ባህሪያትን ለመክፈት የዋጋ ገጹን ይጎብኙ።",
     "firstProductPricingPromptStay": "በኋላ እመለሳለሁ",
-    "firstProductPricingPromptGo": "ወደ ዋጋ ገጽ ሂድ"
+    "firstProductPricingPromptGo": "ወደ ዋጋ ገጽ ሂድ",
+    "subscriptionRequiredPromptTitle": "ደንበኝነት ያስፈልጋል",
+    "subscriptionRequiredPromptDescription": "ሌላ ምርት ለመጨመር ንቁ የክፍያ ደንበኝነት ያስፈልጋል። ለመቀጠል እቅድ ይምረጡ።",
+    "subscriptionRequiredPromptStay": "አሁን አይደለም",
+    "subscriptionRequiredPromptGo": "ዋጋን ይመልከቱ"
   },
   "orders": {
     "title": "ትዕዛዞች",

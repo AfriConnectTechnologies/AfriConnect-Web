@@ -139,7 +139,11 @@
     "firstProductPricingPromptTitle": "Your first product is live",
     "firstProductPricingPromptDescription": "Great start! Visit the pricing page to explore plans and unlock more selling features.",
     "firstProductPricingPromptStay": "Maybe later",
-    "firstProductPricingPromptGo": "Go to Pricing"
+    "firstProductPricingPromptGo": "Go to Pricing",
+    "subscriptionRequiredPromptTitle": "Subscription required",
+    "subscriptionRequiredPromptDescription": "To add another product, you need an active paid subscription. Choose a plan to continue.",
+    "subscriptionRequiredPromptStay": "Not now",
+    "subscriptionRequiredPromptGo": "View pricing"
   },
   "orders": {
     "title": "Orders",
