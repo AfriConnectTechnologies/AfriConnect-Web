@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { requireAdmin, requireUser, getOrCreateUser } from "./helpers";
 import { createLogger, flushLogs } from "./lib/logger";
 
-// Create a new business (user becomes a seller)
+// Create a new business (verification starts as pending)
 export const createBusiness = mutation({
   args: {
     name: v.string(),
@@ -101,9 +101,8 @@ export const createBusiness = mutation({
 
       log.setContext({ businessId });
 
-      // Update user to seller role and link business
+      // Link business; seller role is granted only after verification approval.
       await ctx.db.patch(user._id, {
-        role: "seller",
         businessId: businessId,
       });
 
@@ -112,7 +111,7 @@ export const createBusiness = mutation({
         businessName: args.name,
         country: args.country,
         category: args.category,
-        ownerRole: "seller",
+        ownerRole: user.role ?? "buyer",
         verificationStatus: "pending",
       });
 
@@ -480,22 +479,41 @@ export const verifyBusiness = mutation({
       }
 
       const previousStatus = business.verificationStatus;
+      const owner = await ctx.db.get(business.ownerId);
+
+      if (!owner) {
+        log.error("Business verification failed - owner not found", undefined, {
+          businessId: args.businessId,
+          ownerId: business.ownerId,
+        });
+        await flushLogs();
+        throw new Error("Business owner not found");
+      }
 
       await ctx.db.patch(args.businessId, {
         verificationStatus: args.status,
         updatedAt: Date.now(),
       });
 
+      const nextOwnerRole =
+        args.status === "verified"
+          ? "seller"
+          : owner.role === "admin"
+            ? "admin"
+            : "buyer";
+
+      await ctx.db.patch(owner._id, {
+        role: nextOwnerRole,
+      });
+
       const updatedBusiness = await ctx.db.get(args.businessId);
-      
-      // Get owner info for email notification
-      const owner = await ctx.db.get(business.ownerId);
 
       log.info("Business verification completed", {
         businessId: args.businessId,
         businessName: business.name,
         previousStatus,
         newStatus: args.status,
+        ownerRoleAfterReview: nextOwnerRole,
         ownerId: business.ownerId,
         ownerEmailPresent: !!owner?.email, // Don't log PII, just indicate presence
         adminId: admin._id,

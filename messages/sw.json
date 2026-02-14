@@ -85,6 +85,7 @@
     "sortPriceDesc": "Bei: Juu hadi Chini",
     "outOfStock": "Imeisha Stokini",
     "inStock": "{count} stokini",
+    "inStockCap": "1000+ stokini",
     "price": "Bei",
     "category": "Kategoria",
     "country": "Nchi",
@@ -143,7 +144,12 @@
     "subscriptionRequiredPromptTitle": "Usajili unahitajika",
     "subscriptionRequiredPromptDescription": "Ili kuongeza bidhaa nyingine, unahitaji usajili wa malipo ulio hai. Chagua mpango ili uendelee.",
     "subscriptionRequiredPromptStay": "Siyo sasa",
-    "subscriptionRequiredPromptGo": "Angalia bei"
+    "subscriptionRequiredPromptGo": "Angalia bei",
+    "currencyHint": "USD inahitajika na itaonyeshwa kama bei kuu. Thamani za ETB na KSH zinaweza kujazwa kiotomatiki kwa viwango vya ubadilishaji vya sasa na unaweza kuzirekebisha wakati wowote.",
+    "ratesUpdated": "Viwango vimeboreshwa: {date}.",
+    "usdRequired": "Bei ya USD inahitajika na lazima iwe zaidi ya 0.",
+    "etbRequired": "Bei ya ETB inahitajika na lazima iwe zaidi ya 0.",
+    "kshInvalid": "Bei ya KSH lazima iwe 0 au zaidi."
   },
   "orders": {
     "title": "Maagizo",

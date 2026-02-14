@@ -85,6 +85,7 @@
     "sortPriceDesc": "Price: High to Low",
     "outOfStock": "Out of Stock",
     "inStock": "{count} in stock",
+    "inStockCap": "1000+ in stock",
     "price": "Price",
     "category": "Category",
     "country": "Country",
@@ -143,7 +144,12 @@
     "subscriptionRequiredPromptTitle": "Subscription required",
     "subscriptionRequiredPromptDescription": "To add another product, you need an active paid subscription. Choose a plan to continue.",
     "subscriptionRequiredPromptStay": "Not now",
-    "subscriptionRequiredPromptGo": "View pricing"
+    "subscriptionRequiredPromptGo": "View pricing",
+    "currencyHint": "USD is required and shown as the main price. ETB and KSH values can be auto-filled using live exchange rates and you can adjust them any time.",
+    "ratesUpdated": "Rates updated: {date}.",
+    "usdRequired": "USD price is required and must be greater than 0.",
+    "etbRequired": "ETB price is required and must be greater than 0.",
+    "kshInvalid": "KSH price must be 0 or greater."
   },
   "orders": {
     "title": "Orders",

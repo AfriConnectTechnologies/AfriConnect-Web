@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Package, ShoppingCart, Globe2, ArrowLeft, ImageIcon } from "lucide-react";
 import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +31,18 @@ export default function ExplorePage() {
       new Set(allProducts.map((p) => p.category).filter((c) => c) as string[])
     );
   }, [allProducts]);
+
+  const getPrimaryUsdPrice = (priceEtb: number, usdPrice?: number) => {
+    if (usdPrice !== undefined) return { value: usdPrice, approximate: false };
+    return { value: priceEtb / USD_TO_ETB_RATE, approximate: true };
+  };
+
+  const formatStockLabel = (quantity: number) => {
+    if (quantity > 1000) {
+      return "1000+ in stock";
+    }
+    return `${quantity} in stock`;
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -209,15 +222,21 @@ export default function ExplorePage() {
                     </CardHeader>
                     <CardContent className="flex flex-1 flex-col justify-between gap-4">
                       <div>
-                        <div className="text-2xl font-bold text-primary">{product.price.toLocaleString()} ETB</div>
-                        {product.usdPrice !== undefined && (
-                          <div className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</div>
-                        )}
+                        <div className="text-2xl font-bold text-primary">
+                          {(() => {
+                            const usd = getPrimaryUsdPrice(product.price, product.usdPrice);
+                            return `${usd.approximate ? "~" : ""}$${usd.value.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`;
+                          })()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{product.price.toLocaleString()} ETB</div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {product.quantity > 0 ? (
                             <span className="flex items-center gap-1">
                               <Package className="h-3 w-3" />
-                              {product.quantity} in stock
+                              {formatStockLabel(product.quantity)}
                             </span>
                           ) : (
                             <span className="text-destructive">Out of stock</span>
@@ -279,4 +298,3 @@ export default function ExplorePage() {
     </div>
   );
 }
-

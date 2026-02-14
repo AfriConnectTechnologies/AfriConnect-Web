@@ -85,6 +85,7 @@
     "sortPriceDesc": "ዋጋ: ከፍተኛ ወደ ዝቅተኛ",
     "outOfStock": "ክምችት አልቋል",
     "inStock": "{count} በክምችት ውስጥ",
+    "inStockCap": "1000+ በክምችት ውስጥ",
     "price": "ዋጋ",
     "category": "ምድብ",
     "country": "አገር",
@@ -143,7 +144,12 @@
     "subscriptionRequiredPromptTitle": "ደንበኝነት ያስፈልጋል",
     "subscriptionRequiredPromptDescription": "ሌላ ምርት ለመጨመር ንቁ የክፍያ ደንበኝነት ያስፈልጋል። ለመቀጠል እቅድ ይምረጡ።",
     "subscriptionRequiredPromptStay": "አሁን አይደለም",
-    "subscriptionRequiredPromptGo": "ዋጋን ይመልከቱ"
+    "subscriptionRequiredPromptGo": "ዋጋን ይመልከቱ",
+    "currencyHint": "USD አስፈላጊ ነው እና እንደ ዋና ዋጋ ይታያል። ETB እና KSH እሴቶች በቀጥታ የልውውጥ መጠኖች ሊሞሉ ይችላሉ እና በማንኛውም ጊዜ ማስተካከል ይችላሉ።",
+    "ratesUpdated": "የመጠን ዝማኔ: {date}.",
+    "usdRequired": "የUSD ዋጋ አስፈላጊ ነው እና ከ0 በላይ መሆን አለበት።",
+    "etbRequired": "የETB ዋጋ አስፈላጊ ነው እና ከ0 በላይ መሆን አለበት።",
+    "kshInvalid": "የKSH ዋጋ 0 ወይም ከዚያ በላይ መሆን አለበት።"
   },
   "orders": {
     "title": "ትዕዛዞች",

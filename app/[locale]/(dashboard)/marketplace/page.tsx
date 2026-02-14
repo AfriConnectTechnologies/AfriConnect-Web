@@ -20,6 +20,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Search, ShoppingCart, Package, ImageIcon, X, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import Image from "next/image";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 type SortOption = "newest" | "price_asc" | "price_desc";
 
@@ -149,6 +150,18 @@ export default function MarketplacePage() {
   // Ensure products is always an array for rendering (show empty during refetch)
   const displayProducts = products ?? [];
   const isRefetching = products === undefined;
+
+  const getPrimaryUsdPrice = (priceEtb: number, usdPrice?: number) => {
+    if (usdPrice !== undefined) return { value: usdPrice, approximate: false };
+    return { value: priceEtb / USD_TO_ETB_RATE, approximate: true };
+  };
+
+  const formatStockLabel = (quantity: number) => {
+    if (quantity > 1000) {
+      return t("inStockCap");
+    }
+    return t("inStock", { count: quantity });
+  };
 
   return (
     <div className="space-y-6">
@@ -424,14 +437,20 @@ export default function MarketplacePage() {
                     <CardContent className="p-4 pt-0">
                       <div className="flex items-end justify-between">
                         <div>
-                          <div className="text-2xl font-bold">{product.price.toLocaleString()} ETB</div>
-                          {product.usdPrice !== undefined && (
-                            <div className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</div>
-                          )}
+                          <div className="text-2xl font-bold">
+                            {(() => {
+                              const usd = getPrimaryUsdPrice(product.price, product.usdPrice);
+                              return `${usd.approximate ? "~" : ""}$${usd.value.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}`;
+                            })()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{product.price.toLocaleString()} ETB</div>
                           {product.quantity > 0 && (
                             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                               <Package className="h-3 w-3" />
-                              {t("inStock", { count: product.quantity })}
+                              {formatStockLabel(product.quantity)}
                             </div>
                           )}
                         </div>

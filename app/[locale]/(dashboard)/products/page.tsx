@@ -48,6 +48,15 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type ProductStatus = "active" | "inactive";
+type CurrencyCode = "USD" | "ETB" | "KES";
+type FxConversionResponse = {
+  converted?: {
+    USD?: number;
+    ETB?: number;
+    KES?: number;
+  };
+  asOf?: string;
+};
 
 const statusColors: Record<ProductStatus, "default" | "secondary" | "outline" | "destructive"> = {
   active: "default",
@@ -75,8 +84,18 @@ export default function ProductsPage() {
   const [shouldPromptPricingAfterCreate, setShouldPromptPricingAfterCreate] = useState(false);
   const [showFirstProductPricingPrompt, setShowFirstProductPricingPrompt] = useState(false);
   const [showSubscriptionRequiredPrompt, setShowSubscriptionRequiredPrompt] = useState(false);
+  const [createConversion, setCreateConversion] = useState<{ source: CurrencyCode; value: string } | null>(null);
+  const [editConversion, setEditConversion] = useState<{ source: CurrencyCode; value: string } | null>(null);
+  const [createRateAsOf, setCreateRateAsOf] = useState<string | null>(null);
+  const [editRateAsOf, setEditRateAsOf] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
   const createFormRef = useRef<HTMLFormElement>(null);
+  const createUsdRef = useRef<HTMLInputElement>(null);
+  const createEtbRef = useRef<HTMLInputElement>(null);
+  const createKesRef = useRef<HTMLInputElement>(null);
+  const editUsdRef = useRef<HTMLInputElement>(null);
+  const editEtbRef = useRef<HTMLInputElement>(null);
+  const editKesRef = useRef<HTMLInputElement>(null);
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const products = useQuery(
@@ -118,6 +137,41 @@ export default function ProductsPage() {
         product.description?.toLowerCase().includes(searchQuery.toLowerCase())
     ) ?? [];
 
+  const parsePositiveNumber = (value: FormDataEntryValue | null) => {
+    const raw = (value as string | null)?.trim() || "";
+    if (!raw) return null;
+    const parsed = parseFloat(raw);
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return parsed;
+  };
+
+  const applyAutoConversion = async (
+    source: CurrencyCode,
+    amount: number,
+    usdInput: HTMLInputElement | null,
+    etbInput: HTMLInputElement | null,
+    kesInput: HTMLInputElement | null,
+    setAsOf: (value: string | null) => void
+  ) => {
+    try {
+      const response = await fetch(`/api/currency/convert?from=${source}&amount=${amount}`);
+      if (!response.ok) return;
+      const data = (await response.json()) as FxConversionResponse;
+      if (source !== "USD" && data.converted?.USD !== undefined && usdInput) {
+        usdInput.value = data.converted.USD.toFixed(2);
+      }
+      if (source !== "ETB" && data.converted?.ETB !== undefined && etbInput) {
+        etbInput.value = data.converted.ETB.toFixed(2);
+      }
+      if (source !== "KES" && data.converted?.KES !== undefined && kesInput) {
+        kesInput.value = data.converted.KES.toFixed(2);
+      }
+      setAsOf(data.asOf ?? null);
+    } catch {
+      setAsOf(null);
+    }
+  };
+
   // Handle Step 1: Create product
   const handleCreateStep1 = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,13 +192,26 @@ export default function ProductsPage() {
     const isFirstProduct = Array.isArray(allProducts) && allProducts.length === 0;
     
     try {
+      const priceEtb = parsePositiveNumber(formData.get("priceEtb"));
+      const priceUsd = parsePositiveNumber(formData.get("priceUsd"));
+      const priceKesRaw = (formData.get("priceKes") as string | null)?.trim() || "";
+      const priceKes = priceKesRaw ? parseFloat(priceKesRaw) : undefined;
+      if (!priceEtb) {
+        throw new Error(t("etbRequired"));
+      }
+      if (!priceUsd) {
+        throw new Error(t("usdRequired"));
+      }
+      if (priceKesRaw && (priceKes === undefined || !Number.isFinite(priceKes) || priceKes < 0)) {
+        throw new Error(t("kshInvalid"));
+      }
+
       const result = await createProduct({
         name: formData.get("name") as string,
         description: (formData.get("description") as string) || undefined,
-        price: parseFloat(formData.get("priceEtb") as string),
-        usdPrice: formData.get("priceUsd")
-          ? parseFloat(formData.get("priceUsd") as string)
-          : undefined,
+        price: priceEtb,
+        usdPrice: priceUsd,
+        kesPrice: priceKes,
         quantity: parseInt(formData.get("quantity") as string),
         sku: (formData.get("sku") as string) || undefined,
         lowStockThreshold: formData.get("lowStockThreshold")
@@ -202,6 +269,8 @@ export default function ProductsPage() {
     setCreateStep(1);
     setCreatedProductId(null);
     setCreateStatus("active");
+    setCreateConversion(null);
+    setCreateRateAsOf(null);
     createFormRef.current?.reset();
   };
 
@@ -210,14 +279,27 @@ export default function ProductsPage() {
     if (!editingProduct) return;
     const formData = new FormData(e.currentTarget);
     try {
+      const priceEtb = parsePositiveNumber(formData.get("priceEtb"));
+      const priceUsd = parsePositiveNumber(formData.get("priceUsd"));
+      const priceKesRaw = (formData.get("priceKes") as string | null)?.trim() || "";
+      const priceKes = priceKesRaw ? parseFloat(priceKesRaw) : undefined;
+      if (!priceEtb) {
+        throw new Error(t("etbRequired"));
+      }
+      if (!priceUsd) {
+        throw new Error(t("usdRequired"));
+      }
+      if (priceKesRaw && (priceKes === undefined || !Number.isFinite(priceKes) || priceKes < 0)) {
+        throw new Error(t("kshInvalid"));
+      }
+
       await updateProduct({
         id: editingProduct,
         name: formData.get("name") as string,
         description: (formData.get("description") as string) || undefined,
-        price: parseFloat(formData.get("priceEtb") as string),
-        usdPrice: formData.get("priceUsd")
-          ? parseFloat(formData.get("priceUsd") as string)
-          : undefined,
+        price: priceEtb,
+        usdPrice: priceUsd,
+        kesPrice: priceKes,
         quantity: parseInt(formData.get("quantity") as string),
         sku: (formData.get("sku") as string) || undefined,
         lowStockThreshold: formData.get("lowStockThreshold")
@@ -235,8 +317,9 @@ export default function ProductsPage() {
       });
       toast.success(tToast("productUpdated"));
       setEditingProduct(null);
-    } catch {
-      toast.error(tToast("failedToUpdate"));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : tToast("failedToUpdate");
+      toast.error(errorMessage);
     }
   };
 
@@ -270,16 +353,65 @@ export default function ProductsPage() {
   const productToEdit = editingProduct
     ? products?.find((p) => p._id === editingProduct)
     : null;
+  const productToEditKesPrice = (productToEdit as { kesPrice?: number } | null)?.kesPrice;
+
+  useEffect(() => {
+    if (!createConversion?.value.trim()) {
+      setCreateRateAsOf(null);
+      return;
+    }
+    const amount = Number(createConversion.value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void applyAutoConversion(
+        createConversion.source,
+        amount,
+        createUsdRef.current,
+        createEtbRef.current,
+        createKesRef.current,
+        setCreateRateAsOf
+      );
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [createConversion]);
+
+  useEffect(() => {
+    if (!editConversion?.value.trim()) {
+      setEditRateAsOf(null);
+      return;
+    }
+    const amount = Number(editConversion.value);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void applyAutoConversion(
+        editConversion.source,
+        amount,
+        editUsdRef.current,
+        editEtbRef.current,
+        editKesRef.current,
+        setEditRateAsOf
+      );
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [editConversion]);
 
   useEffect(() => {
     if (productToEdit) {
       setEditStatus(productToEdit.status);
+      setEditConversion(null);
+      setEditRateAsOf(null);
     }
   }, [productToEdit]);
 
   useEffect(() => {
     if (!editingProduct) {
       setEditTab("details");
+      setEditConversion(null);
+      setEditRateAsOf(null);
     }
   }, [editingProduct]);
 
@@ -389,7 +521,7 @@ export default function ProductsPage() {
 
       {/* Create Dialog with Stepper */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && resetCreateDialog()}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>{t("addNewProduct")}</DialogTitle>
             <DialogDescription>
@@ -456,27 +588,52 @@ export default function ProductsPage() {
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="grid gap-2">
+                    <Label htmlFor="create-price-usd">{t("price")} (USD) *</Label>
+                    <Input
+                      id="create-price-usd"
+                      name="priceUsd"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder="0.00"
+                      ref={createUsdRef}
+                      onChange={(e) => setCreateConversion({ source: "USD", value: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="create-price-etb">{t("price")} (ETB) *</Label>
                     <Input
                       id="create-price-etb"
                       name="priceEtb"
                       type="number"
                       step="0.01"
+                      min="0.01"
                       placeholder="0.00"
+                      ref={createEtbRef}
+                      onChange={(e) => setCreateConversion({ source: "ETB", value: e.target.value })}
                       required
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="create-price-usd">{t("price")} (USD)</Label>
+                    <Label htmlFor="create-price-kes">{t("price")} (KSH)</Label>
                     <Input
-                      id="create-price-usd"
-                      name="priceUsd"
+                      id="create-price-kes"
+                      name="priceKes"
                       type="number"
                       step="0.01"
                       min="0"
                       placeholder="0.00"
+                      ref={createKesRef}
+                      onChange={(e) => setCreateConversion({ source: "KES", value: e.target.value })}
                     />
                   </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("currencyHint")}
+                  {createRateAsOf ? ` ${t("ratesUpdated", { date: new Date(createRateAsOf).toLocaleDateString() })}` : ""}
+                </p>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div className="grid gap-2">
                     <Label htmlFor="create-quantity">{t("stockQuantity")} *</Label>
                     <Input
@@ -488,8 +645,6 @@ export default function ProductsPage() {
                       required
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="create-sku">{t("sku")}</Label>
                     <Input
@@ -615,7 +770,7 @@ export default function ProductsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           {productToEdit && (
             <>
               <DialogHeader>
@@ -660,27 +815,52 @@ export default function ProductsPage() {
                       </div>
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="grid gap-2">
+                          <Label htmlFor="edit-price-usd">{t("price")} (USD) *</Label>
+                          <Input
+                            id="edit-price-usd"
+                            name="priceUsd"
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            defaultValue={productToEdit.usdPrice ?? ""}
+                            ref={editUsdRef}
+                            onChange={(e) => setEditConversion({ source: "USD", value: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="grid gap-2">
                           <Label htmlFor="edit-price-etb">{t("price")} (ETB) *</Label>
                           <Input
                             id="edit-price-etb"
                             name="priceEtb"
                             type="number"
                             step="0.01"
+                            min="0.01"
                             defaultValue={productToEdit.price}
+                            ref={editEtbRef}
+                            onChange={(e) => setEditConversion({ source: "ETB", value: e.target.value })}
                             required
                           />
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="edit-price-usd">{t("price")} (USD)</Label>
+                          <Label htmlFor="edit-price-kes">{t("price")} (KSH)</Label>
                           <Input
-                            id="edit-price-usd"
-                            name="priceUsd"
+                            id="edit-price-kes"
+                            name="priceKes"
                             type="number"
                             step="0.01"
                             min="0"
-                            defaultValue={productToEdit.usdPrice ?? ""}
+                            defaultValue={productToEditKesPrice ?? ""}
+                            ref={editKesRef}
+                            onChange={(e) => setEditConversion({ source: "KES", value: e.target.value })}
                           />
                         </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t("currencyHint")}
+                        {editRateAsOf ? ` ${t("ratesUpdated", { date: new Date(editRateAsOf).toLocaleDateString() })}` : ""}
+                      </p>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div className="grid gap-2">
                           <Label htmlFor="edit-quantity">{t("quantity")} *</Label>
                           <Input
@@ -692,8 +872,6 @@ export default function ProductsPage() {
                             required
                           />
                         </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                           <Label htmlFor="edit-sku">{t("sku")}</Label>
                           <Input
@@ -902,6 +1080,7 @@ function ProductRow({
     category?: string;
     price: number;
     usdPrice?: number;
+    kesPrice?: number;
     quantity: number;
     status: ProductStatus;
     createdAt: number;
@@ -941,9 +1120,12 @@ function ProductRow({
       </TableCell>
       <TableCell>
         <div className="flex flex-col">
-          <span>{product.price.toLocaleString()} ETB</span>
           {product.usdPrice !== undefined && (
-            <span className="text-xs text-muted-foreground">${product.usdPrice.toLocaleString()}</span>
+            <span>${product.usdPrice.toLocaleString()}</span>
+          )}
+          <span className="text-xs text-muted-foreground">{product.price.toLocaleString()} ETB</span>
+          {product.kesPrice !== undefined && (
+            <span className="text-xs text-muted-foreground">{product.kesPrice.toLocaleString()} KSH</span>
           )}
         </div>
       </TableCell>
