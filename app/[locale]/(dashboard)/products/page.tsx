@@ -102,7 +102,8 @@ export default function ProductsPage() {
   );
   const hasExistingProducts = Array.isArray(allProducts) && allProducts.length > 0;
   const hasPaidSubscription = currentSubscription?.status === "active";
-  const canCreateProduct = !hasExistingProducts || hasPaidSubscription;
+  const isAdmin = currentUser?.role === "admin";
+  const canCreateProduct = isAdmin || !hasExistingProducts || hasPaidSubscription;
 
   // Get images for the product being created or edited
   const productImages = useQuery(
