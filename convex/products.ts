@@ -92,13 +92,16 @@ export const create = mutation({
       const user = await getOrCreateUser(ctx);
       log.setContext({ userId: user.clerkId });
 
+      // Admin users bypass all product limit and subscription checks
+      const isAdmin = user.role === "admin";
+
       // Allow the first product without a paid subscription, but require payment afterwards.
       const existingProducts = await ctx.db
         .query("products")
         .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
         .collect();
 
-      if (existingProducts.length > 0) {
+      if (!isAdmin && existingProducts.length > 0) {
         let hasPaidSubscription = false;
         if (user.businessId) {
           const subscription = await ctx.db
@@ -119,20 +122,24 @@ export const create = mutation({
       }
 
       // Check product limit based on subscription plan
-      const productLimit = await checkProductLimit(ctx, user._id);
-      if (!productLimit.allowed) {
-        log.warn("Product creation failed - plan limit reached", {
+      if (!isAdmin) {
+        const productLimit = await checkProductLimit(ctx, user._id);
+        if (!productLimit.allowed) {
+          log.warn("Product creation failed - plan limit reached", {
+            currentProducts: productLimit.current,
+            limit: productLimit.limit,
+          });
+          await flushLogs();
+          throw new PlanLimitError("products", productLimit.current, productLimit.limit);
+        }
+
+        log.debug("Product limit check passed", {
           currentProducts: productLimit.current,
           limit: productLimit.limit,
         });
-        await flushLogs();
-        throw new PlanLimitError("products", productLimit.current, productLimit.limit);
+      } else {
+        log.debug("Admin user - bypassing product limit checks");
       }
-
-      log.debug("Product limit check passed", {
-        currentProducts: productLimit.current,
-        limit: productLimit.limit,
-      });
 
       if (args.lowStockThreshold !== undefined && args.lowStockThreshold < 0) {
         throw new Error("Low stock threshold must be 0 or greater");
