@@ -344,133 +344,133 @@ export default function MarketplacePage() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Products Grid */}
-          {isRefetching ? (
-            <div className="py-12 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-              <p className="mt-4 text-muted-foreground">{t("loadingProducts")}</p>
-            </div>
-          ) : displayProducts.length === 0 ? (
-            <div className="py-12 text-center">
-              <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold">{t("noProducts")}</h3>
-              <p className="mt-2 text-muted-foreground">
-                {hasActiveFilters
-                  ? t("tryAdjustingFilters")
-                  : t("noProductsYet")}
-              </p>
-              {hasActiveFilters && (
-                <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                  {t("clearAllFilters")}
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {displayProducts.map((product) => (
-                <Link key={product._id} href={`/marketplace/${product._id}`}>
-                  <Card className="group h-full overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-                    {/* Product Image */}
-                    <div className="relative aspect-square overflow-hidden bg-muted">
-                      {product.primaryImageUrl ? (
-                        <Image
-                          src={product.primaryImageUrl}
-                          alt={product.name}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <ImageIcon className="h-16 w-16 text-muted-foreground/50" />
-                        </div>
-                      )}
-                      
-                      {/* Category Badge - Overlay */}
-                      {product.category && (
-                        <Badge 
-                          variant="secondary" 
-                          className="absolute left-3 top-3 bg-background/80 backdrop-blur-sm"
-                        >
-                          {product.category}
-                        </Badge>
-                      )}
+      {/* Products Grid */}
+      {isRefetching ? (
+        <div className="py-12 text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+          <p className="mt-4 text-muted-foreground">{t("loadingProducts")}</p>
+        </div>
+      ) : displayProducts.length === 0 ? (
+        <div className="py-12 text-center">
+          <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
+          <h3 className="mt-4 text-lg font-semibold">{t("noProducts")}</h3>
+          <p className="mt-2 text-muted-foreground">
+            {hasActiveFilters ? t("tryAdjustingFilters") : t("noProductsYet")}
+          </p>
+          {hasActiveFilters && (
+            <Button variant="outline" className="mt-4" onClick={clearFilters}>
+              {t("clearAllFilters")}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {displayProducts.map((product) => (
+            <Link key={product._id} href={`/marketplace/${product._id}`} className="min-w-0">
+              <Card className="group h-full overflow-hidden rounded-xl transition-all hover:border-primary/50 hover:shadow-lg sm:rounded-2xl">
+                {/* Product Image */}
+                <div className="relative aspect-square overflow-hidden bg-muted">
+                  {product.primaryImageUrl ? (
+                    <Image
+                      src={product.primaryImageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground/50 sm:h-16 sm:w-16" />
+                    </div>
+                  )}
 
-                      {/* Country Badge - Overlay */}
-                      {product.country && (
-                        <Badge 
-                          variant="outline" 
-                          className="absolute right-3 top-3 bg-background/80 backdrop-blur-sm"
-                        >
-                          {product.country}
-                        </Badge>
-                      )}
+                  {/* Category Badge - Overlay */}
+                  {product.category && (
+                    <Badge
+                      variant="secondary"
+                      className="absolute left-2 top-2 hidden bg-background/80 text-[10px] backdrop-blur-sm sm:inline-flex"
+                    >
+                      {product.category}
+                    </Badge>
+                  )}
 
-                      {/* Out of Stock Overlay */}
-                      {product.quantity === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                          <Badge variant="destructive" className="text-sm">
-                            {t("outOfStock")}
-                          </Badge>
-                        </div>
-                      )}
+                  {/* Country Badge - Overlay */}
+                  {product.country && (
+                    <Badge
+                      variant="outline"
+                      className="absolute right-2 top-2 hidden bg-background/80 text-[10px] backdrop-blur-sm sm:inline-flex"
+                    >
+                      {product.country}
+                    </Badge>
+                  )}
 
-                      {product.isOrderable === false && (
-                        <div className="absolute bottom-3 left-3">
-                          <Badge variant="outline" className="bg-background/90">
-                            Not orderable
-                          </Badge>
+                  {/* Out of Stock Overlay */}
+                  {product.quantity === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                      <Badge variant="destructive" className="text-xs sm:text-sm">
+                        {t("outOfStock")}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {product.isOrderable === false && (
+                    <div className="absolute bottom-2 left-2">
+                      <Badge variant="outline" className="bg-background/90 text-[10px] sm:text-xs">
+                        Not orderable
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+
+                <CardHeader className="p-3 pb-1 sm:p-4 sm:pb-2">
+                  <CardTitle className="line-clamp-1 text-sm transition-colors group-hover:text-primary sm:text-base">
+                    {product.name}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-1 min-h-[1.25rem] text-xs sm:line-clamp-2 sm:min-h-[2.5rem] sm:text-sm">
+                    {product.description || tCommon("noDescription")}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
+                  <div className="flex items-end justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-lg font-bold sm:text-2xl">
+                        {(() => {
+                          const usd = getPrimaryUsdPrice(product.price, product.usdPrice);
+                          return `${usd.approximate ? "~" : ""}$${usd.value.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`;
+                        })()}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground sm:text-xs">
+                        {product.price.toLocaleString()} ETB
+                      </div>
+                      {product.quantity > 0 && (
+                        <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground sm:text-xs">
+                          <Package className="h-3 w-3" />
+                          {formatStockLabel(product.quantity)}
                         </div>
                       )}
                     </div>
-
-                    <CardHeader className="p-4 pb-2">
-                      <CardTitle className="line-clamp-1 text-base group-hover:text-primary transition-colors">
-                        {product.name}
-                      </CardTitle>
-                      <CardDescription className="line-clamp-2 min-h-[2.5rem]">
-                        {product.description || tCommon("noDescription")}
-                      </CardDescription>
-                    </CardHeader>
-                    
-                    <CardContent className="p-4 pt-0">
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <div className="text-2xl font-bold">
-                            {(() => {
-                              const usd = getPrimaryUsdPrice(product.price, product.usdPrice);
-                              return `${usd.approximate ? "~" : ""}$${usd.value.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}`;
-                            })()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{product.price.toLocaleString()} ETB</div>
-                          {product.quantity > 0 && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <Package className="h-3 w-3" />
-                              {formatStockLabel(product.quantity)}
-                            </div>
-                          )}
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="secondary"
-                          className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                          disabled={product.quantity === 0 || product.isOrderable === false}
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-8 w-8 shrink-0 transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:h-9 sm:w-9"
+                      disabled={product.quantity === 0 || product.isOrderable === false}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

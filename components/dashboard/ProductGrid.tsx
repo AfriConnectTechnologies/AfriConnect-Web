@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ImageIcon, Package } from "lucide-react";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 interface Product {
   _id: string;
@@ -40,6 +41,14 @@ function ProductSkeleton() {
 export function ProductGrid({ products, isLoading }: ProductGridProps) {
   const t = useTranslations("marketplace");
   const tCommon = useTranslations("common");
+
+  const getPrimaryUsdPrice = (priceEtb: number, usdPrice?: number) => {
+    if (usdPrice !== undefined) return { value: usdPrice, approximate: false };
+    return { value: priceEtb / USD_TO_ETB_RATE, approximate: true };
+  };
+
+  const formatStockLabel = (quantity: number) =>
+    quantity > 1000 ? "1000+" : quantity.toLocaleString();
 
   if (isLoading) {
     return (
@@ -120,22 +129,27 @@ export function ProductGrid({ products, isLoading }: ProductGridProps) {
               <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                 {product.description || tCommon("noDescription")}
               </p>
-              <div className="flex items-center justify-between mt-2">
-                <div className="flex flex-col">
-                  <span className="text-lg font-bold text-primary">
+              <div className="flex items-end justify-between mt-2">
+                <div>
+                  <div className="text-2xl font-bold text-primary">
+                    {(() => {
+                      const usd = getPrimaryUsdPrice(product.price, product.usdPrice);
+                      return `${usd.approximate ? "~" : ""}$${usd.value.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`;
+                    })()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
                     {product.price.toLocaleString()} ETB
-                  </span>
-                  {product.usdPrice !== undefined && (
-                    <span className="text-xs text-muted-foreground">
-                      ${product.usdPrice.toLocaleString()}
-                    </span>
+                  </div>
+                  {product.quantity > 0 && (
+                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                      <Package className="h-3 w-3" />
+                      {formatStockLabel(product.quantity)}
+                    </div>
                   )}
                 </div>
-                {product.quantity > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {product.quantity} in stock
-                  </span>
-                )}
               </div>
             </CardContent>
           </Card>
