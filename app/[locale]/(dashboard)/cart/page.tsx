@@ -15,6 +15,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { ComingSoonBanner } from "@/components/ui/coming-soon";
 import { AgreementDialog } from "@/components/agreements/AgreementDialog";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 export default function CartPage() {
   const t = useTranslations("cart");
@@ -156,6 +157,28 @@ export default function CartPage() {
 
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const getPrimaryUsdPrice = (priceEtb: number, usdPrice?: number) => {
+    if (usdPrice !== undefined) return { value: usdPrice, approximate: false };
+    return { value: priceEtb / USD_TO_ETB_RATE, approximate: true };
+  };
+
+  const formatUsd = (amount: number) =>
+    amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const subtotalUsd = cart.reduce((sum, item) => {
+    if (!item.product) return sum;
+    const usd = getPrimaryUsdPrice(item.product.price, item.product.usdPrice);
+    return sum + usd.value * item.quantity;
+  }, 0);
+  const subtotalUsdApproximate = cart.some(
+    (item) => item.product && item.product.usdPrice === undefined
+  );
+  const buyerFeeUsd = buyerFee / USD_TO_ETB_RATE;
+  const totalUsd = total / USD_TO_ETB_RATE;
+
   return (
     <div className="space-y-6">
       <AgreementDialog
@@ -244,9 +267,17 @@ export default function CartPage() {
                         </p>
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col">
-                            <div className="text-lg font-semibold">{item.product.price.toLocaleString()} ETB</div>
-                            {item.product.usdPrice !== undefined && (
-                              <div className="text-xs text-muted-foreground">${item.product.usdPrice.toLocaleString()}</div>
+                            <div className="text-lg font-semibold">
+                              {(() => {
+                                const usd = getPrimaryUsdPrice(item.product.price, item.product.usdPrice);
+                                return `${usd.approximate ? "~" : ""}$${formatUsd(usd.value)}`;
+                              })()}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{item.product.price.toLocaleString()} ETB</div>
+                            {item.product.kesPrice !== undefined && (
+                              <div className="text-xs text-muted-foreground">
+                                {item.product.kesPrice.toLocaleString()} KES
+                              </div>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
@@ -304,8 +335,19 @@ export default function CartPage() {
                         <div className="text-right">
                           <div className="text-sm text-muted-foreground">{t("subtotal")}</div>
                           <div className="font-semibold">
+                            {(() => {
+                              const usd = getPrimaryUsdPrice(item.product.price, item.product.usdPrice);
+                              return `${usd.approximate ? "~" : ""}$${formatUsd(usd.value * item.quantity)}`;
+                            })()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
                             {(item.product.price * item.quantity).toLocaleString()} ETB
                           </div>
+                          {item.product.kesPrice !== undefined && (
+                            <div className="text-xs text-muted-foreground">
+                              {(item.product.kesPrice * item.quantity).toLocaleString()} KES
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -327,17 +369,26 @@ export default function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t("subtotal")}</span>
-                    <span>{subtotal.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div>{`${subtotalUsdApproximate ? "~" : ""}$${formatUsd(subtotalUsd)}`}</div>
+                      <div className="text-xs text-muted-foreground">{subtotal.toLocaleString()} ETB</div>
+                    </div>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Buyer fee (1%)</span>
-                    <span>{buyerFee.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div>{`~$${formatUsd(buyerFeeUsd)}`}</div>
+                      <div className="text-xs text-muted-foreground">{buyerFee.toLocaleString()} ETB</div>
+                    </div>
                   </div>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between font-semibold">
                     <span>{t("total")}</span>
-                    <span>{total.toLocaleString()} ETB</span>
+                    <div className="text-right">
+                      <div>{`~$${formatUsd(totalUsd)}`}</div>
+                      <div className="text-xs font-normal text-muted-foreground">{total.toLocaleString()} ETB</div>
+                    </div>
                   </div>
                 </div>
                 <Button

@@ -30,6 +30,7 @@ import { ImageGallery } from "@/components/products";
 import Image from "next/image";
 import { COMMERCE_ENABLED } from "@/lib/features";
 import { useTranslations } from "next-intl";
+import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -133,6 +134,20 @@ export default function ProductDetailPage() {
   const maxQuantity = Math.min(productData.quantity, 100);
   const minQuantity = productData.minOrderQuantity || 1;
   const isOrderable = productData.isOrderable !== false;
+  const getPrimaryUsdPrice = (priceEtb: number, usdPrice?: number) => {
+    if (usdPrice !== undefined) return { value: usdPrice, approximate: false };
+    return { value: priceEtb / USD_TO_ETB_RATE, approximate: true };
+  };
+  const formatUsd = (amount: number) =>
+    amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  const primaryUsd = getPrimaryUsdPrice(productData.price, productData.usdPrice);
+  const subtotalUsd = primaryUsd.value * quantity;
+  const subtotalEtb = productData.price * quantity;
+  const subtotalKes =
+    productData.kesPrice !== undefined ? productData.kesPrice * quantity : undefined;
 
   // Parse specifications if available
   let specifications: Record<string, string> = {};
@@ -179,9 +194,12 @@ export default function ProductDetailPage() {
             </div>
             <h1 className="text-3xl font-bold">{productData.name}</h1>
             <div className="mt-2">
-              <p className="text-3xl font-bold text-primary">{productData.price.toLocaleString()} ETB</p>
-              {productData.usdPrice !== undefined && (
-                <p className="text-sm text-muted-foreground">${productData.usdPrice.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-primary">
+                {`${primaryUsd.approximate ? "~" : ""}$${formatUsd(primaryUsd.value)}`}
+              </p>
+              <p className="text-sm text-muted-foreground">{productData.price.toLocaleString()} ETB</p>
+              {productData.kesPrice !== undefined && (
+                <p className="text-sm text-muted-foreground">{productData.kesPrice.toLocaleString()} KES</p>
               )}
             </div>
           </div>
@@ -287,9 +305,19 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex justify-between text-sm py-2">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-bold text-lg">
-                    {(productData.price * quantity).toLocaleString()} ETB
-                  </span>
+                  <div className="text-right">
+                    <div className="font-bold text-lg">
+                      {`${primaryUsd.approximate ? "~" : ""}$${formatUsd(subtotalUsd)}`}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {subtotalEtb.toLocaleString()} ETB
+                    </div>
+                    {subtotalKes !== undefined && (
+                      <div className="text-xs text-muted-foreground">
+                        {subtotalKes.toLocaleString()} KES
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <Button
                   className="w-full"
