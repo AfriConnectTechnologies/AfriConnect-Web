@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { COMMERCE_ENABLED, COMPLIANCE_ENABLED } from "@/lib/features";
+import { COMMERCE_ENABLED, isComplianceEnabledForEmail } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
 type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageProducts" | "manageRefunds" | "compliance";
@@ -134,6 +134,8 @@ function SidebarContent({
   const { unreadCount } = useChatContext();
   const cartItemCount = cart?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const [isMobileAccountMenuOpen, setIsMobileAccountMenuOpen] = useState(false);
+  const userEmail = currentUser?.email || user?.primaryEmailAddress?.emailAddress;
+  const isComplianceEnabled = isComplianceEnabledForEmail(userEmail);
 
   // Build nav items based on user role
   const navItems = useMemo(() => {
@@ -149,7 +151,7 @@ function SidebarContent({
       items.push(...sellerNavItems); // My Business
     }
 
-    if (canAccessCompliance && COMPLIANCE_ENABLED) {
+    if (canAccessCompliance && isComplianceEnabled) {
       items.push(complianceNavItem);
     }
 
@@ -169,6 +171,7 @@ function SidebarContent({
     currentUser?.businessId,
     currentUser?.emailVerified,
     myBusiness?.verificationStatus,
+    isComplianceEnabled,
   ]);
 
   return (

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { promises as fs } from "fs";
 import path from "path";
-import { COMPLIANCE_ENABLED } from "@/lib/features";
+import { COMPLIANCE_ENABLED, isComplianceEnabledForEmail } from "@/lib/features";
 
 // Supported countries/regions
 type Country = "ethiopia" | "kenya";
@@ -119,7 +120,10 @@ async function loadHSCodeData(country: Country): Promise<NormalizedHSCodeEntry[]
 
 export async function GET(request: NextRequest) {
   try {
-    if (!COMPLIANCE_ENABLED) {
+    const clerkUser = COMPLIANCE_ENABLED ? null : await currentUser();
+    const userEmail = clerkUser?.emailAddresses[0]?.emailAddress;
+
+    if (!isComplianceEnabledForEmail(userEmail)) {
       return NextResponse.json(
         { error: "Compliance tools are currently unavailable." },
         { status: 503 }

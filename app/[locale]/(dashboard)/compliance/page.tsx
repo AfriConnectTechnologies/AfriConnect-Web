@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,24 +12,28 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Shield, ExternalLink, Info, FileCheck } from "lucide-react";
 import { BusinessProducts, OriginEligibilityCalculator } from "@/components/compliance";
 import { Separator } from "@/components/ui/separator";
-import { COMPLIANCE_ENABLED } from "@/lib/features";
+import { isComplianceEnabledForEmail } from "@/lib/features";
 import { ComingSoonPage } from "@/components/ui/coming-soon";
 
 export default function CompliancePage() {
   const t = useTranslations("compliance");
   const router = useRouter();
+  const { user } = useUser();
+  const isComplianceEnabled = isComplianceEnabledForEmail(
+    user?.primaryEmailAddress?.emailAddress
+  );
 
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    COMPLIANCE_ENABLED ? undefined : "skip"
+    isComplianceEnabled ? undefined : "skip"
   );
   const myBusiness = useQuery(
     api.businesses.getMyBusiness,
-    COMPLIANCE_ENABLED ? undefined : "skip"
+    isComplianceEnabled ? undefined : "skip"
   );
-  const complianceSummary = useQuery(
+  useQuery(
     api.compliance.getComplianceSummary,
-    COMPLIANCE_ENABLED ? undefined : "skip"
+    isComplianceEnabled ? undefined : "skip"
   );
 
   const isLoading = currentUser === undefined || myBusiness === undefined;
@@ -43,7 +48,7 @@ export default function CompliancePage() {
     }
   }, [isLoading, hasBusiness, canAccessCompliance, router]);
 
-  if (!COMPLIANCE_ENABLED) {
+  if (!isComplianceEnabled) {
     return (
       <ComingSoonPage
         title={t("title")}

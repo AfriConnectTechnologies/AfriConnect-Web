@@ -27,3 +27,25 @@ export const COMMERCE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_COMMERCE === "tru
  * Set via: NEXT_PUBLIC_ENABLE_COMPLIANCE=true|false
  */
 export const COMPLIANCE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_COMPLIANCE === "true";
+
+const COMPLIANCE_EMAIL_ALLOWLIST = new Set([
+  "hiruymulugeta441@gmail.com",
+  "minasesotlg@gmail.com",
+]);
+
+function normalizeEmail(email?: string | null): string {
+  return (email ?? "").trim().toLowerCase();
+}
+
+export function isComplianceEnabledForEmail(email?: string | null): boolean {
+  if (COMPLIANCE_ENABLED) {
+    return true;
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) {
+    return false;
+  }
+
+  return COMPLIANCE_EMAIL_ALLOWLIST.has(normalizedEmail);
+}
