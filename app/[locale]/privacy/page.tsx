@@ -1,179 +1,190 @@
 "use client";
 
-import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Globe2, Shield, Database, Eye, Share2, Lock, UserCheck, Cookie, Clock, Globe, Mail, Scale } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { PublicHeader } from "@/components/public-header";
+import { PublicFooter } from "@/components/public-footer";
 
 export default function PrivacyPolicyPage() {
-  const t = useTranslations("legal");
-  const tLanding = useTranslations("landing");
-
-  const sections = [
-    { id: "collection", icon: Database, titleKey: "privacy.collection.title", contentKey: "privacy.collection.content" },
-    { id: "usage", icon: Eye, titleKey: "privacy.usage.title", contentKey: "privacy.usage.content" },
-    { id: "sharing", icon: Share2, titleKey: "privacy.sharing.title", contentKey: "privacy.sharing.content" },
-    { id: "security", icon: Lock, titleKey: "privacy.security.title", contentKey: "privacy.security.content" },
-    { id: "rights", icon: UserCheck, titleKey: "privacy.rights.title", contentKey: "privacy.rights.content" },
-    { id: "cookies", icon: Cookie, titleKey: "privacy.cookies.title", contentKey: "privacy.cookies.content" },
-    { id: "retention", icon: Clock, titleKey: "privacy.retention.title", contentKey: "privacy.retention.content" },
-    { id: "international", icon: Globe, titleKey: "privacy.international.title", contentKey: "privacy.international.content" },
-    { id: "children", icon: Shield, titleKey: "privacy.children.title", contentKey: "privacy.children.content" },
-    { id: "changes", icon: Mail, titleKey: "privacy.changes.title", contentKey: "privacy.changes.content" },
-  ];
-
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
-        <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Globe2 className="h-5 w-5 text-primary-foreground" />
+    <>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=Figtree:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+      <style>{`
+        .font-display { font-family: 'Newsreader', Georgia, serif; }
+        .font-body { font-family: 'Figtree', system-ui, sans-serif; }
+      `}</style>
+
+      <div className="font-body flex min-h-screen flex-col bg-background text-foreground">
+        <PublicHeader />
+
+        <main className="flex-1 pt-28 pb-16">
+          <article className="mx-auto max-w-3xl px-6">
+            <div className="mb-10">
+              <p className="text-xs font-medium tracking-widest uppercase text-primary mb-3">Legal</p>
+              <h1 className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] font-normal leading-tight tracking-tight mb-3">
+                Privacy Policy
+              </h1>
+              <p className="text-sm text-muted-foreground">Last updated: March 6, 2026</p>
             </div>
-            <span className="text-xl font-bold tracking-tight">AfriConnect</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {t("backToHome")}
-              </Button>
-            </Link>
-          </div>
-        </nav>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 pt-24 pb-16">
-        <div className="container mx-auto px-4 max-w-4xl">
-          {/* Page Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mb-6">
-              <Shield className="h-8 w-8 text-primary" />
+            <div className="prose-custom space-y-8 text-sm text-muted-foreground leading-relaxed">
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">1. Introduction</h2>
+                <p>
+                  AfriConnect (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is committed to protecting your privacy.
+                  This Privacy Policy explains how we collect, use, disclose, and safeguard your information
+                  when you use our B2B marketplace platform. By using AfriConnect, you consent to the practices
+                  described in this policy.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">2. Information We Collect</h2>
+                <p className="mb-3">We collect the following types of information:</p>
+
+                <h3 className="text-sm font-medium text-foreground mb-2 mt-4">Personal Information</h3>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>Name, email address, and phone number</li>
+                  <li>Business name, address, and registration details</li>
+                  <li>Payment information (processed securely via Chapa)</li>
+                  <li>Profile information and preferences</li>
+                </ul>
+
+                <h3 className="text-sm font-medium text-foreground mb-2 mt-4">Automatically Collected Information</h3>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>Device information (browser type, operating system)</li>
+                  <li>IP address and approximate location</li>
+                  <li>Usage data (pages visited, features used, time spent)</li>
+                  <li>Cookies and similar tracking technologies</li>
+                </ul>
+
+                <h3 className="text-sm font-medium text-foreground mb-2 mt-4">Business Information</h3>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>Business verification documents</li>
+                  <li>Product listings and inventory data</li>
+                  <li>Transaction history and order details</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">3. How We Use Your Information</h2>
+                <p className="mb-3">We use collected information to:</p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>Provide, maintain, and improve the Platform</li>
+                  <li>Process transactions and manage subscriptions</li>
+                  <li>Verify business identities and prevent fraud</li>
+                  <li>Communicate service updates and promotional offers</li>
+                  <li>Analyze usage patterns to enhance user experience</li>
+                  <li>Comply with legal obligations and resolve disputes</li>
+                  <li>Provide multilingual support (English, Amharic, Swahili)</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">4. Information Sharing</h2>
+                <p className="mb-3">We may share your information with:</p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li><strong className="text-foreground">Other users</strong> — Business profiles and product listings are visible to other platform users</li>
+                  <li><strong className="text-foreground">Service providers</strong> — Third-party services that help us operate the platform (payment processing, analytics, authentication)</li>
+                  <li><strong className="text-foreground">Legal requirements</strong> — When required by law, regulation, or legal process</li>
+                  <li><strong className="text-foreground">Business transfers</strong> — In connection with a merger, acquisition, or sale of assets</li>
+                </ul>
+                <p className="mt-3">We do not sell your personal information to third parties.</p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">5. Data Security</h2>
+                <p>
+                  We implement industry-standard security measures to protect your information, including
+                  encryption in transit and at rest, secure authentication via Clerk, and regular security
+                  audits. However, no method of transmission over the Internet is 100% secure, and we
+                  cannot guarantee absolute security.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">6. Cookies and Tracking</h2>
+                <p className="mb-3">
+                  We use cookies and similar technologies for:
+                </p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li><strong className="text-foreground">Essential cookies</strong> — Required for the platform to function (authentication, preferences)</li>
+                  <li><strong className="text-foreground">Analytics cookies</strong> — Help us understand usage patterns (PostHog)</li>
+                  <li><strong className="text-foreground">Preference cookies</strong> — Remember your language and theme settings</li>
+                </ul>
+                <p className="mt-3">
+                  You can manage cookie preferences through our cookie consent banner or your browser settings.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">7. Data Retention</h2>
+                <p>
+                  We retain your information for as long as your account is active or as needed to provide
+                  services. Transaction records are retained for a minimum of 5 years for compliance purposes.
+                  You may request deletion of your account and associated data at any time, subject to legal
+                  retention requirements.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">8. Your Rights</h2>
+                <p className="mb-3">You have the right to:</p>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  <li>Access the personal information we hold about you</li>
+                  <li>Request correction of inaccurate information</li>
+                  <li>Request deletion of your data (subject to legal obligations)</li>
+                  <li>Opt out of marketing communications</li>
+                  <li>Export your data in a portable format</li>
+                  <li>Withdraw consent for data processing</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">9. International Data Transfers</h2>
+                <p>
+                  As a pan-African platform, your information may be transferred to and processed in countries
+                  other than your country of residence. We ensure appropriate safeguards are in place for
+                  cross-border data transfers in compliance with applicable data protection laws.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">10. Children&apos;s Privacy</h2>
+                <p>
+                  AfriConnect is a business-to-business platform and is not intended for individuals under
+                  the age of 18. We do not knowingly collect information from minors.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">11. Changes to This Policy</h2>
+                <p>
+                  We may update this Privacy Policy from time to time. We will notify you of material changes
+                  by posting the updated policy on the Platform and updating the &ldquo;Last updated&rdquo; date.
+                  Continued use of the Platform after changes constitutes acceptance of the updated policy.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="font-display text-lg font-normal text-foreground mb-3">12. Contact Us</h2>
+                <p>
+                  For questions or concerns about this Privacy Policy, or to exercise your data rights,
+                  contact us at{" "}
+                  <a href="mailto:privacy@africonnect.africa.com" className="text-primary hover:underline">
+                    privacy@africonnect.africa.com
+                  </a>.
+                </p>
+              </section>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              {t("privacy.title")}
-            </h1>
-            <p className="text-muted-foreground">
-              {t("privacy.lastUpdated")}: {t("privacy.lastUpdatedDate")}
-            </p>
-          </div>
+          </article>
+        </main>
 
-          {/* Compliance Notice */}
-          <Card className="mb-8 border-primary/20 bg-primary/5">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 shrink-0">
-                  <Scale className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="font-semibold mb-2">{t("privacy.compliance.title")}</h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t("privacy.compliance.content")}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Introduction */}
-          <Card className="mb-8">
-            <CardContent className="p-6 md:p-8">
-              <p className="text-muted-foreground leading-relaxed">
-                {t("privacy.introduction")}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Table of Contents */}
-          <Card className="mb-8">
-            <CardContent className="p-6 md:p-8">
-              <h2 className="text-lg font-semibold mb-4">{t("tableOfContents")}</h2>
-              <nav className="grid md:grid-cols-2 gap-2">
-                {sections.map((section, index) => (
-                  <a
-                    key={section.id}
-                    href={`#${section.id}`}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors py-1"
-                  >
-                    <span className="text-primary font-medium">{index + 1}.</span>
-                    {t(section.titleKey)}
-                  </a>
-                ))}
-              </nav>
-            </CardContent>
-          </Card>
-
-          {/* Sections */}
-          <div className="space-y-6">
-            {sections.map((section, index) => (
-              <Card key={section.id} id={section.id} className="scroll-mt-24">
-                <CardContent className="p-6 md:p-8">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 shrink-0">
-                      <section.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <h2 className="text-xl font-semibold pt-1.5">
-                      {index + 1}. {t(section.titleKey)}
-                    </h2>
-                  </div>
-                  <div className="pl-14 prose prose-sm dark:prose-invert max-w-none">
-                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                      {t(section.contentKey)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Data Protection Officer */}
-          <Card className="mt-8">
-            <CardContent className="p-6 md:p-8">
-              <h2 className="text-lg font-semibold mb-4">{t("privacy.dpo.title")}</h2>
-              <p className="text-muted-foreground leading-relaxed mb-4">
-                {t("privacy.dpo.content")}
-              </p>
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm font-medium">Data Protection Officer</p>
-                <p className="text-sm text-muted-foreground">AfriConnect</p>
-                <p className="text-sm text-muted-foreground">Email: sw.minasefikadu@gmail.com</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Related Links */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/terms">
-              <Button variant="outline" className="gap-2 w-full sm:w-auto">
-                <Scale className="h-4 w-4" />
-                {t("viewTermsOfService")}
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button className="gap-2 w-full sm:w-auto">
-                <ArrowLeft className="h-4 w-4" />
-                {t("backToHome")}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-card border-t py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} AfriConnect. {tLanding("footer.allRightsReserved")}
-          </p>
-        </div>
-      </footer>
-    </div>
+        <PublicFooter />
+      </div>
+    </>
   );
 }

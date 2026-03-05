@@ -280,6 +280,128 @@
 .animation-delay-800 { animation-delay: 800ms; }
 .animation-delay-1000 { animation-delay: 1000ms; }
 
+/* Typewriter cursor blink */
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: currentColor; }
+}
+
+.animate-blink-caret {
+  border-right: 3px solid;
+  animation: blink-caret 0.75s step-end infinite;
+}
+
+/* Marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Counter pulse */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count-up {
+  animation: count-up 0.8s ease-out forwards;
+}
+
+/* Orbit */
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+
+.animate-orbit {
+  animation: orbit 20s linear infinite;
+}
+
+/* Draw line */
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+.animate-draw {
+  stroke-dasharray: 1000;
+  animation: draw-line 3s ease-out forwards;
+}
+
+/* Morph blob */
+@keyframes morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; }
+  75% { border-radius: 60% 30% 60% 40% / 70% 40% 50% 60%; }
+}
+
+.animate-morph {
+  animation: morph 8s ease-in-out infinite;
+}
+
+/* Glow pulse for stats */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px -5px oklch(0.55 0.18 35 / 0.3); }
+  50% { box-shadow: 0 0 40px -5px oklch(0.55 0.18 35 / 0.6); }
+}
+
+.dark .animate-glow-pulse,
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Stagger children */
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 500ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 600ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 700ms; }
+
+/* Gradient border */
+.gradient-border {
+  position: relative;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, oklch(0.55 0.18 35), oklch(0.75 0.15 85), oklch(0.6 0.15 145));
+  z-index: -1;
+}
+
+/* Noise texture */
+.noise-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Isometric grid */
+.isometric-grid {
+  background-image: 
+    linear-gradient(30deg, oklch(0.55 0.18 35 / 0.05) 12%, transparent 12.5%, transparent 87%, oklch(0.55 0.18 35 / 0.05) 87.5%),
+    linear-gradient(150deg, oklch(0.55 0.18 35 / 0.05) 12%, transparent 12.5%, transparent 87%, oklch(0.55 0.18 35 / 0.05) 87.5%),
+    linear-gradient(30deg, oklch(0.55 0.18 35 / 0.05) 12%, transparent 12.5%, transparent 87%, oklch(0.55 0.18 35 / 0.05) 87.5%),
+    linear-gradient(150deg, oklch(0.55 0.18 35 / 0.05) 12%, transparent 12.5%, transparent 87%, oklch(0.55 0.18 35 / 0.05) 87.5%);
+  background-size: 80px 140px;
+  background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+}
+
 /* Interactive hover effects */
 .hover-lift {
   transition: transform 0.3s ease, box-shadow 0.3s ease;

@@ -10,10 +10,16 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/:locale',
   '/:locale/explore',
+  '/:locale/pricing',
   '/:locale/terms',
   '/:locale/privacy',
   '/:locale/sign-in(.*)',
   '/:locale/sign-up(.*)',
+  '/:locale/1',
+  '/:locale/2',
+  '/:locale/3',
+  '/:locale/4',
+  '/:locale/5',
   '/api(.*)',
 ])
 
