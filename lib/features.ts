@@ -28,6 +28,17 @@ export const COMMERCE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_COMMERCE === "tru
  */
 export const COMPLIANCE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_COMPLIANCE === "true";
 
+/**
+ * COMPLIANCE_AI_ENABLED controls the AfCFTA document-grounded AI assistant.
+ * When set to false:
+ * - The assistant UI can stay hidden or behave as not configured
+ * - Compliance Q&A API routes should not serve responses
+ *
+ * Set via: NEXT_PUBLIC_ENABLE_COMPLIANCE_AI=true|false
+ */
+export const COMPLIANCE_AI_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_COMPLIANCE_AI === "true";
+
 const COMPLIANCE_EMAIL_ALLOWLIST = new Set([
   "hiruymulugeta441@gmail.com",
   "minasesotlg@gmail.com",
