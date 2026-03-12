@@ -448,7 +448,18 @@ export const getMyProfile = query({
     const fulfillmentCycleDays = terminalOrders.map((order) =>
       (order.updatedAt - order.createdAt) / (24 * 60 * 60 * 1000)
     );
-    const lastPaidOrder = paidOrders[0] ?? null;
+    const recentPaidActivityAt = paidOrders.reduce<number | null>((latest, order) => {
+      const paymentUpdatedAt = order.payment?.updatedAt;
+      if (paymentUpdatedAt === undefined) {
+        return latest;
+      }
+
+      if (latest === null || paymentUpdatedAt > latest) {
+        return paymentUpdatedAt;
+      }
+
+      return latest;
+    }, null);
     const reportStart =
       sortedOrders.length > 0
         ? Math.min(...sortedOrders.map((order) => order.createdAt))
@@ -505,7 +516,7 @@ export const getMyProfile = query({
             paidOrders.length,
             ordersWithPayments.length
           ),
-          recentPaidActivityAt: lastPaidOrder?.updatedAt ?? null,
+          recentPaidActivityAt,
           trend: [30, 90, 180].map((days) => {
             const windowStart = startOfWindow(days, now);
             const windowOrders = sortedOrders.filter(
