@@ -882,6 +882,49 @@
     "countryDescription": "Chagua nchi kutafuta ratiba za ushuru",
     "registerToSaveProducts": "Sajili biashara yako ili kuhifadhi bidhaa kwenye orodha yako."
   },
+  "afcfta": {
+    "title": "Uliza AI kuhusu uzingatiaji wa AfCFTA",
+    "description": "Uliza maswali yaliyowekwa msingi dhidi ya nyaraka za AfCFTA zilizopakiwa. Msaidizi ameandaliwa kwa utafutaji wa Qdrant na majibu yanayoanza na marejeleo.",
+    "badge": "Muundo wa awali",
+    "helper": "Majibu yanapaswa kutegemea vyanzo vilivyopakiwa pekee. Ushahidi ukikosekana au kupingana, msaidizi anapaswa kusema hivyo badala ya kubashiri.",
+    "placeholder": "Uliza swali la uzingatiaji, kwa mfano: Ni nyaraka gani zinahitajika kuunga mkono dai la cheti cha asili cha AfCFTA?",
+    "sampleQuestions": [
+      "Je, AfCFTA hufanya bidhaa hii kutolipiwa ushuru moja kwa moja leo?",
+      "Ni ushahidi gani ninaohitaji kuunga mkono dai la cheti cha asili?",
+      "Je, kufungasha upya kwa urahisi kunaweza kutoa asili ya AfCFTA chini ya sheria zilizopakiwa?"
+    ],
+    "cta": {
+      "ask": "Uliza AI",
+      "asking": "Inauliza..."
+    },
+    "form": {
+      "questionLabel": "Swali la uzingatiaji"
+    },
+    "validation": {
+      "questionTooShort": "Tafadhali weka swali la uzingatiaji lililo mahususi zaidi.",
+      "invalidQuestion": "Tafadhali toa swali halali la uzingatiaji."
+    },
+    "error": {
+      "generic": "Imeshindwa kuuliza msaidizi wa uzingatiaji."
+    },
+    "empty": {
+      "citations": "Bado hakuna marejeleo yaliyorejeshwa."
+    },
+    "sections": {
+      "answer": "Jibu",
+      "citations": "Marejeleo",
+      "source": "Chanzo"
+    },
+    "mode": {
+      "fullRag": "RAG kamili",
+      "retrievalOnly": "Urejeshaji pekee"
+    },
+    "status": {
+      "ready": "Tayari",
+      "not_configured": "Haijasanidiwa",
+      "no_evidence": "Hakuna ushahidi"
+    }
+  },
   "originEligibility": {
     "title": "Ustahiki wa Cheti cha Asili",
     "description": "Hesabu kama bidhaa yako inakidhi sheria ya 60% ya asili ya upendeleo chini ya AfCFTA",
