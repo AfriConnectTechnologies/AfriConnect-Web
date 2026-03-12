@@ -33,7 +33,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
     const parsed = requestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -51,12 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Compliance AI ask route failed:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to answer compliance question",
-      },
+      { error: "Failed to answer compliance question" },
       { status: 500 }
     );
   }

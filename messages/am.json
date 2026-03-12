@@ -882,6 +882,49 @@
     "countryDescription": "የታሪፍ መርሐግብሮችን ለመፈለግ ሀገር ይምረጡ",
     "registerToSaveProducts": "ምርቶችዎን በዝርዝርዎ ለማስቀጠል ንግድዎን ይመዝገቡ።"
   },
+  "afcfta": {
+    "title": "ስለ AfCFTA ተገዢነት ከAI ይጠይቁ",
+    "description": "በተጫኑ የAfCFTA ሰነዶች ላይ የተመሰረቱ ጥያቄዎችን ይጠይቁ። ረዳቱ ለQdrant ፍለጋ እና በማጣቀሻ የሚጀምሩ መልሶች እንዲሰጥ ተዘጋጅቷል።",
+    "badge": "የመነሻ መዋቅር",
+    "helper": "መልሶች በተጫኑ ምንጮች ላይ ብቻ መመርኮዝ አለባቸው። ማስረጃ ከጎደለ ወይም ከተጋጨ ረዳቱ ከመገመት ይልቅ ይህን መግለጽ አለበት።",
+    "placeholder": "የተገዢነት ጥያቄ ይጠይቁ፣ ለምሳሌ፦ የAfCFTA የመነሻ ሰርተፊኬት ጥያቄን ለመደገፍ ምን ሰነዶች ያስፈልጋሉ?",
+    "sampleQuestions": [
+      "AfCFTA ይህን ምርት ዛሬ በራሱ ከቀረጥ ነፃ ያደርገዋል?",
+      "የመነሻ ሰርተፊኬት ጥያቄን ለመደገፍ ምን አይነት ማስረጃ ያስፈልገኛል?",
+      "በተጫኑ ደንቦች ስር ቀላል ዳግም ማሸግ የAfCFTA መነሻን ሊያስገኝ ይችላል?"
+    ],
+    "cta": {
+      "ask": "AI ይጠይቁ",
+      "asking": "በመጠየቅ ላይ..."
+    },
+    "form": {
+      "questionLabel": "የተገዢነት ጥያቄ"
+    },
+    "validation": {
+      "questionTooShort": "እባክዎ የበለጠ ግልጽ የሆነ የተገዢነት ጥያቄ ያስገቡ።",
+      "invalidQuestion": "እባክዎ ትክክለኛ የተገዢነት ጥያቄ ያቅርቡ።"
+    },
+    "error": {
+      "generic": "የተገዢነት ረዳቱን መጠየቅ አልተሳካም።"
+    },
+    "empty": {
+      "citations": "እስካሁን ምንም ማጣቀሻዎች አልተመለሱም።"
+    },
+    "sections": {
+      "answer": "መልስ",
+      "citations": "ማጣቀሻዎች",
+      "source": "ምንጭ"
+    },
+    "mode": {
+      "fullRag": "ሙሉ RAG",
+      "retrievalOnly": "ፍለጋ ብቻ"
+    },
+    "status": {
+      "ready": "ዝግጁ",
+      "not_configured": "አልተዋቀረም",
+      "no_evidence": "ምንም ማስረጃ የለም"
+    }
+  },
   "originEligibility": {
     "title": "የመነሻ ሰርተፊኬት ብቁነት",
     "description": "ምርትዎ በAfCFTA ስር ለተመራጭ መነሻ የ60% ህጉን ያሟላ እንደሆነ ያሰሉ",

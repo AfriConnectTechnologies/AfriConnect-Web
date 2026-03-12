@@ -23,6 +23,7 @@ interface ChunkRecord {
   text: string;
   documentTitle: string;
   locator: string;
+  sourcePath: string;
   pageStart?: number;
   sourceUrl?: string;
   country?: string;
@@ -83,6 +84,11 @@ function createUuidFromSeed(seed: string): string {
   hex[12] = "4";
   hex[16] = "8";
   return `${hex.slice(0, 8).join("")}-${hex.slice(8, 12).join("")}-${hex.slice(12, 16).join("")}-${hex.slice(16, 20).join("")}-${hex.slice(20, 32).join("")}`;
+}
+
+function createChunkId(relativePath: string, heading: string, text: string): string {
+  const contentHash = createHash("sha256").update(text.trim()).digest("hex");
+  return createUuidFromSeed(`${relativePath}:${heading}:${contentHash}`);
 }
 
 function getEmbeddingCachePath(model: string, dimension: number): string {
@@ -284,22 +290,22 @@ function splitLargeSection(
   const chunks: ChunkRecord[] = [];
   let current = "";
 
-  const pushChunk = (value: string, chunkIndex: number) => {
+  const relativePath = path.relative(process.cwd(), filePath);
+
+  const pushChunk = (value: string) => {
     const text = value.trim();
     if (!text) {
       return;
     }
 
-    const relativePath = path.relative(process.cwd(), filePath);
-    const id = createUuidFromSeed(
-      `${relativePath}:${section.heading}:${chunkIndex}:${text.slice(0, 120)}`
-    );
+    const id = createChunkId(relativePath, section.heading, text);
 
     chunks.push({
       id,
       text,
       documentTitle,
       locator: section.heading,
+      sourcePath: relativePath,
       pageStart: section.pageStart,
       sourceUrl: metadata.sourceUrl,
       country: metadata.country,
@@ -307,6 +313,43 @@ function splitLargeSection(
       language: metadata.language ?? "en",
       documentType: metadata.documentType ?? "compliance-document",
     });
+  };
+
+  const splitOversizedText = (value: string): string[] => {
+    const text = value.trim();
+    if (!text) {
+      return [];
+    }
+
+    if (text.length <= TARGET_CHUNK_SIZE) {
+      return [text];
+    }
+
+    const step = Math.max(1, TARGET_CHUNK_SIZE - CHUNK_OVERLAP);
+    const parts: string[] = [];
+
+    for (let start = 0; start < text.length; start += step) {
+      const part = text.slice(start, start + TARGET_CHUNK_SIZE).trim();
+      if (part) {
+        parts.push(part);
+      }
+      if (start + TARGET_CHUNK_SIZE >= text.length) {
+        break;
+      }
+    }
+
+    return parts;
+  };
+
+  const flushOversizedText = (value: string) => {
+    const parts = splitOversizedText(value);
+    if (parts.length === 0) {
+      current = "";
+      return;
+    }
+
+    parts.slice(0, -1).forEach((part) => pushChunk(part));
+    current = parts.at(-1) ?? "";
   };
 
   for (const paragraph of paragraphs) {
@@ -317,16 +360,21 @@ function splitLargeSection(
     }
 
     if (current) {
-      pushChunk(current, chunks.length);
+      pushChunk(current);
       const overlap = current.slice(Math.max(0, current.length - CHUNK_OVERLAP)).trim();
-      current = overlap ? `${overlap}\n\n${paragraph}` : paragraph;
+      const rebuilt = overlap ? `${overlap}\n\n${paragraph}` : paragraph;
+      if (rebuilt.length <= TARGET_CHUNK_SIZE) {
+        current = rebuilt;
+      } else {
+        flushOversizedText(rebuilt);
+      }
     } else {
-      pushChunk(paragraph, chunks.length);
+      flushOversizedText(paragraph);
     }
   }
 
   if (current) {
-    pushChunk(current, chunks.length);
+    pushChunk(current);
   }
 
   return chunks;
@@ -398,23 +446,53 @@ async function createPoints(chunks: ChunkRecord[], dimension: number): Promise<Q
         dimension
       );
 
+      if (freshVectors.length !== missingChunks.length) {
+        throw new Error(
+          `Voyage embedding returned ${freshVectors.length} vector(s) for ${missingChunks.length} chunk(s)`
+        );
+      }
+
       missingIndexes.forEach((batchIndex, freshIndex) => {
-        const vector = freshVectors[freshIndex]!;
+        const vector = freshVectors[freshIndex];
+        const chunk = batch[batchIndex];
+
+        if (!chunk) {
+          throw new Error(`Missing chunk for embedding batch index ${batchIndex}`);
+        }
+
+        if (!vector) {
+          throw new Error(
+            `Voyage embedding response omitted a vector for chunk ${chunk.id}`
+          );
+        }
+
+        if (vector.length !== dimension) {
+          throw new Error(
+            `Voyage embedding for chunk ${chunk.id} had dimension ${vector.length}; expected ${dimension}`
+          );
+        }
+
         vectors[batchIndex] = vector;
-        embeddingCache[batch[batchIndex]!.id] = vector;
+        embeddingCache[chunk.id] = vector;
       });
 
       await saveEmbeddingCache(model, dimension, embeddingCache);
     }
 
     batch.forEach((chunk, batchIndex) => {
+      const vector = vectors[batchIndex];
+      if (!vector) {
+        throw new Error(`Missing embedding vector for chunk ${chunk.id}`);
+      }
+
       points.push({
         id: chunk.id,
-        vector: vectors[batchIndex]!,
+        vector,
         payload: {
           text: chunk.text,
           document_title: chunk.documentTitle,
           article_or_section: chunk.locator,
+          source_path: chunk.sourcePath,
           source_url: chunk.sourceUrl,
           country: chunk.country,
           jurisdiction: chunk.jurisdiction,
@@ -433,10 +511,49 @@ async function createPoints(chunks: ChunkRecord[], dimension: number): Promise<Q
   return points;
 }
 
+async function deletePointsForSources(sourcePaths: string[]): Promise<void> {
+  const qdrantUrl = requireEnv("COMPLIANCE_AI_QDRANT_URL").replace(/\/$/, "");
+  const qdrantCollection = requireEnv("COMPLIANCE_AI_QDRANT_COLLECTION");
+  const qdrantApiKey = requireEnv("COMPLIANCE_AI_QDRANT_API_KEY");
+
+  for (const sourcePath of sourcePaths) {
+    const response = await fetch(
+      `${qdrantUrl}/collections/${qdrantCollection}/points/delete?wait=true`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": qdrantApiKey,
+        },
+        body: JSON.stringify({
+          filter: {
+            must: [{ key: "source_path", match: { value: sourcePath } }],
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(
+        `Qdrant delete failed for source ${sourcePath}: ${response.status} ${body}`
+      );
+    }
+
+    console.log(`Removed existing points for ${sourcePath}`);
+  }
+}
+
 async function upsertPoints(points: QdrantPoint[]): Promise<void> {
   const qdrantUrl = requireEnv("COMPLIANCE_AI_QDRANT_URL").replace(/\/$/, "");
   const qdrantCollection = requireEnv("COMPLIANCE_AI_QDRANT_COLLECTION");
   const qdrantApiKey = requireEnv("COMPLIANCE_AI_QDRANT_API_KEY");
+  const sourcePaths = [...new Set(points.map((point) => point.payload.source_path))]
+    .filter((sourcePath): sourcePath is string => typeof sourcePath === "string");
+
+  if (sourcePaths.length > 0) {
+    await deletePointsForSources(sourcePaths);
+  }
 
   for (let index = 0; index < points.length; index += UPSERT_BATCH_SIZE) {
     const batch = points.slice(index, index + UPSERT_BATCH_SIZE);

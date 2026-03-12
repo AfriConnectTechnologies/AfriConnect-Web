@@ -77,21 +77,38 @@ export async function searchComplianceChunks(
 ): Promise<ComplianceChunk[]> {
   const config = getComplianceAiConfig();
   const endpoint = `${config.qdrantUrl.replace(/\/$/, "")}/collections/${config.qdrantCollection}/points/search`;
+  const controller = new AbortController();
+  const timeoutMs = config.qdrantTimeout || 10000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(config.qdrantApiKey ? { "api-key": config.qdrantApiKey } : {}),
-    },
-    body: JSON.stringify({
-      vector,
-      limit: config.topK,
-      with_payload: true,
-      with_vector: false,
-      filter: buildFilter(filters),
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(config.qdrantApiKey ? { "api-key": config.qdrantApiKey } : {}),
+      },
+      body: JSON.stringify({
+        vector,
+        limit: config.topK,
+        with_payload: true,
+        with_vector: false,
+        filter: buildFilter(filters),
+      }),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new QdrantSearchError(
+        `Qdrant search timed out after ${timeoutMs}ms`
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const responseText = await response.text();

@@ -882,6 +882,49 @@
     "countryDescription": "Select the country to search tariff schedules for",
     "registerToSaveProducts": "Register your business to save products to your list."
   },
+  "afcfta": {
+    "title": "Ask AI about AfCFTA compliance",
+    "description": "Ask grounded questions against uploaded AfCFTA documents. The assistant is scaffolded for Qdrant retrieval and citation-first answers.",
+    "badge": "Scaffold",
+    "helper": "Answers should rely on uploaded sources only. If evidence is missing or conflicting, the assistant should say so instead of guessing.",
+    "placeholder": "Ask a compliance question, for example: What documents are needed to support an AfCFTA certificate of origin claim?",
+    "sampleQuestions": [
+      "Does AfCFTA automatically make this product duty free today?",
+      "What evidence do I need to support a certificate of origin claim?",
+      "Can simple repackaging confer AfCFTA origin under the uploaded rules?"
+    ],
+    "cta": {
+      "ask": "Ask AI",
+      "asking": "Asking..."
+    },
+    "form": {
+      "questionLabel": "Compliance question"
+    },
+    "validation": {
+      "questionTooShort": "Please enter a more specific compliance question.",
+      "invalidQuestion": "Please provide a valid compliance question."
+    },
+    "error": {
+      "generic": "Failed to ask the compliance assistant."
+    },
+    "empty": {
+      "citations": "No citations returned yet."
+    },
+    "sections": {
+      "answer": "Answer",
+      "citations": "Citations",
+      "source": "Source"
+    },
+    "mode": {
+      "fullRag": "Full RAG",
+      "retrievalOnly": "Retrieval only"
+    },
+    "status": {
+      "ready": "Ready",
+      "not_configured": "Not configured",
+      "no_evidence": "No evidence"
+    }
+  },
   "originEligibility": {
     "title": "Certificate of Origin Eligibility",
     "description": "Calculate if your product meets the 60% rule for preferential origin under AfCFTA",

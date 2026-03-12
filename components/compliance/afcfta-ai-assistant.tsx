@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertCircle, Bot, ExternalLink, Loader2, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,24 +16,29 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { ComplianceAssistantAnswer } from "@/lib/compliance-ai/types";
 
-const SAMPLE_QUESTIONS = [
-  "Does AfCFTA automatically make this product duty free today?",
-  "What evidence do I need to support a certificate of origin claim?",
-  "Can simple repackaging confer AfCFTA origin under the uploaded rules?",
-];
-
 export function AfcftaAiAssistant() {
+  const t = useTranslations("afcfta");
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<ComplianceAssistantAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const sampleQuestions = useMemo(() => {
+    const rawQuestions = t.raw("sampleQuestions");
+
+    return Array.isArray(rawQuestions)
+      ? rawQuestions.filter(
+          (question): question is string => typeof question === "string"
+        )
+      : [];
+  }, [t]);
 
   const canSubmit = question.trim().length >= 5 && !isSubmitting;
 
   const submitQuestion = async (nextQuestion?: string) => {
     const value = (nextQuestion ?? question).trim();
     if (value.length < 5) {
-      setError("Please enter a more specific compliance question.");
+      setError(t("validation.questionTooShort"));
       return;
     }
 
@@ -51,18 +57,21 @@ export function AfcftaAiAssistant() {
       };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Failed to ask the compliance assistant.");
+        setAnswer(null);
+        setError(
+          response.status === 400
+            ? t("validation.invalidQuestion")
+            : t("error.generic")
+        );
+        return;
       }
 
       setQuestion(value);
       setAnswer(payload);
     } catch (requestError) {
+      console.error("AfCFTA assistant request failed:", requestError);
       setAnswer(null);
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Failed to ask the compliance assistant."
-      );
+      setError(t("error.generic"));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,33 +84,32 @@ export function AfcftaAiAssistant() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              Ask AI about AfCFTA compliance
+              {t("title")}
             </CardTitle>
             <CardDescription className="mt-2 max-w-2xl">
-              Ask grounded questions against uploaded AfCFTA documents. The
-              assistant is scaffolded for Qdrant retrieval and citation-first answers.
+              {t("description")}
             </CardDescription>
           </div>
           <Badge variant="outline" className="shrink-0">
-            Scaffold
+            {t("badge")}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg border bg-background/80 p-3 text-sm text-muted-foreground">
-          Answers should rely on uploaded sources only. If evidence is missing or
-          conflicting, the assistant should say so instead of guessing.
+          {t("helper")}
         </div>
 
         <div className="space-y-3">
           <Textarea
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask a compliance question, for example: What documents are needed to support an AfCFTA certificate of origin claim?"
+            aria-label={t("form.questionLabel")}
+            placeholder={t("placeholder")}
             className="min-h-28"
           />
           <div className="flex flex-wrap gap-2">
-            {SAMPLE_QUESTIONS.map((sample) => (
+            {sampleQuestions.map((sample) => (
               <Button
                 key={sample}
                 type="button"
@@ -123,12 +131,12 @@ export function AfcftaAiAssistant() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Asking...
+                  {t("cta.asking")}
                 </>
               ) : (
                 <>
                   <Bot className="h-4 w-4" />
-                  Ask AI
+                  {t("cta.ask")}
                 </>
               )}
             </Button>
@@ -146,13 +154,15 @@ export function AfcftaAiAssistant() {
           <div className="space-y-4 rounded-xl border bg-background p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={answer.mode === "full-rag" ? "default" : "secondary"}>
-                {answer.mode === "full-rag" ? "Full RAG" : "Retrieval only"}
+                {answer.mode === "full-rag"
+                  ? t("mode.fullRag")
+                  : t("mode.retrievalOnly")}
               </Badge>
-              <Badge variant="outline">{answer.status}</Badge>
+              <Badge variant="outline">{t(`status.${answer.status}`)}</Badge>
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-medium">Answer</h3>
+              <h3 className="font-medium">{t("sections.answer")}</h3>
               <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">
                 {answer.answer}
               </p>
@@ -164,7 +174,7 @@ export function AfcftaAiAssistant() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="font-medium">Citations</h3>
+              <h3 className="font-medium">{t("sections.citations")}</h3>
               {answer.citations.length > 0 ? (
                 <div className="space-y-3">
                   {answer.citations.map((citation) => (
@@ -183,7 +193,7 @@ export function AfcftaAiAssistant() {
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                           >
-                            Source
+                            {t("sections.source")}
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
@@ -196,7 +206,7 @@ export function AfcftaAiAssistant() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No citations returned yet.
+                  {t("empty.citations")}
                 </p>
               )}
             </div>

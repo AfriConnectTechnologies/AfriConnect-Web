@@ -12,6 +12,7 @@ export interface ComplianceAiConfig {
   qdrantUrl: string;
   qdrantApiKey?: string;
   qdrantCollection: string;
+  qdrantTimeout: number;
   embeddingModel: string;
   embeddingDimension?: number;
   rerankerModel?: string;
@@ -28,6 +29,7 @@ const DEFAULT_GENERATION_PROVIDER: ComplianceAiGenerationProvider = "openai";
 const DEFAULT_GENERATION_MODEL = "gpt-5-mini";
 const DEFAULT_TOP_K = 8;
 const DEFAULT_EMBEDDING_DIMENSION = 1024;
+const DEFAULT_QDRANT_TIMEOUT_MS = 10000;
 
 function getGenerationProvider(): ComplianceAiGenerationProvider {
   const parsed = generationProviderSchema.safeParse(
@@ -135,11 +137,18 @@ export function getComplianceAiConfig(): ComplianceAiConfig {
   const parsedEmbeddingDimension = Number(
     process.env.COMPLIANCE_AI_EMBEDDING_DIMENSION ?? DEFAULT_EMBEDDING_DIMENSION
   );
+  const parsedQdrantTimeout = Number(
+    process.env.COMPLIANCE_AI_QDRANT_TIMEOUT ?? DEFAULT_QDRANT_TIMEOUT_MS
+  );
 
   return {
     qdrantUrl: process.env.COMPLIANCE_AI_QDRANT_URL!,
     qdrantApiKey: process.env.COMPLIANCE_AI_QDRANT_API_KEY,
     qdrantCollection: process.env.COMPLIANCE_AI_QDRANT_COLLECTION!,
+    qdrantTimeout:
+      Number.isFinite(parsedQdrantTimeout) && parsedQdrantTimeout > 0
+        ? parsedQdrantTimeout
+        : DEFAULT_QDRANT_TIMEOUT_MS,
     embeddingModel:
       process.env.COMPLIANCE_AI_EMBEDDING_MODEL ?? DEFAULT_EMBEDDING_MODEL,
     embeddingDimension:

@@ -10,6 +10,46 @@ interface GeneratedAnswerPayload {
   warning?: string;
 }
 
+const DEFAULT_PROVIDER_TIMEOUT_MS = 15000;
+
+interface FetchWithTimeoutOptions extends RequestInit {
+  timeout?: number;
+  requestName?: string;
+}
+
+async function fetchWithTimeout(
+  input: string | URL | globalThis.Request,
+  options: FetchWithTimeoutOptions = {}
+): Promise<Response> {
+  const {
+    timeout = DEFAULT_PROVIDER_TIMEOUT_MS,
+    requestName = "External request",
+    signal,
+    ...init
+  } = options;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  const abortHandler = () => controller.abort();
+  signal?.addEventListener("abort", abortHandler);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`${requestName} timed out after ${timeout}ms`);
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", abortHandler);
+  }
+}
+
 function extractJsonObject(value: string): string | null {
   const first = value.indexOf("{");
   const last = value.lastIndexOf("}");
@@ -64,8 +104,10 @@ function buildAnswerPrompt(question: string, chunks: ComplianceChunk[]): string 
 
 export async function embedComplianceQuery(question: string): Promise<number[]> {
   const config = getComplianceAiConfig();
-  const response = await fetch("https://api.voyageai.com/v1/embeddings", {
+  const response = await fetchWithTimeout("https://api.voyageai.com/v1/embeddings", {
     method: "POST",
+    timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+    requestName: "Voyage embedding request",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${config.voyageApiKey}`,
@@ -106,8 +148,10 @@ async function generateWithOpenAi(
   model: string,
   prompt: string
 ): Promise<GeneratedAnswerPayload | null> {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
     method: "POST",
+    timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+    requestName: "OpenAI generation request",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
@@ -146,10 +190,12 @@ async function generateWithGemini(
   model: string,
   prompt: string
 ): Promise<GeneratedAnswerPayload | null> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
+      timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+      requestName: "Gemini generation request",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [
@@ -187,8 +233,10 @@ async function generateWithAnthropic(
   model: string,
   prompt: string
 ): Promise<GeneratedAnswerPayload | null> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
+    timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+    requestName: "Anthropic generation request",
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
