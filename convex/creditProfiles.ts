@@ -1,3 +1,4 @@
+import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { requireUser } from "./helpers";
 
@@ -9,6 +10,8 @@ const SETTLED_PAYMENT_STATUSES = new Set([
 
 const TERMINAL_ORDER_STATUSES = new Set(["completed", "cancelled"]);
 const RESOLVED_PAYOUT_STATUSES = new Set(["success", "failed", "reverted"]);
+const CREDIT_PROFILE_ORDER_LIMIT = 500;
+const CREDIT_PROFILE_PAYOUT_LIMIT = 500;
 
 function roundToTwo(value: number) {
   return Math.round(value * 100) / 100;
@@ -132,37 +135,110 @@ export const getMyProfile = query({
     const orders = await ctx.db
       .query("orders")
       .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
-      .collect();
+      .order("desc")
+      .take(CREDIT_PROFILE_ORDER_LIMIT);
     const payouts = await ctx.db
       .query("payouts")
       .withIndex("by_seller", (q) => q.eq("sellerId", user.clerkId))
-      .collect();
+      .order("desc")
+      .take(CREDIT_PROFILE_PAYOUT_LIMIT);
 
     const payoutByOrderId = new Map(
       payouts.map((payout) => [payout.orderId.toString(), payout])
     );
 
-    const enrichedOrders = await Promise.all(
-      orders.map(async (order) => {
-        const payment = order.paymentId ? await ctx.db.get(order.paymentId) : null;
-        const buyerDocId = ctx.db.normalizeId(
-          "users",
-          (order.buyerId ?? order.userId) as string
-        );
-        const buyer = buyerDocId ? await ctx.db.get(buyerDocId) : null;
-        const buyerBusiness = buyer?.businessId
-          ? await ctx.db.get(buyer.businessId)
-          : null;
+    const paymentIdByKey = new Map<string, Id<"payments">>();
+    const buyerDocIdByKey = new Map<string, Id<"users">>();
 
-        return {
-          ...order,
-          payment,
-          payout: payoutByOrderId.get(order._id.toString()) ?? null,
-          buyer,
-          buyerBusiness,
-        };
+    for (const order of orders) {
+      if (order.paymentId) {
+        paymentIdByKey.set(order.paymentId.toString(), order.paymentId);
+      }
+
+      const buyerDocId = ctx.db.normalizeId(
+        "users",
+        (order.buyerId ?? order.userId) as string
+      );
+      if (buyerDocId) {
+        buyerDocIdByKey.set(buyerDocId.toString(), buyerDocId);
+      }
+    }
+
+    const paymentEntries = await Promise.all(
+      Array.from(paymentIdByKey.values()).map(async (paymentId) => {
+        const payment = await ctx.db.get(paymentId);
+        return payment
+          ? ([payment._id.toString(), payment] as const)
+          : null;
       })
     );
+    const paymentById = new Map<string, Doc<"payments">>();
+    for (const entry of paymentEntries) {
+      if (entry) {
+        paymentById.set(entry[0], entry[1]);
+      }
+    }
+
+    const buyerEntries = await Promise.all(
+      Array.from(buyerDocIdByKey.values()).map(async (buyerDocId) => {
+        const buyer = await ctx.db.get(buyerDocId);
+        return buyer
+          ? ([buyer._id.toString(), buyer] as const)
+          : null;
+      })
+    );
+    const buyerByDocId = new Map<string, Doc<"users">>();
+    for (const entry of buyerEntries) {
+      if (entry) {
+        buyerByDocId.set(entry[0], entry[1]);
+      }
+    }
+
+    const businessIdByKey = new Map<string, Id<"businesses">>();
+    for (const buyer of buyerByDocId.values()) {
+      if (buyer.businessId) {
+        businessIdByKey.set(buyer.businessId.toString(), buyer.businessId);
+      }
+    }
+
+    const buyerBusinessEntries = await Promise.all(
+      Array.from(businessIdByKey.values()).map(async (businessId) => {
+        const buyerBusiness = await ctx.db.get(businessId);
+        return buyerBusiness
+          ? ([buyerBusiness._id.toString(), buyerBusiness] as const)
+          : null;
+      })
+    );
+    const businessById = new Map<string, Doc<"businesses">>();
+    for (const entry of buyerBusinessEntries) {
+      if (entry) {
+        businessById.set(entry[0], entry[1]);
+      }
+    }
+
+    const enrichedOrders = orders.map((order) => {
+      const payment = order.paymentId
+        ? paymentById.get(order.paymentId.toString()) ?? null
+        : null;
+      const buyerDocId = ctx.db.normalizeId(
+        "users",
+        (order.buyerId ?? order.userId) as string
+      );
+      const buyer = buyerDocId
+        ? buyerByDocId.get(buyerDocId.toString()) ?? null
+        : null;
+      const buyerBusiness = buyer?.businessId
+        ? businessById.get(buyer.businessId.toString()) ?? null
+        : null;
+
+      return {
+        ...order,
+        payment,
+        payout: payoutByOrderId.get(order._id.toString()) ?? null,
+        buyer,
+        buyerBusiness,
+      };
+    });
 
     const sortedOrders = enrichedOrders.sort((a, b) => b.createdAt - a.createdAt);
     const paidOrders = sortedOrders.filter(

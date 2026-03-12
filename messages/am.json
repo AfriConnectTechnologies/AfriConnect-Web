@@ -1121,7 +1121,8 @@
         "queued": "ተሰልፏል",
         "pending": "በመጠባበቅ ላይ",
         "success": "ተሳክቷል",
-        "failed": "አልተሳካም"
+        "failed": "አልተሳካም",
+        "reverted": "ተመልሷል"
       }
     },
     "buyerDiversity": {

@@ -1121,7 +1121,8 @@
         "queued": "Queued",
         "pending": "Pending",
         "success": "Successful",
-        "failed": "Failed"
+        "failed": "Failed",
+        "reverted": "Reverted"
       }
     },
     "buyerDiversity": {

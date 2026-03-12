@@ -529,6 +529,10 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
                   <span className="text-muted-foreground">{t("fulfillment.payoutStatuses.failed")}</span>
                   <span>{integer(fulfillment.payoutStatusCounts.failed, locale)}</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t("fulfillment.payoutStatuses.reverted")}</span>
+                  <span>{integer(fulfillment.payoutStatusCounts.reverted, locale)}</span>
+                </div>
               </div>
             </div>
           </CardContent>

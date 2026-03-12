@@ -1121,7 +1121,8 @@
         "queued": "Yamepangwa",
         "pending": "Yanasubiri",
         "success": "Yamefanikiwa",
-        "failed": "Yameshindwa"
+        "failed": "Yameshindwa",
+        "reverted": "Yamerudishwa"
       }
     },
     "buyerDiversity": {
