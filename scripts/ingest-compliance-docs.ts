@@ -5,7 +5,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
+import pdfParse from "pdf-parse";
 
 type SupportedExtension = ".pdf" | ".txt" | ".md" | ".docx";
 
@@ -177,9 +177,7 @@ async function extractText(filePath: string): Promise<string> {
 
   if (extension === ".pdf") {
     const buffer = await readFile(filePath);
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    await parser.destroy();
+    const result = await pdfParse(buffer);
     return result.text;
   }
 
