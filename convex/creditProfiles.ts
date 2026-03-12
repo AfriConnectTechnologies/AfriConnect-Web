@@ -33,28 +33,105 @@ function startOfWindow(days: number, now: number) {
   return now - days * 24 * 60 * 60 * 1000;
 }
 
-function getCanonicalCurrency(currencies: string[]) {
-  if (currencies.length === 0) {
-    return "USD";
-  }
-
-  const counts = new Map<string, number>();
-  for (const currency of currencies) {
-    counts.set(currency, (counts.get(currency) ?? 0) + 1);
-  }
-
-  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "USD";
-}
-
 type BuyerAggregate = {
   buyerId: string;
   name: string;
   orderCount: number;
-  revenue: number;
+  revenueByCurrency: Map<string, number>;
   country: string | null;
   category: string | null;
   hasBusinessMetadata: boolean;
 };
+
+type CurrencyBucket = {
+  currency: string;
+  amount: number;
+};
+
+type CurrencyRateBucket = {
+  currency: string;
+  rate: number;
+};
+
+function addCurrencyAmount(
+  totals: Map<string, number>,
+  currency: string,
+  amount: number
+) {
+  totals.set(currency, roundToTwo((totals.get(currency) ?? 0) + amount));
+}
+
+function bucketsFromTotals(totals: Map<string, number>): CurrencyBucket[] {
+  return Array.from(totals.entries())
+    .map(([currency, amount]) => ({
+      currency,
+      amount: roundToTwo(amount),
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function bucketOrderAmountsByCurrency(
+  orders: Array<{ amount: number; payment?: Doc<"payments"> | null }>
+): CurrencyBucket[] {
+  const totals = new Map<string, number>();
+
+  for (const order of orders) {
+    const currency = order.payment?.currency ?? "USD";
+    addCurrencyAmount(totals, currency, order.amount);
+  }
+
+  return bucketsFromTotals(totals);
+}
+
+function bucketAverageOrderValuesByCurrency(
+  orders: Array<{ amount: number; payment?: Doc<"payments"> | null }>
+): CurrencyBucket[] {
+  const totals = new Map<string, { total: number; count: number }>();
+
+  for (const order of orders) {
+    const currency = order.payment?.currency ?? "USD";
+    const current = totals.get(currency) ?? { total: 0, count: 0 };
+    totals.set(currency, {
+      total: current.total + order.amount,
+      count: current.count + 1,
+    });
+  }
+
+  return Array.from(totals.entries())
+    .map(([currency, value]) => ({
+      currency,
+      amount: roundToTwo(value.total / value.count),
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function getCanonicalCurrency(currencyBuckets: CurrencyBucket[]) {
+  return currencyBuckets[0]?.currency ?? "USD";
+}
+
+function getBucketAmount(currencyBuckets: CurrencyBucket[], currency: string) {
+  return currencyBuckets.find((bucket) => bucket.currency === currency)?.amount ?? 0;
+}
+
+function topBuyerConcentrationByCurrency(
+  buyers: BuyerAggregate[],
+  totalVolumesByCurrency: CurrencyBucket[]
+): CurrencyRateBucket[] {
+  return totalVolumesByCurrency.map(({ currency, amount }) => {
+    const topAmount = buyers.reduce((max, buyer) => {
+      return Math.max(max, buyer.revenueByCurrency.get(currency) ?? 0);
+    }, 0);
+
+    return {
+      currency,
+      rate: toPercent(topAmount, amount),
+    };
+  });
+}
+
+function getBucketRate(rateBuckets: CurrencyRateBucket[], currency: string) {
+  return rateBuckets.find((bucket) => bucket.currency === currency)?.rate ?? 0;
+}
 
 export const getMyProfile = query({
   args: {},
@@ -269,21 +346,22 @@ export const getMyProfile = query({
       RESOLVED_PAYOUT_STATUSES.has(payout.status)
     );
 
-    const totalTransactionVolume = paidOrders.reduce(
-      (sum, order) => sum + order.amount,
-      0
+    const totalTransactionVolumeByCurrency = bucketOrderAmountsByCurrency(paidOrders);
+    const canonicalCurrency = getCanonicalCurrency(totalTransactionVolumeByCurrency);
+    const totalTransactionVolume = getBucketAmount(
+      totalTransactionVolumeByCurrency,
+      canonicalCurrency
     );
-    const canonicalCurrency = getCanonicalCurrency(
-      paidOrders
-        .map((order) => order.payment?.currency)
-        .filter((currency): currency is string => Boolean(currency))
+    const averageOrderValueByCurrency = bucketAverageOrderValuesByCurrency(paidOrders);
+    const averageOrderValue = getBucketAmount(
+      averageOrderValueByCurrency,
+      canonicalCurrency
     );
-    const averageOrderValue =
-      paidOrders.length > 0 ? roundToTwo(totalTransactionVolume / paidOrders.length) : 0;
 
     const buyerAggregates = new Map<string, BuyerAggregate>();
     for (const order of paidOrders) {
       const buyerKey =
+        order.buyerBusiness?._id?.toString() ??
         order.buyer?._id?.toString() ??
         (order.buyerId as string | undefined) ??
         order.userId.toString();
@@ -294,7 +372,11 @@ export const getMyProfile = query({
 
       if (existing) {
         existing.orderCount += 1;
-        existing.revenue += order.amount;
+        addCurrencyAmount(
+          existing.revenueByCurrency,
+          order.payment?.currency ?? canonicalCurrency,
+          order.amount
+        );
         if (!existing.country && order.buyerBusiness?.country) {
           existing.country = order.buyerBusiness.country;
         }
@@ -308,7 +390,9 @@ export const getMyProfile = query({
           buyerId: buyerKey,
           name: buyerName,
           orderCount: 1,
-          revenue: order.amount,
+          revenueByCurrency: new Map([
+            [order.payment?.currency ?? canonicalCurrency, roundToTwo(order.amount)],
+          ]),
           country: order.buyerBusiness?.country ?? null,
           category: order.buyerBusiness?.category ?? null,
           hasBusinessMetadata: Boolean(order.buyerBusiness),
@@ -317,13 +401,19 @@ export const getMyProfile = query({
     }
 
     const buyers = Array.from(buyerAggregates.values()).sort(
-      (a, b) => b.revenue - a.revenue
+      (a, b) =>
+        (b.revenueByCurrency.get(canonicalCurrency) ?? 0) -
+        (a.revenueByCurrency.get(canonicalCurrency) ?? 0)
     );
     const buyersWithBusinessMetadata = buyers.filter(
       (buyer) => buyer.hasBusinessMetadata
     ).length;
     const repeatBuyers = buyers.filter((buyer) => buyer.orderCount > 1).length;
-    const topBuyerRevenue = buyers[0]?.revenue ?? 0;
+    const topBuyerConcentrationByCurrencyBuckets = topBuyerConcentrationByCurrency(
+      buyers,
+      totalTransactionVolumeByCurrency
+    );
+    const topBuyerRevenue = buyers[0]?.revenueByCurrency.get(canonicalCurrency) ?? 0;
 
     const countryCounts = new Map<string, number>();
     const categoryCounts = new Map<string, number>();
@@ -402,12 +492,15 @@ export const getMyProfile = query({
           uniqueBuyers: buyers.length,
           countriesRepresented: countryBreakdown.length,
           totalTransactionVolume,
+          totalTransactionVolumeByCurrency,
         },
         transactionHistory: {
           totalOrders: sortedOrders.length,
           paidOrders: paidOrders.length,
           totalTransactionVolume,
+          totalTransactionVolumeByCurrency,
           averageOrderValue,
+          averageOrderValueByCurrency,
           successfulPaymentRate: toPercent(
             paidOrders.length,
             ordersWithPayments.length
@@ -422,16 +515,17 @@ export const getMyProfile = query({
               (order) =>
                 order.payment && SETTLED_PAYMENT_STATUSES.has(order.payment.status)
             );
+            const windowPaidVolumeByCurrency = bucketOrderAmountsByCurrency(
+              windowPaidOrders
+            );
 
             return {
               label: `${days} days`,
               days,
               orderCount: windowOrders.length,
               paidOrderCount: windowPaidOrders.length,
-              paidVolume: windowPaidOrders.reduce(
-                (sum, order) => sum + order.amount,
-                0
-              ),
+              paidVolume: getBucketAmount(windowPaidVolumeByCurrency, canonicalCurrency),
+              paidVolumeByCurrency: windowPaidVolumeByCurrency,
             };
           }),
         },
@@ -472,12 +566,17 @@ export const getMyProfile = query({
             topBuyerRevenue,
             totalTransactionVolume
           ),
+          topBuyerConcentrationByCurrency: topBuyerConcentrationByCurrencyBuckets,
           countries: countryBreakdown,
           categories: categoryBreakdown,
           topBuyers: buyers.slice(0, 5).map((buyer) => ({
+            buyerId: buyer.buyerId,
             name: buyer.name,
             orderCount: buyer.orderCount,
-            revenue: roundToTwo(buyer.revenue),
+            revenue: roundToTwo(
+              buyer.revenueByCurrency.get(canonicalCurrency) ?? 0
+            ),
+            revenueByCurrency: bucketsFromTotals(buyer.revenueByCurrency),
           })),
           coverageNote:
             buyersWithBusinessMetadata === buyers.length

@@ -19,10 +19,22 @@ type BreakdownItem = {
   share: number;
 };
 
+type CurrencyBucket = {
+  currency: string;
+  amount: number;
+};
+
+type CurrencyRateBucket = {
+  currency: string;
+  rate: number;
+};
+
 type TopBuyer = {
+  buyerId: string;
   name: string;
   orderCount: number;
   revenue: number;
+  revenueByCurrency: CurrencyBucket[];
 };
 
 type CreditProfileResponse = {
@@ -62,12 +74,15 @@ type CreditProfileResponse = {
       uniqueBuyers: number;
       countriesRepresented: number;
       totalTransactionVolume: number;
+      totalTransactionVolumeByCurrency: CurrencyBucket[];
     };
     transactionHistory: {
       totalOrders: number;
       paidOrders: number;
       totalTransactionVolume: number;
+      totalTransactionVolumeByCurrency: CurrencyBucket[];
       averageOrderValue: number;
+      averageOrderValueByCurrency: CurrencyBucket[];
       successfulPaymentRate: number;
       recentPaidActivityAt: number | null;
       trend: Array<{
@@ -76,6 +91,7 @@ type CreditProfileResponse = {
         orderCount: number;
         paidOrderCount: number;
         paidVolume: number;
+        paidVolumeByCurrency: CurrencyBucket[];
       }>;
     };
     fulfillment: {
@@ -99,6 +115,7 @@ type CreditProfileResponse = {
       buyerBusinessCoverageRate: number;
       buyersWithBusinessMetadata: number;
       topBuyerConcentrationRate: number;
+      topBuyerConcentrationByCurrency: CurrencyRateBucket[];
       countries: BreakdownItem[];
       categories: BreakdownItem[];
       topBuyers: TopBuyer[];
@@ -113,6 +130,21 @@ function currency(value: number, locale: string, displayCurrency: string) {
     currency: displayCurrency,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatCurrencyBreakdown(buckets: CurrencyBucket[], locale: string) {
+  return buckets
+    .map((bucket) => currency(bucket.amount, locale, bucket.currency))
+    .join(" • ");
+}
+
+function formatRateBreakdown(buckets: CurrencyRateBucket[], locale: string) {
+  return buckets
+    .map(
+      (bucket) =>
+        `${bucket.currency} ${percent(bucket.rate, locale)}`
+    )
+    .join(" • ");
 }
 
 function percent(value: number, locale: string) {
@@ -256,6 +288,8 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
   const buyerDiversity = profile.buyerDiversity;
   const displayCurrency = profile.currency;
   const hasOrders = transactionHistory.totalOrders > 0;
+  const hasMultiCurrencyVolume =
+    transactionHistory.totalTransactionVolumeByCurrency.length > 1;
   const coverageNote =
     buyerDiversity.buyersWithBusinessMetadata === buyerDiversity.uniqueBuyers
       ? t("buyerDiversity.coverage.complete")
@@ -345,7 +379,14 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
             <StatCard
               title={t("cards.paidTransactionVolume.title")}
               value={currency(summary.totalTransactionVolume, locale, displayCurrency)}
-              description={t("cards.paidTransactionVolume.description")}
+              description={
+                hasMultiCurrencyVolume
+                  ? `${t("cards.paidTransactionVolume.description")} • ${formatCurrencyBreakdown(
+                      summary.totalTransactionVolumeByCurrency,
+                      locale
+                    )}`
+                  : t("cards.paidTransactionVolume.description")
+              }
               icon={TrendingUp}
             />
             <StatCard
@@ -413,7 +454,14 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
               <StatCard
                 title={t("cards.averageOrderValue.title")}
                 value={currency(transactionHistory.averageOrderValue, locale, displayCurrency)}
-                description={t("cards.averageOrderValue.description")}
+                description={
+                  transactionHistory.averageOrderValueByCurrency.length > 1
+                    ? `${t("cards.averageOrderValue.description")} • ${formatCurrencyBreakdown(
+                        transactionHistory.averageOrderValueByCurrency,
+                        locale
+                      )}`
+                    : t("cards.averageOrderValue.description")
+                }
                 icon={TrendingUp}
               />
               <StatCard
@@ -454,6 +502,11 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
                         {currency(window.paidVolume, locale, displayCurrency)}
                       </span>
                     </div>
+                    {window.paidVolumeByCurrency.length > 1 && (
+                      <div className="text-xs text-muted-foreground">
+                        {formatCurrencyBreakdown(window.paidVolumeByCurrency, locale)}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -573,7 +626,14 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
             <StatCard
               title={t("cards.topBuyerConcentration.title")}
               value={percent(buyerDiversity.topBuyerConcentrationRate, locale)}
-              description={t("cards.topBuyerConcentration.description")}
+              description={
+                buyerDiversity.topBuyerConcentrationByCurrency.length > 1
+                  ? `${t("cards.topBuyerConcentration.description")} • ${formatRateBreakdown(
+                      buyerDiversity.topBuyerConcentrationByCurrency,
+                      locale
+                    )}`
+                  : t("cards.topBuyerConcentration.description")
+              }
               icon={TrendingUp}
             />
           </div>
@@ -604,7 +664,7 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
                   <p className="text-sm text-muted-foreground">{t("breakdowns.topBuyers.empty")}</p>
                 ) : (
                   buyerDiversity.topBuyers.map((buyer) => (
-                    <div key={buyer.name} className="rounded-lg border p-3">
+                    <div key={buyer.buyerId} className="rounded-lg border p-3">
                       <div className="font-medium">{buyer.name}</div>
                       <div className="mt-1 flex items-center justify-between text-sm text-muted-foreground">
                         <span>
@@ -614,6 +674,11 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
                         </span>
                         <span>{currency(buyer.revenue, locale, displayCurrency)}</span>
                       </div>
+                      {buyer.revenueByCurrency.length > 1 && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          {formatCurrencyBreakdown(buyer.revenueByCurrency, locale)}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
