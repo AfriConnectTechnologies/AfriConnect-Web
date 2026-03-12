@@ -986,6 +986,176 @@
     "previousCalculations": "Hesabu Zilizopita",
     "previousCalculationsDescription": "Hesabu zako za ustahiki zilizohifadhiwa"
   },
+  "creditProfile": {
+    "loading": "Inapakia wasifu wa kidijitali wa mikopo...",
+    "title": "Wasifu wa Kidijitali wa Mikopo",
+    "titleReport": "Ripoti ya Wasifu wa Kidijitali wa Mikopo",
+    "subtitle": "Imejengwa kutoka kwa miamala ya sokoni, utimilifu wa maagizo, na utofauti wa wanunuzi.",
+    "actions": {
+      "backToProfile": "Rudi kwenye wasifu wa mikopo",
+      "openBusinessProfile": "Fungua wasifu wa biashara",
+      "businessSetup": "Mpangilio wa biashara",
+      "back": "Rudi",
+      "printOrSavePdf": "Chapisha / Hifadhi PDF",
+      "downloadableReport": "Ripoti ya kupakua"
+    },
+    "badges": {
+      "verifiedSeller": "Muuzaji aliyethibitishwa",
+      "platformActivity": "Wasifu wa shughuli za jukwaa"
+    },
+    "access": {
+      "no_business": {
+        "title": "Sajili biashara yako",
+        "message": "Wasifu wa kidijitali wa mikopo unapatikana baada ya kusajili na kuthibitisha biashara yako."
+      },
+      "pending_verification": {
+        "title": "Uthibitishaji unaendelea",
+        "message": "Wasifu wako wa kidijitali wa mikopo utafunguliwa mara biashara yako itakapothibitishwa."
+      },
+      "rejected_verification": {
+        "title": "Uthibitishaji unahitajika",
+        "message": "Rekebisha uthibitishaji wa biashara yako kwanza ili kufungua wasifu wa kidijitali wa mikopo."
+      },
+      "not_seller": {
+        "title": "Ufikiaji wa muuzaji unahitajika",
+        "message": "Ni akaunti za wauzaji waliothibitishwa pekee zinaweza kufikia wasifu wa kidijitali wa mikopo."
+      },
+      "ready": {
+        "title": "Tayari",
+        "message": "Wasifu wako wa kidijitali wa mikopo uko tayari."
+      }
+    },
+    "common": {
+      "notAvailableYet": "Bado haipatikani"
+    },
+    "summary": {
+      "headline": "Maagizo {paidOrdersCount} yaliyolipwa kutoka kwa wanunuzi {uniqueBuyers}",
+      "description": "Wasifu huu unaonyesha shughuli zilizorekodiwa kwenye AfriConnect na unakusudiwa kuwa kadi ya tathmini ya jukwaa, si alama ya mkopo ya taasisi ya nje.",
+      "generated": "Imetengenezwa",
+      "reportPeriodStart": "Mwanzo wa kipindi cha ripoti",
+      "latestProfileActivity": "Shughuli ya hivi karibuni ya wasifu"
+    },
+    "cards": {
+      "paidTransactionVolume": {
+        "title": "Kiasi cha miamala iliyolipwa",
+        "description": "Thamani ya maagizo ya sokoni yaliyokamilika kulipwa"
+      },
+      "paidOrders": {
+        "title": "Maagizo yaliyolipwa",
+        "description": "Jumla ya maagizo ya muuzaji {totalOrders} yamefuatiliwa"
+      },
+      "uniqueBuyers": {
+        "title": "Wanunuzi wa kipekee",
+        "description": "Wanunuzi {repeatBuyers} wa kurudia"
+      },
+      "buyerCountries": {
+        "title": "Nchi za wanunuzi",
+        "description": "Wanunuzi {buyersWithBusinessMetadata} wana metadata ya biashara iliyounganishwa"
+      },
+      "totalSellerOrders": {
+        "title": "Jumla ya maagizo ya muuzaji",
+        "description": "Maagizo yote yanayohusishwa na muuzaji huyu"
+      },
+      "successfulPaymentRate": {
+        "title": "Kiwango cha malipo yaliyofanikiwa",
+        "description": "Malipo yaliyokamilika kati ya maagizo yenye kumbukumbu za malipo"
+      },
+      "averageOrderValue": {
+        "title": "Wastani wa thamani ya agizo",
+        "description": "Kulingana na maagizo ya sokoni yaliyolipwa"
+      },
+      "recentPaidActivity": {
+        "title": "Shughuli ya hivi karibuni iliyolipwa",
+        "description": "Shughuli ya hivi karibuni ya agizo lililolipwa"
+      },
+      "uniqueBuyersDetailed": {
+        "title": "Wanunuzi wa kipekee",
+        "description": "Wanunuzi tofauti walioweka maagizo kwa muuzaji huyu"
+      },
+      "repeatBuyers": {
+        "title": "Wanunuzi wa kurudia",
+        "description": "Wanunuzi wenye zaidi ya agizo moja"
+      },
+      "metadataCoverage": {
+        "title": "Ufunikaji wa metadata",
+        "description": "Wanunuzi {buyersWithBusinessMetadata} wameunganishwa na kumbukumbu za biashara"
+      },
+      "topBuyerConcentration": {
+        "title": "Mkazo wa mnunuzi mkuu",
+        "description": "Sehemu ya kiasi cha miamala kutoka kwa mnunuzi mkubwa zaidi"
+      }
+    },
+    "empty": {
+      "title": "Bado hakuna shughuli za kutosha",
+      "description": "Biashara yako itakapoanza kupokea maagizo, wasifu huu utaongezeka kiotomatiki kwa viashiria vya miamala, utimilifu, na utofauti wa wanunuzi."
+    },
+    "sections": {
+      "transactionHistory": {
+        "title": "Historia ya Miamala",
+        "description": "Utendaji wa hivi karibuni wa maagizo na malipo katika soko."
+      },
+      "fulfillment": {
+        "title": "Utendaji wa Utimilifu",
+        "description": "Utendaji wa uendeshaji unaotokana na mzunguko wa agizo na matokeo ya malipo."
+      },
+      "buyerDiversity": {
+        "title": "Utofauti wa Wanunuzi"
+      }
+    },
+    "trend": {
+      "window": "Siku {days}",
+      "rollingPerformanceWindow": "Dirisha la utendaji linalozunguka",
+      "orders": "Maagizo",
+      "paidOrders": "Maagizo yaliyolipwa",
+      "paidVolume": "Kiasi kilicholipwa"
+    },
+    "fulfillment": {
+      "completionRate": "Kiwango cha kukamilisha",
+      "cancellationRate": "Kiwango cha kughairi",
+      "payoutSuccessRate": "Kiwango cha mafanikio ya malipo",
+      "ordersCurrentlyProcessing": "Maagizo yanayochakatwa sasa",
+      "averageFulfillmentCycle": "Wastani wa mzunguko wa utimilifu",
+      "averageFulfillmentCycleValue": "Siku {days}",
+      "payoutOutcomeCounts": "Hesabu ya matokeo ya malipo",
+      "payoutStatuses": {
+        "queued": "Yamepangwa",
+        "pending": "Yanasubiri",
+        "success": "Yamefanikiwa",
+        "failed": "Yameshindwa"
+      }
+    },
+    "buyerDiversity": {
+      "coverage": {
+        "complete": "Utofauti wa wanunuzi unategemea kumbukumbu za biashara za wanunuzi zilizounganishwa.",
+        "partial": "Utofauti wa wanunuzi unategemea tu wanunuzi wenye kumbukumbu za biashara zilizounganishwa, kwa hiyo baadhi ya wanunuzi hawaingii kwenye mchanganyiko wa utofauti."
+      }
+    },
+    "breakdowns": {
+      "countLabel": "Wanunuzi {count}",
+      "buyerCountries": {
+        "title": "Nchi za wanunuzi",
+        "empty": "Usambazaji wa nchi utaonekana baada ya wanunuzi kuunganisha metadata ya biashara."
+      },
+      "buyerCategories": {
+        "title": "Makundi ya wanunuzi",
+        "empty": "Usambazaji wa makundi utaonekana baada ya wanunuzi kuunganisha metadata ya biashara."
+      },
+      "topBuyers": {
+        "title": "Wanunuzi wakuu",
+        "empty": "Wanunuzi wakuu wataonekana mara maagizo yatakapowekwa.",
+        "orders": "Maagizo {count}"
+      }
+    },
+    "methodology": {
+      "title": "Maelezo ya Mbinu",
+      "description": "Ripoti hii imetengenezwa kutoka kwa shughuli za kwanza za soko la AfriConnect.",
+      "points": {
+        "transactionVolume": "Kiasi cha miamala kinatokana na maagizo ya muuzaji yaliyounganishwa na malipo ya jukwaa yaliyokamilika.",
+        "fulfillment": "Utimilifu hutumia hali ya agizo na matokeo ya malipo kama viashiria vya utendaji wa uendeshaji.",
+        "buyerDiversity": "Utofauti wa wanunuzi unategemea kumbukumbu za biashara za wanunuzi zilizounganishwa, kwa hiyo metadata isiyokamilika inapunguza ufunikaji."
+      }
+    }
+  },
   "inventory": {
     "title": "Hesabu ya Hisa",
     "description": "Fuata viwango vya hisa, rekebisha kiasi, na weka arifa za kujaza tena",

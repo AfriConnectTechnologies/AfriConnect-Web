@@ -184,7 +184,7 @@ export const getMyProfile = query({
       paidOrders.length > 0 ? roundToTwo(totalTransactionVolume / paidOrders.length) : 0;
 
     const buyerAggregates = new Map<string, BuyerAggregate>();
-    for (const order of sortedOrders) {
+    for (const order of paidOrders) {
       const buyerKey =
         order.buyer?._id?.toString() ??
         (order.buyerId as string | undefined) ??
@@ -192,9 +192,7 @@ export const getMyProfile = query({
       const existing = buyerAggregates.get(buyerKey);
       const buyerName =
         order.buyerBusiness?.name ??
-        order.buyer?.name ??
-        order.buyer?.email ??
-        order.customer;
+        "Unknown Buyer";
 
       if (existing) {
         existing.orderCount += 1;
@@ -366,7 +364,7 @@ export const getMyProfile = query({
           buyersWithBusinessMetadata,
           topBuyerConcentrationRate: toPercent(
             topBuyerRevenue,
-            totalTransactionVolume || sortedOrders.reduce((sum, order) => sum + order.amount, 0)
+            totalTransactionVolume
           ),
           countries: countryBreakdown,
           categories: categoryBreakdown,
