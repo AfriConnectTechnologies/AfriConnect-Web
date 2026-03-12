@@ -1008,6 +1008,10 @@
         "title": "Sajili biashara yako",
         "message": "Wasifu wa kidijitali wa mikopo unapatikana baada ya kusajili na kuthibitisha biashara yako."
       },
+      "business_missing": {
+        "title": "Kumbukumbu ya biashara haijapatikana",
+        "message": "Akaunti yako imeunganishwa na kumbukumbu ya biashara ambayo haipatikani tena."
+      },
       "pending_verification": {
         "title": "Uthibitishaji unaendelea",
         "message": "Wasifu wako wa kidijitali wa mikopo utafunguliwa mara biashara yako itakapothibitishwa."

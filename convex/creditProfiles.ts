@@ -2,11 +2,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { requireUser } from "./helpers";
 
-const SETTLED_PAYMENT_STATUSES = new Set([
-  "success",
-  "refunded",
-  "partially_refunded",
-]);
+const SETTLED_PAYMENT_STATUSES = new Set(["success"]);
 
 const TERMINAL_ORDER_STATUSES = new Set(["completed", "cancelled"]);
 const RESOLVED_PAYOUT_STATUSES = new Set(["success", "failed", "reverted"]);
@@ -35,6 +31,19 @@ function average(values: number[]) {
 
 function startOfWindow(days: number, now: number) {
   return now - days * 24 * 60 * 60 * 1000;
+}
+
+function getCanonicalCurrency(currencies: string[]) {
+  if (currencies.length === 0) {
+    return "USD";
+  }
+
+  const counts = new Map<string, number>();
+  for (const currency of currencies) {
+    counts.set(currency, (counts.get(currency) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "USD";
 }
 
 type BuyerAggregate = {
@@ -70,7 +79,7 @@ export const getMyProfile = query({
     if (!business) {
       return {
         access: {
-          state: "no_business",
+          state: "business_missing",
           title: "Business record not found",
           message:
             "Your account is linked to a business record that is no longer available.",
@@ -241,6 +250,14 @@ export const getMyProfile = query({
     });
 
     const sortedOrders = enrichedOrders.sort((a, b) => b.createdAt - a.createdAt);
+    const selectedOrderIds = new Set(
+      sortedOrders
+        .slice(0, CREDIT_PROFILE_PAYOUT_LIMIT)
+        .map((order) => order._id.toString())
+    );
+    const windowPayouts = payouts.filter((payout) =>
+      selectedOrderIds.has(payout.orderId.toString())
+    );
     const paidOrders = sortedOrders.filter(
       (order) => order.payment && SETTLED_PAYMENT_STATUSES.has(order.payment.status)
     );
@@ -248,13 +265,18 @@ export const getMyProfile = query({
     const terminalOrders = sortedOrders.filter((order) =>
       TERMINAL_ORDER_STATUSES.has(order.status)
     );
-    const resolvedPayouts = payouts.filter((payout) =>
+    const resolvedPayouts = windowPayouts.filter((payout) =>
       RESOLVED_PAYOUT_STATUSES.has(payout.status)
     );
 
     const totalTransactionVolume = paidOrders.reduce(
       (sum, order) => sum + order.amount,
       0
+    );
+    const canonicalCurrency = getCanonicalCurrency(
+      paidOrders
+        .map((order) => order.payment?.currency)
+        .filter((currency): currency is string => Boolean(currency))
     );
     const averageOrderValue =
       paidOrders.length > 0 ? roundToTwo(totalTransactionVolume / paidOrders.length) : 0;
@@ -345,6 +367,8 @@ export const getMyProfile = query({
       sortedOrders.length > 0
         ? Math.max(...sortedOrders.map((order) => order.updatedAt))
         : null;
+    const ordersTruncated = orders.length === CREDIT_PROFILE_ORDER_LIMIT;
+    const payoutsTruncated = payouts.length === CREDIT_PROFILE_PAYOUT_LIMIT;
 
     return {
       access: {
@@ -364,8 +388,14 @@ export const getMyProfile = query({
         generatedAt: now,
         reportStart,
         reportEnd,
+        reportWindowStart: reportStart,
+        ordersTruncated,
+        payoutsTruncated,
+        orderLimit: CREDIT_PROFILE_ORDER_LIMIT,
+        payoutLimit: CREDIT_PROFILE_PAYOUT_LIMIT,
       },
       profile: {
+        currency: canonicalCurrency,
         profileSummary: {
           ordersCount: sortedOrders.length,
           paidOrdersCount: paidOrders.length,
@@ -419,15 +449,15 @@ export const getMyProfile = query({
           ),
           averageFulfillmentCycleDays: roundToTwo(average(fulfillmentCycleDays)),
           payoutSuccessRate: toPercent(
-            payouts.filter((payout) => payout.status === "success").length,
+            windowPayouts.filter((payout) => payout.status === "success").length,
             resolvedPayouts.length
           ),
           payoutStatusCounts: {
-            pending: payouts.filter((payout) => payout.status === "pending").length,
-            queued: payouts.filter((payout) => payout.status === "queued").length,
-            success: payouts.filter((payout) => payout.status === "success").length,
-            failed: payouts.filter((payout) => payout.status === "failed").length,
-            reverted: payouts.filter((payout) => payout.status === "reverted").length,
+            pending: windowPayouts.filter((payout) => payout.status === "pending").length,
+            queued: windowPayouts.filter((payout) => payout.status === "queued").length,
+            success: windowPayouts.filter((payout) => payout.status === "success").length,
+            failed: windowPayouts.filter((payout) => payout.status === "failed").length,
+            reverted: windowPayouts.filter((payout) => payout.status === "reverted").length,
           },
         },
         buyerDiversity: {

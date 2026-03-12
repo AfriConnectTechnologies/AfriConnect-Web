@@ -25,17 +25,12 @@ type TopBuyer = {
   revenue: number;
 };
 
-const currencyByLocale: Record<Locale, string> = {
-  en: "USD",
-  am: "ETB",
-  sw: "KES",
-};
-
 type CreditProfileResponse = {
   access: {
     state:
       | "ready"
       | "no_business"
+      | "business_missing"
       | "pending_verification"
       | "rejected_verification"
       | "not_seller";
@@ -53,8 +48,14 @@ type CreditProfileResponse = {
     generatedAt: number;
     reportStart: number | null;
     reportEnd: number | null;
+    reportWindowStart: number | null;
+    ordersTruncated: boolean;
+    payoutsTruncated: boolean;
+    orderLimit: number;
+    payoutLimit: number;
   } | null;
   profile: {
+    currency: string;
     profileSummary: {
       ordersCount: number;
       paidOrdersCount: number;
@@ -198,7 +199,6 @@ function BreakdownList({
 export function CreditProfileView({ reportMode = false }: { reportMode?: boolean }) {
   const t = useTranslations("creditProfile");
   const locale = useLocale() as Locale;
-  const displayCurrency = currencyByLocale[locale] ?? "USD";
   const creditProfile = useQuery(api.creditProfiles.getMyProfile) as
     | CreditProfileResponse
     | undefined;
@@ -254,6 +254,7 @@ export function CreditProfileView({ reportMode = false }: { reportMode?: boolean
   const transactionHistory = profile.transactionHistory;
   const fulfillment = profile.fulfillment;
   const buyerDiversity = profile.buyerDiversity;
+  const displayCurrency = profile.currency;
   const hasOrders = transactionHistory.totalOrders > 0;
   const coverageNote =
     buyerDiversity.buyersWithBusinessMetadata === buyerDiversity.uniqueBuyers

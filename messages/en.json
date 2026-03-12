@@ -1008,6 +1008,10 @@
         "title": "Register your business",
         "message": "A digital credit profile becomes available after you register and verify a business."
       },
+      "business_missing": {
+        "title": "Business record not found",
+        "message": "Your account is linked to a business record that is no longer available."
+      },
       "pending_verification": {
         "title": "Verification in progress",
         "message": "Your digital credit profile will unlock once the business is verified."
