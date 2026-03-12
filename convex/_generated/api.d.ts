@@ -13,6 +13,7 @@ import type * as businesses from "../businesses.js";
 import type * as cart from "../cart.js";
 import type * as chat from "../chat.js";
 import type * as compliance from "../compliance.js";
+import type * as creditProfiles from "../creditProfiles.js";
 import type * as crons from "../crons.js";
 import type * as directory from "../directory.js";
 import type * as helpers from "../helpers.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   cart: typeof cart;
   chat: typeof chat;
   compliance: typeof compliance;
+  creditProfiles: typeof creditProfiles;
   crons: typeof crons;
   directory: typeof directory;
   helpers: typeof helpers;

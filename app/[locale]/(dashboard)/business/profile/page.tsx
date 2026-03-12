@@ -679,6 +679,30 @@ export default function BusinessProfilePage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Digital Credit Profile
+          </CardTitle>
+          <CardDescription>
+            Review your transaction history, fulfillment performance, and buyer diversity in one seller report.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Available once your business is verified. You can also export a printable report for sharing.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => intlRouter.push("/business/credit-profile")}
+          >
+            Open Credit Profile
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* AfCFTA Compliance Section */}
       {canAccessCompliance && isComplianceEnabled && (
         <Card>
