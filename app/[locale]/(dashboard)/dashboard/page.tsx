@@ -15,35 +15,38 @@ import { ProductGrid } from "@/components/dashboard/ProductGrid";
 
 const statConfig = [
   {
-    key: "totalOrders",
+    key: "totalOrders" as const,
     icon: ShoppingCart,
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-50 dark:bg-blue-950/30",
     border: "border-blue-100 dark:border-blue-900/50",
+    format: undefined as ((v: number) => string) | undefined,
   },
   {
-    key: "totalRevenue",
+    key: "totalRevenue" as const,
     icon: DollarSign,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-50 dark:bg-emerald-950/30",
     border: "border-emerald-100 dark:border-emerald-900/50",
-    format: (v: number) => `$${v.toLocaleString()}`,
+    format: ((v: number) => `$${v.toLocaleString()}`) as ((v: number) => string) | undefined,
   },
   {
-    key: "pendingOrders",
+    key: "pendingOrders" as const,
     icon: Clock,
     color: "text-amber-600 dark:text-amber-400",
     bg: "bg-amber-50 dark:bg-amber-950/30",
     border: "border-amber-100 dark:border-amber-900/50",
+    format: undefined as ((v: number) => string) | undefined,
   },
   {
-    key: "completedOrders",
+    key: "completedOrders" as const,
     icon: CheckCircle2,
     color: "text-violet-600 dark:text-violet-400",
     bg: "bg-violet-50 dark:bg-violet-950/30",
     border: "border-violet-100 dark:border-violet-900/50",
+    format: undefined as ((v: number) => string) | undefined,
   },
-] as const;
+];
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");

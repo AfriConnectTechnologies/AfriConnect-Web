@@ -16,6 +16,7 @@ export default function BillingPage() {
   const t = useTranslations("billing");
   const tCommon = useTranslations("common");
   const tOrders = useTranslations("orders");
+  const locale = useLocale();
   
   const payments = useQuery(api.payments.list, COMMERCE_ENABLED ? {} : "skip");
   const subscription = useQuery(api.subscriptions.getCurrentSubscription, COMMERCE_ENABLED ? {} : "skip");
@@ -29,8 +30,6 @@ export default function BillingPage() {
       />
     );
   }
-
-  const locale = useLocale();
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(locale, {
