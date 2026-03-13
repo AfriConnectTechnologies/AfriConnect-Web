@@ -44,8 +44,9 @@ export default function AdminProductsPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">Loading admin panel...</p>
       </div>
     );
   }
@@ -56,17 +57,19 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manage Products</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Manage Products</h1>
         <p className="text-muted-foreground">
           Generate non-orderable dummy products for demos and testing
         </p>
       </div>
 
-      <Card>
+      <Card className="border-border/60 rounded-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
+            <div className="bg-primary/10 p-1.5 rounded-lg">
+              <Database className="h-4 w-4 text-primary" />
+            </div>
             Dummy Product Generator
           </CardTitle>
           <CardDescription>

@@ -263,11 +263,9 @@ function MessagesContent() {
 
   if (isConnecting) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">Connecting to chat...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">Connecting to chat...</p>
       </div>
     );
   }
@@ -275,10 +273,12 @@ function MessagesContent() {
   if (!client || !isConnected) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground/50" />
-            <p className="mt-4 text-muted-foreground">
+        <Card className="border-border/60 rounded-2xl">
+          <CardContent className="py-16 text-center px-8">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 mb-4">
+              <MessageCircle className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+            <p className="text-muted-foreground">
               Unable to connect to chat service
             </p>
           </CardContent>
@@ -353,11 +353,11 @@ function MessagesContent() {
     <div className="h-[calc(100vh-12rem)] flex gap-4">
       {/* Conversations List - Left Panel */}
       <div className="w-80 shrink-0">
-        <Card className="h-full overflow-hidden flex flex-col">
+        <Card className="h-full overflow-hidden flex flex-col border-border/60 rounded-2xl">
           <div className="p-4 border-b bg-card">
-            <h2 className="font-semibold">{t("conversations")}</h2>
+            <h2 className="font-semibold text-sm">{t("conversations")}</h2>
           </div>
-          <CardContent className="p-0 flex-1 overflow-y-auto">
+          <CardContent className="p-0 flex-1 overflow-y-auto scrollbar-thin">
             <Chat client={client} theme="str-chat__theme-light">
               <ChannelList
                 key={`desktop-${listKey}`}
@@ -368,13 +368,11 @@ function MessagesContent() {
                 showChannelSearch={false}
                 EmptyStateIndicator={() => (
                   <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <MessageCircle className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("noMessages")}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t("startConversation")}
-                    </p>
+                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50 mb-3">
+                      <MessageCircle className="h-7 w-7 text-muted-foreground/30" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">{t("noMessages")}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t("startConversation")}</p>
                   </div>
                 )}
               />
@@ -386,15 +384,17 @@ function MessagesContent() {
       {/* Chat Window - Right Panel */}
       <div className="flex-1">
         {selectedChannel ? (
-          <Card className="h-full overflow-hidden">
+          <Card className="h-full overflow-hidden border-border/60 rounded-2xl">
             <ChatWindow channelId={selectedChannel.id || ""} />
           </Card>
         ) : (
-          <Card className="h-full flex items-center justify-center">
-            <CardContent className="text-center py-12">
-              <MessageCircle className="h-16 w-16 mx-auto text-muted-foreground/30" />
-              <h3 className="mt-4 text-lg font-medium">{t("selectConversation")}</h3>
-              <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+          <Card className="h-full flex items-center justify-center border-border/60 rounded-2xl">
+            <CardContent className="text-center py-16">
+              <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/50 mb-4">
+                <MessageCircle className="h-10 w-10 text-muted-foreground/30" />
+              </div>
+              <h3 className="text-lg font-semibold">{t("selectConversation")}</h3>
+              <p className="mt-1.5 text-sm text-muted-foreground max-w-sm">
                 {t("selectConversationDescription")}
               </p>
             </CardContent>
@@ -411,8 +411,8 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
-      <div>
-        <h1 className="text-2xl font-bold">{t("messages")}</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("messages")}</h1>
         <p className="text-muted-foreground">{t("messagesDescription")}</p>
       </div>
       <ChatProvider>

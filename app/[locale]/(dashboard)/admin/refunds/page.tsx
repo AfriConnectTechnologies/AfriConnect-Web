@@ -188,8 +188,8 @@ export default function RefundsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Subscription Refunds</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Subscription Refunds</h1>
         <p className="text-muted-foreground">
           Process refunds for subscription payments (admin only)
         </p>

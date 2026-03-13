@@ -171,8 +171,8 @@ export default function SubscriptionPage() {
   if (currentUser && !currentUser.businessId) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Subscription</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Subscription</h1>
           <p className="text-muted-foreground">
             Manage your subscription and billing
           </p>

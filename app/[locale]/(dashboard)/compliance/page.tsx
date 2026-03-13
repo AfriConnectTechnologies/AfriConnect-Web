@@ -9,7 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Shield, ExternalLink, Info, FileCheck } from "lucide-react";
+import { Loader2, Shield, ExternalLink, Info, FileCheck, ArrowRight } from "lucide-react";
 import {
   AfcftaAiAssistant,
   BusinessProducts,
@@ -64,8 +64,9 @@ export default function CompliancePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">Loading compliance tools...</p>
       </div>
     );
   }
@@ -73,23 +74,24 @@ export default function CompliancePage() {
   if (!hasBusiness) {
     return (
       <div className="space-y-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
-        <Card>
+        <Card className="border-border/60 rounded-2xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
+              <div className="bg-primary/10 p-1.5 rounded-lg">
+                <Shield className="h-4 w-4 text-primary" />
+              </div>
               {t("businessRequired")}
             </CardTitle>
-            <CardDescription>
-              {t("businessRequiredDescription")}
-            </CardDescription>
+            <CardDescription>{t("businessRequiredDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push("/business/register")}>
+            <Button onClick={() => router.push("/business/register")} className="rounded-xl gap-2">
               {t("registerBusiness")}
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </CardContent>
         </Card>
@@ -99,8 +101,8 @@ export default function CompliancePage() {
 
   if (!canAccessCompliance) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
       </div>
     );
   }
@@ -109,38 +111,32 @@ export default function CompliancePage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
-        <Badge variant="outline" className="w-fit flex items-center gap-1">
-          <Shield className="h-3 w-3" />
+        <Badge variant="outline" className="w-fit flex items-center gap-1.5 rounded-lg px-3 py-1.5">
+          <Shield className="h-3.5 w-3.5" />
           AfCFTA {t("categoryA")}
         </Badge>
       </div>
 
       {/* AfCFTA Info Card */}
-      <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20">
+      <Card className="border-blue-200/60 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-            <Info className="h-5 w-5" />
+            <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-lg">
+              <Info className="h-4 w-4" />
+            </div>
             {t("whatIsAfcfta")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            {t("afcftaDescription")}
-          </p>
+          <p className="text-sm text-blue-700 dark:text-blue-300">{t("afcftaDescription")}</p>
           <div className="flex flex-wrap gap-2">
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              {t("categoryABadge")}
-            </Badge>
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              2026-2030
-            </Badge>
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              {t("tariffReduction")}
-            </Badge>
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-lg">{t("categoryABadge")}</Badge>
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-lg">2026-2030</Badge>
+            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-lg">{t("tariffReduction")}</Badge>
           </div>
           <a
             href="https://au-afcfta.org/"
@@ -155,57 +151,43 @@ export default function CompliancePage() {
       </Card>
 
       {/* Tariff Reduction Schedule */}
-      <Card>
+      <Card className="border-border/60 rounded-2xl">
         <CardHeader>
           <CardTitle>{t("reductionSchedule")}</CardTitle>
           <CardDescription>{t("reductionScheduleDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-border/40">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-3 font-medium">{t("year")}</th>
-                  <th className="text-center py-2 px-3 font-medium">2026</th>
-                  <th className="text-center py-2 px-3 font-medium">2027</th>
-                  <th className="text-center py-2 px-3 font-medium">2028</th>
-                  <th className="text-center py-2 px-3 font-medium">2029</th>
-                  <th className="text-center py-2 px-3 font-medium">2030</th>
+                <tr className="bg-muted/30">
+                  <th className="text-left py-3 px-4 font-semibold">{t("year")}</th>
+                  <th className="text-center py-3 px-4 font-semibold">2026</th>
+                  <th className="text-center py-3 px-4 font-semibold">2027</th>
+                  <th className="text-center py-3 px-4 font-semibold">2028</th>
+                  <th className="text-center py-3 px-4 font-semibold">2029</th>
+                  <th className="text-center py-3 px-4 font-semibold">2030</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-2 px-3 text-muted-foreground">{t("typicalRateReduction")}</td>
-                  <td className="text-center py-2 px-3">
-                    <Badge variant="secondary">2%</Badge>
-                  </td>
-                  <td className="text-center py-2 px-3">
-                    <Badge variant="secondary">1.5%</Badge>
-                  </td>
-                  <td className="text-center py-2 px-3">
-                    <Badge variant="secondary">1%</Badge>
-                  </td>
-                  <td className="text-center py-2 px-3">
-                    <Badge variant="secondary">0.5%</Badge>
-                  </td>
-                  <td className="text-center py-2 px-3">
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      0%
-                    </Badge>
+                  <td className="py-3 px-4 text-muted-foreground">{t("typicalRateReduction")}</td>
+                  <td className="text-center py-3 px-4"><Badge variant="secondary" className="rounded-lg">2%</Badge></td>
+                  <td className="text-center py-3 px-4"><Badge variant="secondary" className="rounded-lg">1.5%</Badge></td>
+                  <td className="text-center py-3 px-4"><Badge variant="secondary" className="rounded-lg">1%</Badge></td>
+                  <td className="text-center py-3 px-4"><Badge variant="secondary" className="rounded-lg">0.5%</Badge></td>
+                  <td className="text-center py-3 px-4">
+                    <Badge className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-200 rounded-lg">0%</Badge>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            {t("rateDisclaimer")}
-          </p>
+          <p className="text-xs text-muted-foreground mt-4">{t("rateDisclaimer")}</p>
         </CardContent>
       </Card>
 
-      {/* Tariffs / HS search and Business Products – free for all */}
       <BusinessProducts showHeader={true} />
-
       <AfcftaAiAssistant />
 
       {/* Section Divider */}
@@ -219,7 +201,6 @@ export default function CompliancePage() {
         </div>
       </div>
 
-      {/* Certificate of Origin Eligibility Calculator – free for all */}
       <OriginEligibilityCalculator showHeader={true} />
     </div>
   );

@@ -12,11 +12,11 @@ export default function ChatPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">{t("conversation")}</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight">{t("conversation")}</h1>
       </div>
       <ChatProvider>
-        <div className="h-[calc(100vh-14rem)]">
+        <div className="h-[calc(100vh-14rem)] rounded-2xl overflow-hidden border border-border/60">
           <ChatWindow
             channelId={channelId}
             showBackButton

@@ -151,20 +151,21 @@ export default function AdminUsersPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">Loading admin panel...</p>
       </div>
     );
   }
 
   if (!isAuthorized) {
-    return null; // Will redirect via hook
+    return null;
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Manage Users</h1>
         <p className="text-muted-foreground">
           View and manage user accounts and roles
         </p>
@@ -215,65 +216,72 @@ export default function AdminUsersPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {users?.length ?? <Loader2 className="h-6 w-6 animate-spin" />}
+        <Card className="border-blue-100 dark:border-blue-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Users</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {users?.length ?? <Loader2 className="h-6 w-6 animate-spin" />}
+                </p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-xl">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sellers</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {users?.filter((u) => u.role === "seller").length ?? 0}
+        <Card className="border-emerald-100 dark:border-emerald-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sellers</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {users?.filter((u) => u.role === "seller").length ?? 0}
+                </p>
+              </div>
+              <div className="bg-emerald-50 dark:bg-emerald-950/30 p-2.5 rounded-xl">
+                <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admins</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {users?.filter((u) => u.role === "admin").length ?? 0}
+        <Card className="border-violet-100 dark:border-violet-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Admins</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {users?.filter((u) => u.role === "admin").length ?? 0}
+                </p>
+              </div>
+              <div className="bg-violet-50 dark:bg-violet-950/30 p-2.5 rounded-xl">
+                <Shield className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Users Table */}
-      <Card>
+      <Card className="border-border/60 rounded-2xl overflow-hidden">
         <CardHeader>
           <CardTitle>All Users</CardTitle>
-          <CardDescription>
-            Search and filter users to manage their roles
-          </CardDescription>
+          <CardDescription>Search and filter users to manage their roles</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
               <Input
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-10 rounded-xl bg-muted/30 border-border/60"
               />
             </div>
-            <Select
-              value={roleFilter}
-              onValueChange={(v) => setRoleFilter(v as UserRole | "all")}
-            >
-              <SelectTrigger className="w-full sm:w-[180px]">
+            <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as UserRole | "all")}>
+              <SelectTrigger className="w-full sm:w-[180px] h-10 rounded-xl">
                 <SelectValue placeholder="Filter by role" />
               </SelectTrigger>
               <SelectContent>
@@ -286,17 +294,18 @@ export default function AdminUsersPage() {
           </div>
 
           {users === undefined ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+              <span className="text-sm text-muted-foreground">Loading users...</span>
             </div>
           ) : users.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground">
+            <div className="py-16 text-center text-muted-foreground">
               {searchQuery || roleFilter !== "all"
                 ? "No users match your search criteria."
                 : "No users found."}
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-xl border border-border/60 overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -162,17 +162,17 @@ export default function AdminBusinessesPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">Loading admin panel...</p>
       </div>
     );
   }
 
   if (!isAuthorized) {
-    return null; // Will redirect via hook
+    return null;
   }
 
-  // Count stats
   const pendingCount =
     businesses?.filter((b) => b.verificationStatus === "pending").length ?? 0;
   const verifiedCount =
@@ -182,8 +182,8 @@ export default function AdminBusinessesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Manage Businesses</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Manage Businesses</h1>
         <p className="text-muted-foreground">
           Review and verify business registrations
         </p>
@@ -191,82 +191,84 @@ export default function AdminBusinessesPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Businesses
-            </CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {businesses?.length ?? <Loader2 className="h-6 w-6 animate-spin" />}
+        <Card className="border-blue-100 dark:border-blue-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Businesses</p>
+                <p className="text-2xl md:text-3xl font-bold">
+                  {businesses?.length ?? <Loader2 className="h-6 w-6 animate-spin" />}
+                </p>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-xl">
+                <Building className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Review
-            </CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {pendingCount}
+        <Card className="border-amber-100 dark:border-amber-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending Review</p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-400">{pendingCount}</p>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-xl">
+                <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verified</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {verifiedCount}
+        <Card className="border-green-100 dark:border-green-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Verified</p>
+                <p className="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{verifiedCount}</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-950/30 p-2.5 rounded-xl">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {rejectedCount}
+        <Card className="border-red-100 dark:border-red-900/50">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rejected</p>
+                <p className="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">{rejectedCount}</p>
+              </div>
+              <div className="bg-red-50 dark:bg-red-950/30 p-2.5 rounded-xl">
+                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Businesses Table */}
-      <Card>
+      <Card className="border-border/60 rounded-2xl overflow-hidden">
         <CardHeader>
           <CardTitle>All Businesses</CardTitle>
-          <CardDescription>
-            Review business registrations and verify or reject them
-          </CardDescription>
+          <CardDescription>Review business registrations and verify or reject them</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 flex flex-col gap-4 sm:flex-row">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
               <Input
                 placeholder="Search by business name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-10 h-10 rounded-xl bg-muted/30 border-border/60"
               />
             </div>
             <Select
               value={statusFilter}
-              onValueChange={(v) =>
-                setStatusFilter(v as VerificationStatus | "all")
-              }
+              onValueChange={(v) => setStatusFilter(v as VerificationStatus | "all")}
             >
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px] h-10 rounded-xl">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -279,8 +281,9 @@ export default function AdminBusinessesPage() {
           </div>
 
           {businesses === undefined ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+              <span className="text-sm text-muted-foreground">Loading businesses...</span>
             </div>
           ) : businesses.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
