@@ -48,6 +48,7 @@
     "manageProducts": "Simamia Bidhaa",
     "manageRefunds": "Simamia Marejesho",
     "compliance": "Uzingatiaji wa AfCFTA",
+    "aiAssistant": "Msaidizi wa AI",
     "toggleMenu": "Badilisha menyu",
     "toggleSidebar": "Badilisha upau wa pembeni"
   },
@@ -924,6 +925,44 @@
       "ready": "Tayari",
       "not_configured": "Haijasanidiwa",
       "no_evidence": "Hakuna ushahidi"
+    }
+  },
+  "aiAssistantPage": {
+    "title": "Msaidizi wa AI",
+    "description": "Uliza maswali kuhusu uzingatiaji wa AfCFTA, alama za mikopo, sheria za asili na zaidi.",
+    "unavailable": "Zana za Msaidizi wa AI hazipatikani kwa sasa.",
+    "tabs": {
+      "compliance": "Uzingatiaji wa AfCFTA",
+      "general": "Msaidizi wa Jumla"
+    },
+    "general": {
+      "title": "Uliza kuhusu AfCFTA",
+      "description": "Uliza maswali ya jumla kuhusu AfCFTA, alama za mikopo, sheria za asili, ratiba za ushuru na zaidi.",
+      "badge": "Imeendeshwa na AI",
+      "helper": "Uliza swali lolote linalohusiana na Eneo la Biashara Huru la Bara la Afrika.",
+      "placeholder": "Uliza swali, mfano: Sheria za asili zinafanyaje kazi chini ya AfCFTA?",
+      "sampleQuestions": [
+        "Mfumo wa alama za mikopo wa AfCFTA ni nini?",
+        "Sheria za asili zinafanyaje kazi chini ya AfCFTA?",
+        "Ratiba za kupunguza ushuru za bidhaa za Kitengo A ni zipi?"
+      ],
+      "cta": {
+        "ask": "Uliza AI",
+        "asking": "Inauliza..."
+      },
+      "form": {
+        "questionLabel": "Swali lako"
+      },
+      "validation": {
+        "questionTooShort": "Tafadhali weka swali la kina zaidi.",
+        "invalidQuestion": "Tafadhali toa swali halali."
+      },
+      "error": {
+        "generic": "Imeshindwa kupata jibu kutoka kwa msaidizi wa AI."
+      },
+      "sections": {
+        "answer": "Jibu"
+      }
     }
   },
   "originEligibility": {

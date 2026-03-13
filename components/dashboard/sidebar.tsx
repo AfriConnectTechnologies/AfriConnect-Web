@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { UserButton, useClerk, useUser } from "@clerk/nextjs";
-import { Globe2, BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw, Boxes } from "lucide-react";
+import { Globe2, BarChart3, ShoppingCart, Settings, CreditCard, Menu, Store, Package, ShoppingBag, ChevronLeft, ChevronRight, Building2, Users, Building, Shield, MessageCircle, RefreshCw, Boxes, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { api } from "@/convex/_generated/api";
 import { COMMERCE_ENABLED, isComplianceEnabledForEmail } from "@/lib/features";
 import { useChatContext } from "@/components/chat/ChatProvider";
 
-type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "creditProfile" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageProducts" | "manageRefunds" | "compliance";
+type NavItemKey = "dashboard" | "marketplace" | "directory" | "products" | "inventory" | "messages" | "cart" | "orders" | "settings" | "billing" | "myBusiness" | "creditProfile" | "registerBusiness" | "manageUsers" | "manageBusinesses" | "manageProducts" | "manageRefunds" | "compliance" | "aiAssistant";
 
 type NavItem = {
   href: string;
@@ -47,6 +47,12 @@ const complianceNavItem: NavItem = {
   href: "/compliance",
   labelKey: "compliance",
   icon: Shield,
+};
+
+const aiAssistantNavItem: NavItem = {
+  href: "/ai-assistant",
+  labelKey: "aiAssistant",
+  icon: Bot,
 };
 
 const buyerNavItems: NavItem[] = [
@@ -154,6 +160,7 @@ function SidebarContent({
 
     if (canAccessCompliance && isComplianceEnabled) {
       items.push(complianceNavItem);
+      items.push(aiAssistantNavItem);
     }
 
     // Add register business option for buyers without a business

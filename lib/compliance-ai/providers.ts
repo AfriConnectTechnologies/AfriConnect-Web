@@ -2,15 +2,34 @@ import { getComplianceAiConfig } from "@/lib/compliance-ai/config";
 import type {
   ComplianceChunk,
   ComplianceCitation,
+  ComplianceTranslationLanguage,
 } from "@/lib/compliance-ai/types";
 
-interface GeneratedAnswerPayload {
+export interface GeneratedAnswerPayload {
   answer: string;
   citationIds: string[];
   warning?: string;
 }
 
 const DEFAULT_PROVIDER_TIMEOUT_MS = 15000;
+const GENERATION_PROVIDER_TIMEOUT_MS = 30000;
+const STREAMING_PROVIDER_TIMEOUT_MS = 60000;
+const TRANSLATION_PROVIDER_TIMEOUT_MS = 15000;
+const OPENAI_GENERATED_ANSWER_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    answer: { type: "string" },
+    citationIds: {
+      type: "array",
+      items: { type: "string" },
+    },
+    warning: {
+      type: ["string", "null"],
+    },
+  },
+  required: ["answer", "citationIds", "warning"],
+} as const;
 
 interface FetchWithTimeoutOptions extends RequestInit {
   timeout?: number;
@@ -60,40 +79,85 @@ function extractJsonObject(value: string): string | null {
   return value.slice(first, last + 1);
 }
 
+function coerceGeneratedAnswer(
+  parsed:
+    | (Partial<GeneratedAnswerPayload> & { warning?: string | null })
+    | null
+    | undefined
+): GeneratedAnswerPayload | null {
+  if (!parsed?.answer || !Array.isArray(parsed.citationIds)) {
+    return null;
+  }
+
+  return {
+    answer: parsed.answer,
+    citationIds: parsed.citationIds.map(String),
+    warning: parsed.warning ?? undefined,
+  };
+}
+
 function parseGeneratedAnswer(raw: string): GeneratedAnswerPayload | null {
   const candidate = extractJsonObject(raw) ?? raw;
 
   try {
-    const parsed = JSON.parse(candidate) as Partial<GeneratedAnswerPayload>;
-    if (!parsed.answer || !Array.isArray(parsed.citationIds)) {
-      return null;
-    }
-
-    return {
-      answer: parsed.answer,
-      citationIds: parsed.citationIds.map(String),
-      warning: parsed.warning,
-    };
+    return coerceGeneratedAnswer(JSON.parse(candidate) as Partial<GeneratedAnswerPayload>);
   } catch {
     return null;
   }
 }
 
-function buildAnswerPrompt(question: string, chunks: ComplianceChunk[]): string {
-  const evidence = chunks
+function buildEvidenceBlock(chunks: ComplianceChunk[]): string {
+  return chunks
     .map(
       (chunk) =>
         `[${chunk.id}] ${chunk.documentTitle} | ${chunk.locator}\n${chunk.text}`
     )
     .join("\n\n");
+}
 
+function buildAnswerPrompt(question: string, chunks: ComplianceChunk[]): string {
+  const evidence = buildEvidenceBlock(chunks);
   return [
     "You are an AfCFTA compliance assistant.",
     "Answer only from the evidence below.",
+    "Respond in English.",
     "If the evidence is insufficient, say so clearly.",
     "Do not give legal advice.",
+    'Write the "answer" value as clean GitHub-flavored Markdown.',
+    'Use this structure when helpful: "Summary", "Key points", and "Gaps or caveats".',
+    "Use short paragraphs and bullet points where helpful.",
+    "Do not include a top-level title.",
+    "Clean up OCR noise, broken line wraps, repeated fragments, and document-style formatting.",
+    "Rewrite fragmented evidence into readable business language while staying faithful to the source.",
+    "Do not copy noisy source text verbatim unless quoting a short phrase is necessary.",
+    "If the evidence is ambiguous or incomplete, say that plainly.",
     'Return strict JSON with keys: "answer", "citationIds", and optional "warning".',
     'The "citationIds" array must contain evidence IDs such as ["1", "3"].',
+    'If there is no warning, use "warning": null.',
+    "",
+    `Question: ${question}`,
+    "",
+    "Evidence:",
+    evidence,
+  ].join("\n");
+}
+
+function buildStreamingAnswerPrompt(question: string, chunks: ComplianceChunk[]): string {
+  const evidence = buildEvidenceBlock(chunks);
+  return [
+    "You are an AfCFTA compliance assistant.",
+    "Answer only from the evidence below.",
+    "Respond in English.",
+    "If the evidence is insufficient, say so clearly.",
+    "Do not give legal advice.",
+    "Write a clean GitHub-flavored Markdown answer.",
+    'Use this structure when helpful: "Summary", "Key points", and "Gaps or caveats".',
+    "Use short paragraphs and bullet points where helpful.",
+    "Do not include a top-level title.",
+    "Clean up OCR noise, broken line wraps, repeated fragments, and document-style formatting.",
+    "Rewrite fragmented evidence into readable business language while staying faithful to the source.",
+    "Do not copy noisy source text verbatim unless quoting a short phrase is necessary.",
+    "Do not include inline citation markers, source IDs, UUIDs, or bracketed references in the visible answer.",
     "",
     `Question: ${question}`,
     "",
@@ -150,7 +214,7 @@ async function generateWithOpenAi(
 ): Promise<GeneratedAnswerPayload | null> {
   const response = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+    timeout: GENERATION_PROVIDER_TIMEOUT_MS,
     requestName: "OpenAI generation request",
     headers: {
       "Content-Type": "application/json",
@@ -158,11 +222,19 @@ async function generateWithOpenAi(
     },
     body: JSON.stringify({
       model,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "afcfta_compliance_answer",
+          strict: true,
+          schema: OPENAI_GENERATED_ANSWER_SCHEMA,
+        },
+      },
       messages: [
         {
           role: "system",
           content:
-            "You answer AfCFTA compliance questions only from retrieved evidence and produce valid JSON.",
+            "You answer AfCFTA compliance questions only from retrieved evidence and produce valid JSON. Respond in English. The answer field must contain clean GitHub-flavored Markdown that reorganizes noisy source text into readable prose.",
         },
         { role: "user", content: prompt },
       ],
@@ -179,10 +251,146 @@ async function generateWithOpenAi(
   }
 
   const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    choices?: Array<{
+      message?: {
+        content?: string;
+        refusal?: string;
+      };
+    }>;
   };
 
-  return parseGeneratedAnswer(data.choices?.[0]?.message?.content ?? "");
+  const message = data.choices?.[0]?.message;
+  if (message?.refusal) {
+    throw new Error(`OpenAI refused the generation request: ${message.refusal}`);
+  }
+
+  return parseGeneratedAnswer(message?.content ?? "");
+}
+
+export async function streamOpenAiComplianceAnswer(
+  question: string,
+  chunks: ComplianceChunk[],
+  onDelta: (delta: string) => void
+): Promise<GeneratedAnswerPayload | null> {
+  const config = getComplianceAiConfig();
+  if (
+    config.generationProvider !== "openai" ||
+    !config.generationApiKey ||
+    !config.generationModel
+  ) {
+    return null;
+  }
+
+  const response = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    timeout: STREAMING_PROVIDER_TIMEOUT_MS,
+    requestName: "OpenAI generation request",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.generationApiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.generationModel,
+      stream: true,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You answer AfCFTA compliance questions only from retrieved evidence. Respond in English. Return only clean GitHub-flavored Markdown. Do not include inline citation markers, source IDs, UUIDs, or bracketed references in the visible answer.",
+        },
+        {
+          role: "user",
+          content: buildStreamingAnswerPrompt(question, chunks),
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      body
+        ? `OpenAI generation failed with status ${response.status}: ${body}`
+        : `OpenAI generation failed with status ${response.status}`
+    );
+  }
+
+  if (!response.body) {
+    throw new Error("OpenAI generation response body was empty");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let answer = "";
+
+  const handleSseEvent = (rawEvent: string) => {
+    const payload = rawEvent
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice(5).trimStart())
+      .join("\n");
+
+    if (!payload) {
+      return;
+    }
+
+    if (payload === "[DONE]") {
+      return;
+    }
+
+    const parsed = JSON.parse(payload) as {
+      choices?: Array<{
+        delta?: {
+          content?: string;
+          refusal?: string;
+        };
+      }>;
+    };
+
+    const delta = parsed.choices?.[0]?.delta;
+    if (delta?.refusal) {
+      throw new Error(`OpenAI refused the generation request: ${delta.refusal}`);
+    }
+
+    if (delta?.content) {
+      answer += delta.content;
+      onDelta(delta.content);
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+    let separatorIndex = buffer.indexOf("\n\n");
+    while (separatorIndex !== -1) {
+      const rawEvent = buffer.slice(0, separatorIndex).trim();
+      buffer = buffer.slice(separatorIndex + 2);
+      if (rawEvent) {
+        handleSseEvent(rawEvent);
+      }
+      separatorIndex = buffer.indexOf("\n\n");
+    }
+
+    if (done) {
+      const trailingEvent = buffer.trim();
+      if (trailingEvent) {
+        handleSseEvent(trailingEvent);
+      }
+      break;
+    }
+  }
+
+  const cleanedAnswer = answer.trim();
+  if (!cleanedAnswer) {
+    return null;
+  }
+
+  return {
+    answer: cleanedAnswer,
+    citationIds: [],
+  };
 }
 
 async function generateWithGemini(
@@ -194,7 +402,7 @@ async function generateWithGemini(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
-      timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+      timeout: GENERATION_PROVIDER_TIMEOUT_MS,
       requestName: "Gemini generation request",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -235,7 +443,7 @@ async function generateWithAnthropic(
 ): Promise<GeneratedAnswerPayload | null> {
   const response = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    timeout: DEFAULT_PROVIDER_TIMEOUT_MS,
+    timeout: GENERATION_PROVIDER_TIMEOUT_MS,
     requestName: "Anthropic generation request",
     headers: {
       "Content-Type": "application/json",
@@ -247,7 +455,7 @@ async function generateWithAnthropic(
       max_tokens: 800,
       temperature: 0.1,
       system:
-        "You answer AfCFTA compliance questions only from retrieved evidence and produce valid JSON.",
+        "You answer AfCFTA compliance questions only from retrieved evidence and produce valid JSON. Respond in English. The answer field must contain clean GitHub-flavored Markdown that reorganizes noisy source text into readable prose.",
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -298,6 +506,55 @@ export async function generateComplianceAnswer(
     default:
       return null;
   }
+}
+
+export async function translateTextWithAddisAssistant(
+  text: string,
+  sourceLanguage: ComplianceTranslationLanguage,
+  targetLanguage: ComplianceTranslationLanguage
+): Promise<string> {
+  const apiKey = process.env.COMPLIANCE_ADDIS_AI_API_KEY;
+  if (!apiKey) {
+    throw new Error("COMPLIANCE_ADDIS_AI_API_KEY is not configured");
+  }
+
+  const response = await fetchWithTimeout("https://api.addisassistant.com/api/v1/translate", {
+    method: "POST",
+    timeout: TRANSLATION_PROVIDER_TIMEOUT_MS,
+    requestName: "Addis Assistant translation request",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+    },
+    body: JSON.stringify({
+      text,
+      source_language: sourceLanguage,
+      target_language: targetLanguage,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      body
+        ? `Translation failed with status ${response.status}: ${body}`
+        : `Translation failed with status ${response.status}`
+    );
+  }
+
+  const data = (await response.json()) as {
+    status?: string;
+    data?: {
+      translation?: string;
+    };
+  };
+
+  const translation = data.data?.translation?.trim();
+  if (!translation) {
+    throw new Error("Translation response did not include translated text");
+  }
+
+  return translation;
 }
 
 export function chunkToCitation(chunk: ComplianceChunk): ComplianceCitation {

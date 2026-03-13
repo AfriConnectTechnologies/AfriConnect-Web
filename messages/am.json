@@ -48,6 +48,7 @@
     "manageProducts": "ምርቶችን አስተዳድር",
     "manageRefunds": "ተመላሾችን አስተዳድር",
     "compliance": "የAfCFTA ተገዢነት",
+    "aiAssistant": "AI ረዳት",
     "toggleMenu": "ምናሌ ቀያይር",
     "toggleSidebar": "ጎን አሞሌ ቀያይር"
   },
@@ -924,6 +925,44 @@
       "ready": "ዝግጁ",
       "not_configured": "አልተዋቀረም",
       "no_evidence": "ምንም ማስረጃ የለም"
+    }
+  },
+  "aiAssistantPage": {
+    "title": "AI ረዳት",
+    "description": "ስለ AfCFTA ተገዢነት፣ የብድር ደረጃ መስጠት፣ የመነሻ ደንቦች እና ሌሎች ጥያቄዎችን ይጠይቁ።",
+    "unavailable": "የAI ረዳት መሳሪያዎች ለጊዜው አይገኙም።",
+    "tabs": {
+      "compliance": "የAfCFTA ተገዢነት",
+      "general": "አጠቃላይ ረዳት"
+    },
+    "general": {
+      "title": "ስለ AfCFTA ይጠይቁ",
+      "description": "ስለ AfCFTA፣ የብድር ደረጃ መስጠት፣ የመነሻ ደንቦች፣ የታሪፍ ቅነሳ መርሃ ግብሮች እና ሌሎች አጠቃላይ ጥያቄዎችን ይጠይቁ።",
+      "badge": "AI ያለው",
+      "helper": "ከአፍሪካ አህጉራዊ ነጻ ንግድ ቀጠና ጋር የተያያዙ ማንኛውንም ጥያቄ ይጠይቁ።",
+      "placeholder": "ጥያቄ ይጠይቁ፣ ለምሳሌ፡ በAfCFTA ስር የመነሻ ደንቦች እንዴት ይሰራሉ?",
+      "sampleQuestions": [
+        "የAfCFTA የብድር ደረጃ መስጫ ማዕቀፍ ምንድን ነው?",
+        "በAfCFTA ስር የመነሻ ደንቦች እንዴት ይሰራሉ?",
+        "ለምድብ A ምርቶች የታሪፍ ቅነሳ መርሃ ግብሮች ምንድን ናቸው?"
+      ],
+      "cta": {
+        "ask": "AI ጠይቅ",
+        "asking": "በመጠየቅ ላይ..."
+      },
+      "form": {
+        "questionLabel": "ጥያቄዎ"
+      },
+      "validation": {
+        "questionTooShort": "እባክዎ የበለጠ ዝርዝር ጥያቄ ያስገቡ።",
+        "invalidQuestion": "እባክዎ ትክክለኛ ጥያቄ ያቅርቡ።"
+      },
+      "error": {
+        "generic": "ከAI ረዳት ምላሽ ማግኘት አልተቻለም።"
+      },
+      "sections": {
+        "answer": "መልስ"
+      }
     }
   },
   "originEligibility": {

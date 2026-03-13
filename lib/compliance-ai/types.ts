@@ -1,4 +1,5 @@
 export type ComplianceAiGenerationProvider = "openai" | "gemini" | "anthropic";
+export type ComplianceTranslationLanguage = "en" | "am" | "om";
 
 export interface ComplianceAssistantFilters {
   country?: string;
@@ -45,6 +46,24 @@ export interface ComplianceAssistantAnswer {
   warning?: string;
   providerSummary: ComplianceAiProviderSummary;
 }
+
+export type ComplianceAssistantStreamEvent =
+  | {
+      type: "metadata";
+      answer: Pick<ComplianceAssistantAnswer, "status" | "mode" | "providerSummary">;
+    }
+  | {
+      type: "delta";
+      delta: string;
+    }
+  | {
+      type: "complete";
+      answer: ComplianceAssistantAnswer;
+    }
+  | {
+      type: "error";
+      error: string;
+    };
 
 export interface ComplianceAiRuntimeStatus {
   enabled: boolean;

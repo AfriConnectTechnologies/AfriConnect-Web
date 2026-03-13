@@ -38,8 +38,7 @@ const markdownClassNames = {
   strong: "font-semibold text-foreground",
   a: "text-primary underline underline-offset-2",
   blockquote: "mb-3 border-l-2 border-border pl-4 italic text-muted-foreground last:mb-0",
-  code:
-    "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground",
+  code: "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground",
   pre: "mb-3 overflow-x-auto rounded-lg border bg-muted/50 p-3 last:mb-0",
   h1: "mb-3 text-lg font-semibold text-foreground last:mb-0",
   h2: "mb-3 text-base font-semibold text-foreground last:mb-0",
@@ -49,8 +48,8 @@ const markdownClassNames = {
   td: "border border-border px-2 py-1 align-top",
 } as const;
 
-export function AfcftaAiAssistant() {
-  const t = useTranslations("afcfta");
+export function GeneralAiAssistant() {
+  const t = useTranslations("aiAssistantPage.general");
   const [question, setQuestion] = useState("");
   const [language, setLanguage] = useState<ComplianceTranslationLanguage>("en");
   const [answer, setAnswer] = useState<ComplianceAssistantAnswer | null>(null);
@@ -102,7 +101,7 @@ export function AfcftaAiAssistant() {
     setAnswer(null);
 
     try {
-      const response = await fetch("/api/compliance/ask", {
+      const response = await fetch("/api/compliance/ask-general", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,15 +143,13 @@ export function AfcftaAiAssistant() {
           .map((line) => line.slice(5).trimStart())
           .join("\n");
 
-        if (!payload) {
-          return;
-        }
+        if (!payload) return;
 
         try {
           const event = JSON.parse(payload) as ComplianceAssistantStreamEvent;
           applyStreamEvent(event);
         } catch (parseError) {
-          console.warn("Malformed SSE event in compliance assistant:", parseError);
+          console.warn("Malformed SSE event in general assistant:", parseError);
         }
       };
 
@@ -165,21 +162,17 @@ export function AfcftaAiAssistant() {
 
         for (const segment of segments) {
           const trimmedSegment = segment.trim();
-          if (trimmedSegment) {
-            processEvent(trimmedSegment);
-          }
+          if (trimmedSegment) processEvent(trimmedSegment);
         }
 
         if (done) {
           const trailingSegment = buffer.trim();
-          if (trailingSegment) {
-            processEvent(trailingSegment);
-          }
+          if (trailingSegment) processEvent(trailingSegment);
           break;
         }
       }
     } catch (requestError) {
-      console.error("AfCFTA assistant request failed:", requestError);
+      console.error("General AI assistant request failed:", requestError);
       setAnswer(null);
       setError(t("error.generic"));
     } finally {
@@ -188,7 +181,7 @@ export function AfcftaAiAssistant() {
   };
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
+    <Card className="border-emerald-500/20 bg-emerald-500/5">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -261,15 +254,6 @@ export function AfcftaAiAssistant() {
 
         {answer && (
           <div className="space-y-4 rounded-xl border bg-background p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={answer.mode === "full-rag" ? "default" : "secondary"}>
-                {answer.mode === "full-rag"
-                  ? t("mode.fullRag")
-                  : t("mode.retrievalOnly")}
-              </Badge>
-              <Badge variant="outline">{t(`status.${answer.status}`)}</Badge>
-            </div>
-
             <div className="space-y-2">
               <h3 className="font-medium">{t("sections.answer")}</h3>
               <div className="rounded-lg border bg-muted/20 p-4">
@@ -368,7 +352,6 @@ export function AfcftaAiAssistant() {
                 </div>
               )}
             </div>
-
           </div>
         )}
       </CardContent>

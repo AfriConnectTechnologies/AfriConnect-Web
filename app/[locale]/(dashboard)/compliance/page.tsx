@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Shield, ExternalLink, Info, FileCheck } from "lucide-react";
 import {
-  AfcftaAiAssistant,
   BusinessProducts,
   OriginEligibilityCalculator,
 } from "@/components/compliance";
@@ -205,8 +204,6 @@ export default function CompliancePage() {
 
       {/* Tariffs / HS search and Business Products – free for all */}
       <BusinessProducts showHeader={true} />
-
-      <AfcftaAiAssistant />
 
       {/* Section Divider */}
       <div className="relative py-4">

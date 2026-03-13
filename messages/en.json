@@ -48,6 +48,7 @@
     "manageProducts": "Manage Products",
     "manageRefunds": "Manage Refunds",
     "compliance": "AfCFTA Compliance",
+    "aiAssistant": "AI Assistant",
     "toggleMenu": "Toggle menu",
     "toggleSidebar": "Toggle sidebar"
   },
@@ -924,6 +925,44 @@
       "ready": "Ready",
       "not_configured": "Not configured",
       "no_evidence": "No evidence"
+    }
+  },
+  "aiAssistantPage": {
+    "title": "AI Assistant",
+    "description": "Ask questions about AfCFTA compliance, credit scoring, rules of origin and more.",
+    "unavailable": "AI Assistant tools are temporarily unavailable.",
+    "tabs": {
+      "compliance": "AfCFTA Compliance",
+      "general": "General Assistant"
+    },
+    "general": {
+      "title": "Ask about AfCFTA",
+      "description": "Ask general questions about AfCFTA, credit scoring, rules of origin, tariff schedules and more. Answers are generated directly by AI.",
+      "badge": "AI Powered",
+      "helper": "Ask any question related to the African Continental Free Trade Area. The AI will answer based on its knowledge of AfCFTA agreements, rules of origin, credit scoring and trade facilitation.",
+      "placeholder": "Ask a question, e.g. What are the rules of origin under AfCFTA?",
+      "sampleQuestions": [
+        "What is the AfCFTA credit scoring framework?",
+        "How do rules of origin work under AfCFTA?",
+        "What are the tariff reduction schedules for Category A products?"
+      ],
+      "cta": {
+        "ask": "Ask AI",
+        "asking": "Asking..."
+      },
+      "form": {
+        "questionLabel": "Your question"
+      },
+      "validation": {
+        "questionTooShort": "Please enter a more specific question.",
+        "invalidQuestion": "Please provide a valid question."
+      },
+      "error": {
+        "generic": "Failed to get a response from the AI assistant."
+      },
+      "sections": {
+        "answer": "Answer"
+      }
     }
   },
   "originEligibility": {

@@ -2,8 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 
-import { askComplianceAssistant } from "@/lib/compliance-ai/service";
+import { getComplianceAiConfig } from "@/lib/compliance-ai/config";
+import {
+  generateComplianceAnswer,
+  streamOpenAiComplianceAnswer,
+} from "@/lib/compliance-ai/providers";
+import {
+  buildGeneratedComplianceResponse,
+  buildRetrievalOnlyResponse,
+  detectComplianceQuestionLanguage,
+  localizeComplianceAssistantAnswer,
+  prepareComplianceAssistant,
+} from "@/lib/compliance-ai/service";
 import { isComplianceEnabledForEmail } from "@/lib/features";
+import type { ComplianceAssistantStreamEvent } from "@/lib/compliance-ai/types";
+
+export const runtime = "nodejs";
 
 const requestSchema = z.object({
   question: z.string().trim().min(5).max(2000),
@@ -16,6 +30,43 @@ const requestSchema = z.object({
     })
     .optional(),
 });
+
+function createSseResponse(
+  streamHandler: (
+    send: (event: ComplianceAssistantStreamEvent) => void
+  ) => Promise<void>
+) {
+  const encoder = new TextEncoder();
+
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        const send = (event: ComplianceAssistantStreamEvent) => {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        };
+
+        try {
+          await streamHandler(send);
+        } catch (error) {
+          console.error("Compliance AI ask route failed:", error);
+          send({
+            type: "error",
+            error: "Failed to answer compliance question",
+          });
+        } finally {
+          controller.close();
+        }
+      },
+    }),
+    {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    }
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,12 +99,137 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const answer = await askComplianceAssistant(
+    const targetLanguage = detectComplianceQuestionLanguage(
       parsed.data.question,
       parsed.data.filters
     );
 
-    return NextResponse.json(answer);
+    const prepared = await prepareComplianceAssistant(
+      parsed.data.question,
+      parsed.data.filters
+    );
+
+    if (prepared.type === "answer") {
+      return createSseResponse(async (send) => {
+        send({
+          type: "complete",
+          answer: await localizeComplianceAssistantAnswer(prepared.answer, targetLanguage),
+        });
+      });
+    }
+
+    const { context } = prepared;
+    const config = getComplianceAiConfig();
+
+    return createSseResponse(async (send) => {
+      if (
+        config.generationProvider === "openai" &&
+        config.generationApiKey &&
+        config.generationModel
+      ) {
+        if (context.targetLanguage === "en") {
+          send({
+            type: "metadata",
+            answer: {
+              status: "ready",
+              mode: "full-rag",
+              providerSummary: context.providerSummary,
+            },
+          });
+        }
+
+        try {
+          const generated = await streamOpenAiComplianceAnswer(
+            context.question,
+            context.rerankedChunks,
+            (delta) => {
+              if (context.targetLanguage === "en") {
+                send({
+                  type: "delta",
+                  delta,
+                });
+              }
+            }
+          );
+
+          if (!generated) {
+            send({
+              type: "complete",
+              answer: await localizeComplianceAssistantAnswer(
+                buildRetrievalOnlyResponse(
+                  context.rerankedChunks,
+                  context.providerSummary,
+                  "Generation provider returned an empty response, so this answer is based on retrieved evidence only."
+                ),
+                context.targetLanguage
+              ),
+            });
+            return;
+          }
+
+          send({
+            type: "complete",
+            answer: await localizeComplianceAssistantAnswer(
+              buildGeneratedComplianceResponse(
+                generated,
+                context.rerankedChunks,
+                context.providerSummary
+              ),
+              context.targetLanguage
+            ),
+          });
+          return;
+        } catch (error) {
+          send({
+            type: "complete",
+            answer: await localizeComplianceAssistantAnswer(
+              buildRetrievalOnlyResponse(
+                context.rerankedChunks,
+                context.providerSummary,
+                error instanceof Error
+                  ? error.message
+                  : "Generation failed, so this answer is based on retrieved evidence only."
+              ),
+              context.targetLanguage
+            ),
+          });
+          return;
+        }
+      }
+
+      let generated: Awaited<ReturnType<typeof generateComplianceAnswer>> = null;
+      let generationWarning: string | undefined;
+
+      try {
+        generated = await generateComplianceAnswer(
+          context.question,
+          context.rerankedChunks
+        );
+      } catch (error) {
+        generationWarning =
+          error instanceof Error
+            ? error.message
+            : "Generation failed, so this answer is based on retrieved evidence only.";
+      }
+
+      send({
+        type: "complete",
+        answer: await localizeComplianceAssistantAnswer(
+          generated
+            ? buildGeneratedComplianceResponse(
+                generated,
+                context.rerankedChunks,
+                context.providerSummary
+              )
+            : buildRetrievalOnlyResponse(
+                context.rerankedChunks,
+                context.providerSummary,
+                generationWarning
+              ),
+          context.targetLanguage
+        ),
+      });
+    });
   } catch (error) {
     console.error("Compliance AI ask route failed:", error);
     return NextResponse.json(
