@@ -289,16 +289,31 @@ export async function POST(request: NextRequest) {
         }
       };
 
+      const getNextSeparator = (value: string) => {
+        const lfIndex = value.indexOf("\n\n");
+        const crlfIndex = value.indexOf("\r\n\r\n");
+
+        if (lfIndex === -1) {
+          return crlfIndex === -1 ? null : { index: crlfIndex, length: 4 };
+        }
+
+        if (crlfIndex === -1 || lfIndex < crlfIndex) {
+          return { index: lfIndex, length: 2 };
+        }
+
+        return { index: crlfIndex, length: 4 };
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
 
-        let separatorIndex = buffer.indexOf("\n\n");
-        while (separatorIndex !== -1) {
-          const rawEvent = buffer.slice(0, separatorIndex).trim();
-          buffer = buffer.slice(separatorIndex + 2);
+        let separator = getNextSeparator(buffer);
+        while (separator) {
+          const rawEvent = buffer.slice(0, separator.index).trim();
+          buffer = buffer.slice(separator.index + separator.length);
           if (rawEvent) handleSseEvent(rawEvent);
-          separatorIndex = buffer.indexOf("\n\n");
+          separator = getNextSeparator(buffer);
         }
 
         if (done) {

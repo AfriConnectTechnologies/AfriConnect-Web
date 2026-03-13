@@ -270,7 +270,8 @@ async function generateWithOpenAi(
 export async function streamOpenAiComplianceAnswer(
   question: string,
   chunks: ComplianceChunk[],
-  onDelta: (delta: string) => void
+  onDelta: (delta: string) => void,
+  abortSignalOrController?: AbortSignal | AbortController
 ): Promise<GeneratedAnswerPayload | null> {
   const config = getComplianceAiConfig();
   if (
@@ -281,80 +282,103 @@ export async function streamOpenAiComplianceAnswer(
     return null;
   }
 
-  const response = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    timeout: STREAMING_PROVIDER_TIMEOUT_MS,
-    requestName: "OpenAI generation request",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${config.generationApiKey}`,
-    },
-    body: JSON.stringify({
-      model: config.generationModel,
-      stream: true,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You answer AfCFTA compliance questions only from retrieved evidence. Respond in English. Return only clean GitHub-flavored Markdown. Do not include inline citation markers, source IDs, UUIDs, or bracketed references in the visible answer.",
-        },
-        {
-          role: "user",
-          content: buildStreamingAnswerPrompt(question, chunks),
-        },
-      ],
-    }),
-  });
+  const externalSignal =
+    abortSignalOrController instanceof AbortController
+      ? abortSignalOrController.signal
+      : abortSignalOrController;
+  const controller = new AbortController();
+  let didTimeout = false;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      body
-        ? `OpenAI generation failed with status ${response.status}: ${body}`
-        : `OpenAI generation failed with status ${response.status}`
-    );
+  const abortHandler = () => controller.abort();
+  if (externalSignal?.aborted) {
+    controller.abort();
+  } else {
+    externalSignal?.addEventListener("abort", abortHandler);
   }
 
-  if (!response.body) {
-    throw new Error("OpenAI generation response body was empty");
-  }
+  const timeoutId = setTimeout(() => {
+    didTimeout = true;
+    controller.abort();
+  }, STREAMING_PROVIDER_TIMEOUT_MS);
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let answer = "";
-
-  const handleSseEvent = (rawEvent: string) => {
-    const payload = rawEvent
-      .split(/\r?\n/)
-      .filter((line) => line.startsWith("data:"))
-      .map((line) => line.slice(5).trimStart())
-      .join("\n");
-
-    if (!payload) {
-      return;
+  const throwAbortError = async () => {
+    if (reader) {
+      try {
+        await reader.cancel();
+      } catch {
+        // Ignore reader cancellation errors during abort cleanup.
+      }
     }
 
-    if (payload === "[DONE]") {
-      return;
+    if (didTimeout) {
+      throw new Error(
+        `OpenAI generation request timed out after ${STREAMING_PROVIDER_TIMEOUT_MS}ms`
+      );
     }
 
-    let parsed: {
-      choices?: Array<{
-        delta?: {
-          content?: string;
-          refusal?: string;
-        };
-      }>;
-    };
-    try {
-      const candidate = JSON.parse(payload);
-      if (typeof candidate !== "object" || candidate === null) {
-        console.error("Malformed OpenAI SSE payload", { payload });
+    throw new Error("OpenAI generation request was aborted");
+  };
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.generationApiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.generationModel,
+        stream: true,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You answer AfCFTA compliance questions only from retrieved evidence. Respond in English. Return only clean GitHub-flavored Markdown. Do not include inline citation markers, source IDs, UUIDs, or bracketed references in the visible answer.",
+          },
+          {
+            role: "user",
+            content: buildStreamingAnswerPrompt(question, chunks),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(
+        body
+          ? `OpenAI generation failed with status ${response.status}: ${body}`
+          : `OpenAI generation failed with status ${response.status}`
+      );
+    }
+
+    if (!response.body) {
+      throw new Error("OpenAI generation response body was empty");
+    }
+
+    reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let answer = "";
+
+    const handleSseEvent = (rawEvent: string) => {
+      const payload = rawEvent
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart())
+        .join("\n");
+
+      if (!payload) {
         return;
       }
 
-      parsed = candidate as {
+      if (payload === "[DONE]") {
+        return;
+      }
+
+      let parsed: {
         choices?: Array<{
           delta?: {
             content?: string;
@@ -362,57 +386,103 @@ export async function streamOpenAiComplianceAnswer(
           };
         }>;
       };
-    } catch (error) {
-      console.error("Failed to parse OpenAI SSE payload", {
-        error,
-        payload,
-      });
-      return;
-    }
+      try {
+        const candidate = JSON.parse(payload);
+        if (typeof candidate !== "object" || candidate === null) {
+          console.error("Malformed OpenAI SSE payload", {
+            payloadLength: payload.length,
+          });
+          return;
+        }
 
-    const delta = parsed.choices?.[0]?.delta;
-    if (delta?.refusal) {
-      throw new Error(`OpenAI refused the generation request: ${delta.refusal}`);
-    }
-
-    if (delta?.content) {
-      answer += delta.content;
-      onDelta(delta.content);
-    }
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
-
-    let separatorIndex = buffer.indexOf("\n\n");
-    while (separatorIndex !== -1) {
-      const rawEvent = buffer.slice(0, separatorIndex).trim();
-      buffer = buffer.slice(separatorIndex + 2);
-      if (rawEvent) {
-        handleSseEvent(rawEvent);
+        parsed = candidate as {
+          choices?: Array<{
+            delta?: {
+              content?: string;
+              refusal?: string;
+            };
+          }>;
+        };
+      } catch (error) {
+        console.error("Failed to parse OpenAI SSE payload", {
+          error,
+          payloadLength: payload.length,
+        });
+        return;
       }
-      separatorIndex = buffer.indexOf("\n\n");
-    }
 
-    if (done) {
-      const trailingEvent = buffer.trim();
-      if (trailingEvent) {
-        handleSseEvent(trailingEvent);
+      const delta = parsed.choices?.[0]?.delta;
+      if (delta?.refusal) {
+        throw new Error(`OpenAI refused the generation request: ${delta.refusal}`);
       }
-      break;
+
+      if (delta?.content) {
+        answer += delta.content;
+        onDelta(delta.content);
+      }
+    };
+
+    const getNextSeparator = (value: string) => {
+      const lfIndex = value.indexOf("\n\n");
+      const crlfIndex = value.indexOf("\r\n\r\n");
+
+      if (lfIndex === -1) {
+        return crlfIndex === -1 ? null : { index: crlfIndex, length: 4 };
+      }
+
+      if (crlfIndex === -1 || lfIndex < crlfIndex) {
+        return { index: lfIndex, length: 2 };
+      }
+
+      return { index: crlfIndex, length: 4 };
+    };
+
+    while (true) {
+      if (controller.signal.aborted) {
+        await throwAbortError();
+      }
+
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+      let separator = getNextSeparator(buffer);
+      while (separator) {
+        const rawEvent = buffer.slice(0, separator.index).trim();
+        buffer = buffer.slice(separator.index + separator.length);
+        if (rawEvent) {
+          handleSseEvent(rawEvent);
+        }
+        separator = getNextSeparator(buffer);
+      }
+
+      if (done) {
+        const trailingEvent = buffer.trim();
+        if (trailingEvent) {
+          handleSseEvent(trailingEvent);
+        }
+        break;
+      }
     }
-  }
 
-  const cleanedAnswer = answer.trim();
-  if (!cleanedAnswer) {
-    return null;
-  }
+    const cleanedAnswer = answer.trim();
+    if (!cleanedAnswer) {
+      return null;
+    }
 
-  return {
-    answer: cleanedAnswer,
-    citationIds: [],
-  };
+    return {
+      answer: cleanedAnswer,
+      citationIds: [],
+    };
+  } catch (error) {
+    if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
+      await throwAbortError();
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    externalSignal?.removeEventListener("abort", abortHandler);
+  }
 }
 
 async function generateWithGemini(
