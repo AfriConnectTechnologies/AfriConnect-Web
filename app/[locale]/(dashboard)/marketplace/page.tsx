@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Search, ShoppingCart, Package, ImageIcon, X, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { Search, ShoppingCart, Package, ImageIcon, X, SlidersHorizontal, ArrowUpDown, Loader2, Store } from "lucide-react";
 import Image from "next/image";
 import { USD_TO_ETB_RATE } from "@/lib/pricing";
 
@@ -30,11 +30,9 @@ export default function MarketplacePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Parse URL params once
   const urlMinPrice = searchParams.get("minPrice");
   const urlMaxPrice = searchParams.get("maxPrice");
 
-  // Initialize state from URL params
   const [searchInput, setSearchInput] = useState(searchParams.get("search") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get("category") || "");
@@ -44,7 +42,6 @@ export default function MarketplacePage() {
   );
   const [showFilters, setShowFilters] = useState(false);
   
-  // User-controlled price range (null means use defaults from priceRangeData)
   const [userPriceRange, setUserPriceRange] = useState<[number, number] | null>(
     urlMinPrice || urlMaxPrice 
       ? [urlMinPrice ? Number(urlMinPrice) : 0, urlMaxPrice ? Number(urlMaxPrice) : 999999]
@@ -52,24 +49,16 @@ export default function MarketplacePage() {
   );
 
   const ensureUser = useMutation(api.users.ensureUser);
-
-  // Fetch filter options
   const categories = useQuery(api.products.getProductCategories);
   const countries = useQuery(api.products.getProductCountries);
   const priceRangeData = useQuery(api.products.getProductPriceRange);
 
-  // Compute effective price range
   const priceRange = useMemo((): [number, number] => {
-    if (userPriceRange) {
-      return userPriceRange;
-    }
-    if (priceRangeData) {
-      return [priceRangeData.min, priceRangeData.max];
-    }
-    return [0, 10000]; // Fallback
+    if (userPriceRange) return userPriceRange;
+    if (priceRangeData) return [priceRangeData.min, priceRangeData.max];
+    return [0, 10000];
   }, [userPriceRange, priceRangeData]);
 
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
@@ -77,7 +66,6 @@ export default function MarketplacePage() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Update URL params when filters change
   const updateUrlParams = useCallback(() => {
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
@@ -97,11 +85,9 @@ export default function MarketplacePage() {
     updateUrlParams();
   }, [updateUrlParams]);
 
-  // Determine if price filter is active
   const isPriceFilterActive = userPriceRange && priceRangeData && 
     (userPriceRange[0] > priceRangeData.min || userPriceRange[1] < priceRangeData.max);
 
-  // Fetch products with filters
   const products = useQuery(api.products.marketplace, {
     search: debouncedSearch || undefined,
     category: categoryFilter || undefined,
@@ -112,15 +98,11 @@ export default function MarketplacePage() {
   });
 
   useEffect(() => {
-    ensureUser().catch(() => {
-      // Silently fail if user creation fails
-    });
+    ensureUser().catch(() => {});
   }, [ensureUser]);
 
-  // Check if any filters are active
   const hasActiveFilters = debouncedSearch || categoryFilter || countryFilter || isPriceFilterActive || sortBy !== "newest";
 
-  // Clear all filters
   const clearFilters = () => {
     setSearchInput("");
     setDebouncedSearch("");
@@ -130,24 +112,21 @@ export default function MarketplacePage() {
     setUserPriceRange(null);
   };
 
-  // Handle price range change from slider
   const handlePriceRangeChange = (value: number[]) => {
     setUserPriceRange([value[0], value[1]]);
   };
 
-  // Count active filters (excluding search and sort)
   const activeFilterCount = [categoryFilter, countryFilter, isPriceFilterActive].filter(Boolean).length;
 
-  // Only show full-page loading when essential data is missing
   if (categories === undefined || countries === undefined) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">{tCommon("loading")}</div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
       </div>
     );
   }
 
-  // Ensure products is always an array for rendering (show empty during refetch)
   const displayProducts = products ?? [];
   const isRefetching = products === undefined;
 
@@ -157,67 +136,37 @@ export default function MarketplacePage() {
   };
 
   const formatStockLabel = (quantity: number) => {
-    if (quantity > 1000) {
-      return t("inStockCap");
-    }
+    if (quantity > 1000) return t("inStockCap");
     return t("inStock", { count: quantity });
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground">
-          {t("description")}
-        </p>
+      {/* Page Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>{t("browseProducts")}</CardTitle>
-              <CardDescription>
-                {isRefetching 
-                  ? t("loadingProducts")
-                  : displayProducts.length > 0 
-                    ? t("showingProducts", { count: displayProducts.length })
-                    : t("noProducts")
-                }
-              </CardDescription>
-            </div>
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="w-fit"
-              >
-                <X className="mr-2 h-4 w-4" />
-                {tCommon("clearFilters")}
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Main Controls */}
-          <div className="mb-6 flex flex-col gap-4">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              {/* Search Input */}
+      {/* Filters Card */}
+      <Card className="border-border/60 overflow-hidden">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col gap-4">
+            {/* Search and Sort Row */}
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
                 <Input
                   placeholder={t("searchPlaceholder")}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className="pl-9"
+                  className="pl-10 h-11 rounded-xl bg-muted/30 border-border/60"
                 />
               </div>
 
-              {/* Sort Dropdown */}
               <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-xl">
+                  <ArrowUpDown className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder={t("sortBy")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -227,64 +176,56 @@ export default function MarketplacePage() {
                 </SelectContent>
               </Select>
 
-              {/* Filter Toggle Button (Mobile) */}
               <Button
                 variant="outline"
-                className="sm:hidden"
+                className="sm:hidden h-11 rounded-xl"
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 {tCommon("filters")}
                 {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5">
                     {activeFilterCount}
                   </Badge>
                 )}
               </Button>
             </div>
 
-            {/* Filter Section */}
-            <div className={`flex flex-col gap-4 sm:flex-row sm:flex-wrap ${showFilters ? "" : "hidden sm:flex"}`}>
-              {/* Country Filter */}
+            {/* Filters Row */}
+            <div className={`flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end ${showFilters ? "" : "hidden sm:flex"}`}>
               {countries.length > 0 && (
                 <Select value={countryFilter || "all"} onValueChange={(v) => setCountryFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px] h-10 rounded-xl">
                     <SelectValue placeholder={t("allCountries")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("allCountries")}</SelectItem>
                     {countries.map((country) => (
-                      <SelectItem key={country} value={country}>
-                        {country}
-                      </SelectItem>
+                      <SelectItem key={country} value={country}>{country}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
 
-              {/* Category Filter */}
               {categories.length > 0 && (
                 <Select value={categoryFilter || "all"} onValueChange={(v) => setCategoryFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px] h-10 rounded-xl">
                     <SelectValue placeholder={t("allCategories")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("allCategories")}</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
 
-              {/* Price Range Filter */}
               {priceRangeData && priceRangeData.max > priceRangeData.min && (
                 <div className="flex flex-col gap-2 w-full sm:w-auto">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {t("price")}: {priceRange[0].toLocaleString()} ETB - {priceRange[1].toLocaleString()} ETB
+                    <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                      {t("price")}: {priceRange[0].toLocaleString()} - {priceRange[1].toLocaleString()} ETB
                     </span>
                   </div>
                   <Slider
@@ -297,71 +238,82 @@ export default function MarketplacePage() {
                   />
                 </div>
               )}
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="w-fit text-muted-foreground hover:text-destructive"
+                >
+                  <X className="mr-1.5 h-3.5 w-3.5" />
+                  {tCommon("clearFilters")}
+                </Button>
+              )}
             </div>
 
             {/* Active Filter Tags */}
             {hasActiveFilters && (
               <div className="flex flex-wrap gap-2">
                 {debouncedSearch && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1.5 rounded-lg px-2.5 py-1">
                     {tCommon("search")}: {debouncedSearch}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => {
-                        setSearchInput("");
-                        setDebouncedSearch("");
-                      }}
-                    />
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => { setSearchInput(""); setDebouncedSearch(""); }} />
                   </Badge>
                 )}
                 {countryFilter && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1.5 rounded-lg px-2.5 py-1">
                     {t("country")}: {countryFilter}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => setCountryFilter("")}
-                    />
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => setCountryFilter("")} />
                   </Badge>
                 )}
                 {categoryFilter && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1.5 rounded-lg px-2.5 py-1">
                     {t("category")}: {categoryFilter}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => setCategoryFilter("")}
-                    />
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => setCategoryFilter("")} />
                   </Badge>
                 )}
                 {isPriceFilterActive && (
-                  <Badge variant="secondary" className="gap-1">
-                    {t("price")}: {userPriceRange![0]} ETB - {userPriceRange![1]} ETB
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => setUserPriceRange(null)}
-                    />
+                  <Badge variant="secondary" className="gap-1.5 rounded-lg px-2.5 py-1">
+                    {t("price")}: {userPriceRange![0]} - {userPriceRange![1]} ETB
+                    <X className="h-3 w-3 cursor-pointer hover:text-destructive" onClick={() => setUserPriceRange(null)} />
                   </Badge>
                 )}
               </div>
             )}
+          </div>
+
+          {/* Results count */}
+          <div className="mt-4 pt-4 border-t border-border/40">
+            <p className="text-sm text-muted-foreground">
+              {isRefetching 
+                ? t("loadingProducts")
+                : displayProducts.length > 0 
+                  ? t("showingProducts", { count: displayProducts.length })
+                  : t("noProducts")
+              }
+            </p>
           </div>
         </CardContent>
       </Card>
 
       {/* Products Grid */}
       {isRefetching ? (
-        <div className="py-12 text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          <p className="mt-4 text-muted-foreground">{t("loadingProducts")}</p>
+        <div className="py-16 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="mt-4 text-sm text-muted-foreground">{t("loadingProducts")}</p>
         </div>
       ) : displayProducts.length === 0 ? (
-        <div className="py-12 text-center">
-          <Package className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <h3 className="mt-4 text-lg font-semibold">{t("noProducts")}</h3>
-          <p className="mt-2 text-muted-foreground">
+        <div className="py-16 text-center">
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/50 mb-4">
+            <Store className="h-10 w-10 text-muted-foreground/40" />
+          </div>
+          <h3 className="text-lg font-semibold">{t("noProducts")}</h3>
+          <p className="mt-1.5 text-sm text-muted-foreground max-w-sm mx-auto">
             {hasActiveFilters ? t("tryAdjustingFilters") : t("noProductsYet")}
           </p>
           {hasActiveFilters && (
-            <Button variant="outline" className="mt-4" onClick={clearFilters}>
+            <Button variant="outline" className="mt-4 rounded-xl" onClick={clearFilters}>
               {t("clearAllFilters")}
             </Button>
           )}
@@ -370,59 +322,49 @@ export default function MarketplacePage() {
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {displayProducts.map((product) => (
             <Link key={product._id} href={`/marketplace/${product._id}`} className="min-w-0">
-              <Card className="group h-full overflow-hidden rounded-xl transition-all hover:border-primary/50 hover:shadow-lg sm:rounded-2xl">
-                {/* Product Image */}
-                <div className="relative aspect-square overflow-hidden bg-muted">
+              <Card className="group h-full overflow-hidden rounded-2xl transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 border-border/60">
+                <div className="relative aspect-square overflow-hidden bg-muted/50">
                   {product.primaryImageUrl ? (
                     <Image
                       src={product.primaryImageUrl}
                       alt={product.name}
                       fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <ImageIcon className="h-12 w-12 text-muted-foreground/50 sm:h-16 sm:w-16" />
+                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground/20 sm:h-16 sm:w-16" />
                     </div>
                   )}
 
-                  {/* Category Badge - Overlay */}
                   {product.category && (
-                    <Badge
-                      variant="secondary"
-                      className="absolute left-2 top-2 hidden bg-background/80 text-[10px] backdrop-blur-sm sm:inline-flex"
-                    >
+                    <Badge variant="secondary" className="absolute left-2 top-2 hidden bg-background/90 text-[10px] backdrop-blur-md sm:inline-flex shadow-sm">
                       {product.category}
                     </Badge>
                   )}
 
-                  {/* Country Badge - Overlay */}
                   {product.country && (
-                    <Badge
-                      variant="outline"
-                      className="absolute right-2 top-2 hidden bg-background/80 text-[10px] backdrop-blur-sm sm:inline-flex"
-                    >
+                    <Badge variant="outline" className="absolute right-2 top-2 hidden bg-background/90 text-[10px] backdrop-blur-md sm:inline-flex shadow-sm">
                       {product.country}
                     </Badge>
                   )}
 
-                  {/* Out of Stock Overlay */}
                   {product.quantity === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                      <Badge variant="destructive" className="text-xs sm:text-sm">
-                        {t("outOfStock")}
-                      </Badge>
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                      <Badge variant="destructive" className="text-xs sm:text-sm">{t("outOfStock")}</Badge>
                     </div>
                   )}
 
                   {product.isOrderable === false && (
                     <div className="absolute bottom-2 left-2">
-                      <Badge variant="outline" className="bg-background/90 text-[10px] sm:text-xs">
+                      <Badge variant="outline" className="bg-background/90 text-[10px] sm:text-xs backdrop-blur-sm">
                         Not orderable
                       </Badge>
                     </div>
                   )}
+
+                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
 
                 <CardHeader className="p-3 pb-1 sm:p-4 sm:pb-2">
@@ -459,7 +401,7 @@ export default function MarketplacePage() {
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="h-8 w-8 shrink-0 transition-colors group-hover:bg-primary group-hover:text-primary-foreground sm:h-9 sm:w-9"
+                      className="h-8 w-8 shrink-0 rounded-xl transition-all group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-md sm:h-9 sm:w-9"
                       disabled={product.quantity === 0 || product.isOrderable === false}
                     >
                       <ShoppingCart className="h-4 w-4" />

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2 } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, Package, CreditCard, Loader2, ArrowRight } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
@@ -36,9 +36,7 @@ export default function CartPage() {
   });
 
   useEffect(() => {
-    ensureUser().catch(() => {
-      // Silently fail if user creation fails
-    });
+    ensureUser().catch(() => {});
   }, [ensureUser]);
 
   const handleUpdateQuantity = async (itemId: Id<"cartItems">, newQuantity: number) => {
@@ -71,7 +69,6 @@ export default function CartPage() {
 
     setIsCheckingOut(true);
     try {
-      // Calculate subtotal from cart (orders will be created after successful payment)
       const subtotalAmount = cart.reduce((sum, item) => {
         if (!item.product) return sum;
         return sum + item.product.price * item.quantity;
@@ -83,12 +80,9 @@ export default function CartPage() {
         throw new Error("Invalid cart total");
       }
 
-      // Initialize Chapa payment (cart snapshot is saved in payment metadata)
       const response = await fetch("/api/payments/initialize", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: totalAmount,
           currency: "ETB",
@@ -102,10 +96,8 @@ export default function CartPage() {
         throw new Error(data.error || "Failed to initialize payment");
       }
 
-      // Redirect to Chapa checkout
       toast.success("Redirecting to payment...");
       window.location.href = data.checkoutUrl;
-
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to checkout";
       toast.error(errorMessage);
@@ -141,8 +133,9 @@ export default function CartPage() {
 
   if (cart === undefined) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">{tCommon("loading")}</div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
       </div>
     );
   }
@@ -154,7 +147,6 @@ export default function CartPage() {
 
   const buyerFee = Math.round(subtotal * 0.01 * 100) / 100;
   const total = subtotal + buyerFee;
-
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const getPrimaryUsdPrice = (priceEtb: number, usdPrice?: number) => {
@@ -211,19 +203,16 @@ export default function CartPage() {
 
             await proceedToCheckout();
           } catch (error: unknown) {
-            const message =
-              error instanceof Error ? error.message : t("buyerAgreementRequired");
+            const message = error instanceof Error ? error.message : t("buyerAgreementRequired");
             toast.error(message);
             throw error;
           }
         }}
       />
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground">
-          {t("description")}
-        </p>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
       {!COMMERCE_ENABLED && (
@@ -234,78 +223,75 @@ export default function CartPage() {
       )}
 
       {cart.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">{t("emptyCart")}</p>
+        <Card className="border-border/60 rounded-2xl">
+          <CardContent className="py-16 text-center">
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/50 mb-4">
+              <ShoppingCart className="h-10 w-10 text-muted-foreground/40" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">{t("emptyCart")}</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">Start shopping in the marketplace</p>
             <Link href="/marketplace">
-              <Button>{t("browseMarketplace")}</Button>
+              <Button className="rounded-xl gap-2">
+                Browse Marketplace
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </Link>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2 space-y-4">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-3">
             {cart.map((item) => {
               if (!item.product) return null;
 
               return (
-                <Card key={item._id}>
-                  <CardContent className="p-6">
+                <Card key={item._id} className="border-border/60 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+                  <CardContent className="p-4 md:p-5">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">
-                          {item.product.name}
-                        </h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-base mb-1 truncate">{item.product.name}</h3>
                         {item.product.category && (
-                          <Badge variant="outline" className="mb-2">
+                          <Badge variant="outline" className="mb-2 text-xs rounded-lg border-border/60">
                             {item.product.category}
                           </Badge>
                         )}
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
                           {item.product.description || tCommon("noDescription")}
                         </p>
                         <div className="flex items-center gap-4">
-                          <div className="flex flex-col">
-                            <div className="text-lg font-semibold">
+                          <div>
+                            <div className="text-lg font-bold">
                               {(() => {
                                 const usd = getPrimaryUsdPrice(item.product.price, item.product.usdPrice);
                                 return `${usd.approximate ? "~" : ""}$${formatUsd(usd.value)}`;
                               })()}
                             </div>
-                            <div className="text-xs text-muted-foreground">{item.product.price.toLocaleString()} ETB</div>
-                            {item.product.kesPrice !== undefined && (
-                              <div className="text-xs text-muted-foreground">
-                                {item.product.kesPrice.toLocaleString()} KES
-                              </div>
-                            )}
+                            <div className="text-[11px] text-muted-foreground">{item.product.price.toLocaleString()} ETB</div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Package className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {item.product.quantity} available
-                            </span>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-lg">
+                            <Package className="h-3 w-3" />
+                            {item.product.quantity} available
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-col items-end gap-3">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive"
                           onClick={() => handleRemove(item._id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() =>
-                              handleUpdateQuantity(item._id, item.quantity - 1)
-                            }
+                            className="h-8 w-8 rounded-lg"
+                            onClick={() => handleUpdateQuantity(item._id, item.quantity - 1)}
                             disabled={item.quantity <= 1}
                           >
-                            <Minus className="h-4 w-4" />
+                            <Minus className="h-3.5 w-3.5" />
                           </Button>
                           <Input
                             type="number"
@@ -314,40 +300,31 @@ export default function CartPage() {
                             value={item.quantity}
                             onChange={(e) => {
                               const val = parseInt(e.target.value) || 1;
-                              handleUpdateQuantity(
-                                item._id,
-                                Math.max(1, Math.min(item.product!.quantity, val))
-                              );
+                              handleUpdateQuantity(item._id, Math.max(1, Math.min(item.product!.quantity, val)));
                             }}
-                            className="w-16 text-center"
+                            className="w-14 text-center h-8 rounded-lg text-sm"
                           />
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() =>
-                              handleUpdateQuantity(item._id, item.quantity + 1)
-                            }
+                            className="h-8 w-8 rounded-lg"
+                            onClick={() => handleUpdateQuantity(item._id, item.quantity + 1)}
                             disabled={item.quantity >= item.product.quantity}
                           >
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-muted-foreground">{t("subtotal")}</div>
-                          <div className="font-semibold">
+                          <div className="text-xs text-muted-foreground">{t("subtotal")}</div>
+                          <div className="font-bold">
                             {(() => {
                               const usd = getPrimaryUsdPrice(item.product.price, item.product.usdPrice);
                               return `${usd.approximate ? "~" : ""}$${formatUsd(usd.value * item.quantity)}`;
                             })()}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[11px] text-muted-foreground">
                             {(item.product.price * item.quantity).toLocaleString()} ETB
                           </div>
-                          {item.product.kesPrice !== undefined && (
-                            <div className="text-xs text-muted-foreground">
-                              {(item.product.kesPrice * item.quantity).toLocaleString()} KES
-                            </div>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -357,75 +334,76 @@ export default function CartPage() {
             })}
           </div>
 
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("title")}</CardTitle>
-                <CardDescription>
-                  {itemCount} {itemCount === 1 ? "item" : "items"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("subtotal")}</span>
-                    <div className="text-right">
-                      <div>{`${subtotalUsdApproximate ? "~" : ""}$${formatUsd(subtotalUsd)}`}</div>
-                      <div className="text-xs text-muted-foreground">{subtotal.toLocaleString()} ETB</div>
+          {/* Order Summary */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-20">
+              <Card className="border-border/60 rounded-2xl overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Order Summary</CardTitle>
+                  <CardDescription>{itemCount} {itemCount === 1 ? "item" : "items"}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t("subtotal")}</span>
+                      <div className="text-right">
+                        <div className="font-medium">{`${subtotalUsdApproximate ? "~" : ""}$${formatUsd(subtotalUsd)}`}</div>
+                        <div className="text-[11px] text-muted-foreground">{subtotal.toLocaleString()} ETB</div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Buyer fee (1%)</span>
+                      <div className="text-right">
+                        <div className="font-medium">{`~$${formatUsd(buyerFeeUsd)}`}</div>
+                        <div className="text-[11px] text-muted-foreground">{buyerFee.toLocaleString()} ETB</div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Buyer fee (1%)</span>
-                    <div className="text-right">
-                      <div>{`~$${formatUsd(buyerFeeUsd)}`}</div>
-                      <div className="text-xs text-muted-foreground">{buyerFee.toLocaleString()} ETB</div>
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between">
+                      <span className="font-bold text-lg">{t("total")}</span>
+                      <div className="text-right">
+                        <div className="font-bold text-lg">{`~$${formatUsd(totalUsd)}`}</div>
+                        <div className="text-xs text-muted-foreground">{total.toLocaleString()} ETB</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="border-t pt-4">
-                  <div className="flex justify-between font-semibold">
-                    <span>{t("total")}</span>
-                    <div className="text-right">
-                      <div>{`~$${formatUsd(totalUsd)}`}</div>
-                      <div className="text-xs font-normal text-muted-foreground">{total.toLocaleString()} ETB</div>
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  className="w-full gap-2"
-                  onClick={handleCheckout}
-                  disabled={
-                    isCheckingOut ||
-                    cart.length === 0 ||
-                    !COMMERCE_ENABLED ||
-                    buyerAgreementState === undefined ||
-                    buyerAgreementState?.status === "missing_active_version"
-                  }
-                >
-                  {isCheckingOut ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {tCommon("loading")}
-                    </>
-                  ) : !COMMERCE_ENABLED ? (
-                    <>
-                      <CreditCard className="h-4 w-4" />
-                      {tCommon("soon")}
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="h-4 w-4" />
-                      {t("checkout")}
-                    </>
-                  )}
-                </Button>
-                <Link href="/marketplace">
-                  <Button variant="outline" className="w-full">
-                    {t("browseMarketplace")}
+                  <Button
+                    className="w-full gap-2 h-11 rounded-xl text-base"
+                    onClick={handleCheckout}
+                    disabled={
+                      isCheckingOut ||
+                      cart.length === 0 ||
+                      !COMMERCE_ENABLED ||
+                      buyerAgreementState === undefined ||
+                      buyerAgreementState?.status === "missing_active_version"
+                    }
+                  >
+                    {isCheckingOut ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {tCommon("loading")}
+                      </>
+                    ) : !COMMERCE_ENABLED ? (
+                      <>
+                        <CreditCard className="h-4 w-4" />
+                        {tCommon("soon")}
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4" />
+                        {t("checkout")}
+                      </>
+                    )}
                   </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                  <Link href="/marketplace">
+                    <Button variant="outline" className="w-full rounded-xl">
+                      {t("browseMarketplace")}
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       )}
