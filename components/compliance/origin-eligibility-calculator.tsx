@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import {
   Card,
   CardContent,
@@ -32,8 +33,6 @@ import {
   Loader2,
   Package,
   DollarSign,
-  Percent,
-  Mail,
   RotateCcw,
 } from "lucide-react";
 import { OriginResultCard } from "./origin-result-card";
@@ -185,11 +184,11 @@ export function OriginEligibilityCalculator({
     setHasSaved(false);
   };
 
-  const handleDeleteCalculation = async (calculationId: string) => {
+  const handleDeleteCalculation = async (calculationId: Id<"originCalculations">) => {
     try {
-      await deleteCalculation({ calculationId: calculationId as any });
+      await deleteCalculation({ calculationId });
       toast.success(t("calculationDeleted"));
-    } catch (error) {
+    } catch {
       toast.error(t("failedToDelete"));
     }
   };

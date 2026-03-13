@@ -21,6 +21,13 @@ const RETRY_BACKOFFS_MS = [
 
 const MAX_ATTEMPTS = RETRY_BACKOFFS_MS.length;
 
+interface ChapaTransferResponse {
+  status?: string;
+  message?: string;
+  data?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 function getBackoffMs(attempts: number) {
   const index = Math.max(0, Math.min(attempts - 1, RETRY_BACKOFFS_MS.length - 1));
   return RETRY_BACKOFFS_MS[index];
@@ -88,7 +95,7 @@ async function createTransfer(payload: {
         }),
       });
 
-      let data: any = null;
+      let data: ChapaTransferResponse | null = null;
       try {
         data = await response.json();
       } catch {

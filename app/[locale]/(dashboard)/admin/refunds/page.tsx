@@ -30,14 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  RefreshCw,
-  Loader2,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  DollarSign,
-} from "lucide-react";
+import { RefreshCw, Loader2, AlertTriangle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { Id } from "@/convex/_generated/dataModel";
 

@@ -92,7 +92,7 @@ export default function PricingPage() {
       if (contentType && contentType.includes("application/json")) {
         try {
           data = await response.json();
-        } catch (parseError) {
+        } catch {
           const text = await response.text();
           console.error(`Failed to parse JSON response (status ${response.status}):`, text);
           throw new Error(`Server returned invalid JSON (status ${response.status})`);

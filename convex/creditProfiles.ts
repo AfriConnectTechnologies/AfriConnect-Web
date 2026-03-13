@@ -129,10 +129,6 @@ function topBuyerConcentrationByCurrency(
   });
 }
 
-function getBucketRate(rateBuckets: CurrencyRateBucket[], currency: string) {
-  return rateBuckets.find((bucket) => bucket.currency === currency)?.rate ?? 0;
-}
-
 export const getMyProfile = query({
   args: {},
   handler: async (ctx) => {

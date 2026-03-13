@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 describe("Button Component", () => {
@@ -43,7 +44,7 @@ describe("Button Component", () => {
   it("should render as child component when asChild is true", () => {
     render(
       <Button asChild>
-        <a href="/test">Link Button</a>
+        <Link href="/test">Link Button</Link>
       </Button>
     );
     expect(screen.getByRole("link", { name: /link button/i })).toBeInTheDocument();

@@ -51,6 +51,7 @@ const markdownClassNames = {
 
 export function AfcftaAiAssistant() {
   const t = useTranslations("afcfta");
+  const sampleQuestions = t.raw("sampleQuestions");
   const [question, setQuestion] = useState("");
   const [language, setLanguage] = useState<ComplianceTranslationLanguage>("en");
   const [answer, setAnswer] = useState<ComplianceAssistantAnswer | null>(null);
@@ -237,6 +238,23 @@ export function AfcftaAiAssistant() {
             placeholder={t("placeholder")}
             className="min-h-28"
           />
+          {Array.isArray(sampleQuestions) && sampleQuestions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {sampleQuestions.map((sampleQuestion) => (
+                <Button
+                  key={sampleQuestion}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-auto whitespace-normal text-left"
+                  onClick={() => setQuestion(sampleQuestion)}
+                  disabled={isSubmitting}
+                >
+                  {sampleQuestion}
+                </Button>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <Button onClick={() => void submitQuestion()} disabled={!canSubmit}>
               {isSubmitting ? (
