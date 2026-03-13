@@ -41,6 +41,7 @@
     "settings": "ቅንብሮች",
     "billing": "ክፍያ",
     "myBusiness": "ንግዴ",
+    "creditProfile": "የክሬዲት መገለጫ",
     "registerBusiness": "ንግድ መዝግብ",
     "manageUsers": "ተጠቃሚዎችን አስተዳድር",
     "manageBusinesses": "ንግዶችን አስተዳድር",
@@ -882,6 +883,49 @@
     "countryDescription": "የታሪፍ መርሐግብሮችን ለመፈለግ ሀገር ይምረጡ",
     "registerToSaveProducts": "ምርቶችዎን በዝርዝርዎ ለማስቀጠል ንግድዎን ይመዝገቡ።"
   },
+  "afcfta": {
+    "title": "ስለ AfCFTA ተገዢነት ከAI ይጠይቁ",
+    "description": "በተጫኑ የAfCFTA ሰነዶች ላይ የተመሰረቱ ጥያቄዎችን ይጠይቁ። ረዳቱ ለQdrant ፍለጋ እና በማጣቀሻ የሚጀምሩ መልሶች እንዲሰጥ ተዘጋጅቷል።",
+    "badge": "የመነሻ መዋቅር",
+    "helper": "መልሶች በተጫኑ ምንጮች ላይ ብቻ መመርኮዝ አለባቸው። ማስረጃ ከጎደለ ወይም ከተጋጨ ረዳቱ ከመገመት ይልቅ ይህን መግለጽ አለበት።",
+    "placeholder": "የተገዢነት ጥያቄ ይጠይቁ፣ ለምሳሌ፦ የAfCFTA የመነሻ ሰርተፊኬት ጥያቄን ለመደገፍ ምን ሰነዶች ያስፈልጋሉ?",
+    "sampleQuestions": [
+      "AfCFTA ይህን ምርት ዛሬ በራሱ ከቀረጥ ነፃ ያደርገዋል?",
+      "የመነሻ ሰርተፊኬት ጥያቄን ለመደገፍ ምን አይነት ማስረጃ ያስፈልገኛል?",
+      "በተጫኑ ደንቦች ስር ቀላል ዳግም ማሸግ የAfCFTA መነሻን ሊያስገኝ ይችላል?"
+    ],
+    "cta": {
+      "ask": "AI ይጠይቁ",
+      "asking": "በመጠየቅ ላይ..."
+    },
+    "form": {
+      "questionLabel": "የተገዢነት ጥያቄ"
+    },
+    "validation": {
+      "questionTooShort": "እባክዎ የበለጠ ግልጽ የሆነ የተገዢነት ጥያቄ ያስገቡ።",
+      "invalidQuestion": "እባክዎ ትክክለኛ የተገዢነት ጥያቄ ያቅርቡ።"
+    },
+    "error": {
+      "generic": "የተገዢነት ረዳቱን መጠየቅ አልተሳካም።"
+    },
+    "empty": {
+      "citations": "እስካሁን ምንም ማጣቀሻዎች አልተመለሱም።"
+    },
+    "sections": {
+      "answer": "መልስ",
+      "citations": "ማጣቀሻዎች",
+      "source": "ምንጭ"
+    },
+    "mode": {
+      "fullRag": "ሙሉ RAG",
+      "retrievalOnly": "ፍለጋ ብቻ"
+    },
+    "status": {
+      "ready": "ዝግጁ",
+      "not_configured": "አልተዋቀረም",
+      "no_evidence": "ምንም ማስረጃ የለም"
+    }
+  },
   "originEligibility": {
     "title": "የመነሻ ሰርተፊኬት ብቁነት",
     "description": "ምርትዎ በAfCFTA ስር ለተመራጭ መነሻ የ60% ህጉን ያሟላ እንደሆነ ያሰሉ",
@@ -941,6 +985,181 @@
     "totalCalculations": "ጠቅላላ ስሌቶች",
     "previousCalculations": "ቀድሞ የነበሩ ስሌቶች",
     "previousCalculationsDescription": "የተቀመጡ የብቁነት ስሌቶችዎ"
+  },
+  "creditProfile": {
+    "loading": "ዲጂታል የክሬዲት መገለጫውን በመጫን ላይ...",
+    "title": "ዲጂታል የክሬዲት መገለጫ",
+    "titleReport": "ዲጂታል የክሬዲት መገለጫ ሪፖርት",
+    "subtitle": "ከገበያ ግብይቶች፣ ከትዕዛዝ አፈጻጸም እና ከገዢ ልዩነት የተገነባ።",
+    "actions": {
+      "backToProfile": "ወደ ክሬዲት መገለጫ ተመለስ",
+      "openBusinessProfile": "የንግድ መገለጫን ክፈት",
+      "businessSetup": "የንግድ ቅንብር",
+      "back": "ተመለስ",
+      "printOrSavePdf": "አትም / PDF አስቀምጥ",
+      "downloadableReport": "ሊወርድ የሚችል ሪፖርት"
+    },
+    "badges": {
+      "verifiedSeller": "የተረጋገጠ ሻጭ",
+      "platformActivity": "የመድረክ እንቅስቃሴ መገለጫ"
+    },
+    "access": {
+      "no_business": {
+        "title": "ንግድዎን ይመዝግቡ",
+        "message": "ዲጂታል የክሬዲት መገለጫ የሚገኘው ንግድዎን ከመዝገቡ እና ከማረጋገጡ በኋላ ነው።"
+      },
+      "business_missing": {
+        "title": "የንግድ መዝገብ አልተገኘም",
+        "message": "መለያዎ አሁን ከማይገኝ የንግድ መዝገብ ጋር ተገናኝቷል።"
+      },
+      "pending_verification": {
+        "title": "ማረጋገጫ በሂደት ላይ ነው",
+        "message": "ንግድዎ ከተረጋገጠ በኋላ ዲጂታል የክሬዲት መገለጫዎ ይከፈታል።"
+      },
+      "rejected_verification": {
+        "title": "ማረጋገጫ ያስፈልጋል",
+        "message": "ዲጂታል የክሬዲት መገለጫውን ለመክፈት በመጀመሪያ የንግድ ማረጋገጫዎን ያስተካክሉ።"
+      },
+      "not_seller": {
+        "title": "የሻጭ ፈቃድ ያስፈልጋል",
+        "message": "ዲጂታል የክሬዲት መገለጫውን ማየት የሚችሉት የተረጋገጡ ሻጮች ብቻ ናቸው።"
+      },
+      "ready": {
+        "title": "ዝግጁ ነው",
+        "message": "ዲጂታል የክሬዲት መገለጫዎ ዝግጁ ነው።"
+      }
+    },
+    "common": {
+      "notAvailableYet": "እስካሁን አይገኝም"
+    },
+    "summary": {
+      "headline": "{paidOrdersCount} የተከፈሉ ትዕዛዞች በ{uniqueBuyers} ገዢዎች ላይ",
+      "description": "ይህ መገለጫ በAfriConnect የተመዘገበ እንቅስቃሴን ያሳያል፣ እና እንደ ውጫዊ የክሬዲት ውጤት ሳይሆን እንደ መድረክ ስኮርካርድ ይቆጠራል።",
+      "generated": "የተፈጠረበት",
+      "reportPeriodStart": "የሪፖርት ጊዜ መጀመሪያ",
+      "latestProfileActivity": "የቅርብ ጊዜ የመገለጫ እንቅስቃሴ"
+    },
+    "cards": {
+      "paidTransactionVolume": {
+        "title": "የተከፈለ የግብይት መጠን",
+        "description": "የተጠናቀቀ የገበያ ትዕዛዝ ዋጋ"
+      },
+      "paidOrders": {
+        "title": "የተከፈሉ ትዕዛዞች",
+        "description": "{totalOrders} ጠቅላላ የሻጭ ትዕዛዞች ተከታትለዋል"
+      },
+      "uniqueBuyers": {
+        "title": "ልዩ ገዢዎች",
+        "description": "{repeatBuyers} የተደጋገሙ ገዢዎች"
+      },
+      "buyerCountries": {
+        "title": "የገዢ አገሮች",
+        "description": "{buyersWithBusinessMetadata} ገዢዎች ከንግድ መረጃ ጋር ተገናኝተዋል"
+      },
+      "totalSellerOrders": {
+        "title": "ጠቅላላ የሻጭ ትዕዛዞች",
+        "description": "ለዚህ ሻጭ የተመደቡ ሁሉም ትዕዛዞች"
+      },
+      "successfulPaymentRate": {
+        "title": "የተሳካ ክፍያ መጠን",
+        "description": "የክፍያ መዝገብ ያላቸው ትዕዛዞች ውስጥ የተጠናቀቁ ክፍያዎች"
+      },
+      "averageOrderValue": {
+        "title": "አማካይ የትዕዛዝ ዋጋ",
+        "description": "በተጠናቀቁ የገበያ ትዕዛዞች ላይ የተመሠረተ"
+      },
+      "recentPaidActivity": {
+        "title": "የቅርብ ጊዜ የተከፈለ እንቅስቃሴ",
+        "description": "በጣም የቅርብ ጊዜ የተጠናቀቀ የትዕዛዝ እንቅስቃሴ"
+      },
+      "uniqueBuyersDetailed": {
+        "title": "ልዩ ገዢዎች",
+        "description": "ለዚህ ሻጭ ትዕዛዝ ያስገቡ ልዩ ገዢዎች"
+      },
+      "repeatBuyers": {
+        "title": "የተደጋገሙ ገዢዎች",
+        "description": "ከአንድ በላይ ትዕዛዝ ያስገቡ ገዢዎች"
+      },
+      "metadataCoverage": {
+        "title": "የመረጃ ሽፋን",
+        "description": "{buyersWithBusinessMetadata} ገዢዎች ከንግድ መዝገቦች ጋር ተገናኝተዋል"
+      },
+      "topBuyerConcentration": {
+        "title": "የከፍተኛ ገዢ መጠን",
+        "description": "ከትልቁ ገዢ የመጣ የግብይት መጠን ድርሻ"
+      }
+    },
+    "empty": {
+      "title": "ገና በቂ እንቅስቃሴ የለም",
+      "description": "ንግድዎ ትዕዛዞችን ማግኘት ሲጀምር ይህ መገለጫ በራሱ በግብይት፣ በአፈጻጸም እና በገዢ ልዩነት ምልክቶች ይሞላል።"
+    },
+    "sections": {
+      "transactionHistory": {
+        "title": "የግብይት ታሪክ",
+        "description": "በገበያ ውስጥ የቅርብ ጊዜ የትዕዛዝ እና የክፍያ አፈጻጸም።"
+      },
+      "fulfillment": {
+        "title": "የአፈጻጸም እንቅስቃሴ",
+        "description": "ከትዕዛዝ ዑደት እና ከክፍያ ውጤቶች የተመነጨ የስራ አፈጻጸም።"
+      },
+      "buyerDiversity": {
+        "title": "የገዢ ልዩነት"
+      }
+    },
+    "trend": {
+      "window": "{days} ቀናት",
+      "rollingPerformanceWindow": "ተንቀሳቃሽ የአፈጻጸም መስኮት",
+      "orders": "ትዕዛዞች",
+      "paidOrders": "የተከፈሉ ትዕዛዞች",
+      "paidVolume": "የተከፈለ መጠን"
+    },
+    "fulfillment": {
+      "completionRate": "የማጠናቀቅ መጠን",
+      "cancellationRate": "የመሰረዝ መጠን",
+      "payoutSuccessRate": "የክፍያ ስኬት መጠን",
+      "ordersCurrentlyProcessing": "በሂደት ላይ ያሉ ትዕዛዞች",
+      "averageFulfillmentCycle": "አማካይ የአፈጻጸም ዑደት",
+      "averageFulfillmentCycleValue": "{days} ቀናት",
+      "payoutOutcomeCounts": "የክፍያ ውጤት ቆጠራ",
+      "payoutStatuses": {
+        "queued": "ተሰልፏል",
+        "pending": "በመጠባበቅ ላይ",
+        "success": "ተሳክቷል",
+        "failed": "አልተሳካም",
+        "reverted": "ተመልሷል"
+      }
+    },
+    "buyerDiversity": {
+      "coverage": {
+        "complete": "የገዢ ልዩነት በተገናኙ የገዢ ንግድ መዝገቦች ላይ የተመሠረተ ነው።",
+        "partial": "የገዢ ልዩነት በንግድ መዝገብ ያላቸው ገዢዎች ብቻ ላይ የተመሠረተ ነው፣ ስለዚህ አንዳንድ ገዢዎች ከልዩነት ትንታኔው ውጭ ሊሆኑ ይችላሉ።"
+      }
+    },
+    "breakdowns": {
+      "countLabel": "{count} ገዢዎች",
+      "buyerCountries": {
+        "title": "የገዢ አገሮች",
+        "empty": "ገዢዎች የንግድ መረጃ ሲያገናኙ የአገር ስርጭት ይታያል።"
+      },
+      "buyerCategories": {
+        "title": "የገዢ ምድቦች",
+        "empty": "ገዢዎች የንግድ መረጃ ሲያገናኙ የምድብ ስርጭት ይታያል።"
+      },
+      "topBuyers": {
+        "title": "ከፍተኛ ገዢዎች",
+        "empty": "ትዕዛዞች ሲመጡ ከፍተኛ ገዢዎች ይታያሉ።",
+        "orders": "{count} ትዕዛዞች"
+      }
+    },
+    "methodology": {
+      "title": "የመርሀ ግብር ማስታወሻ",
+      "description": "ይህ ሪፖርት ከAfriConnect የመጀመሪያ ደረጃ የገበያ እንቅስቃሴ የተፈጠረ ነው።",
+      "points": {
+        "transactionVolume": "የግብይት መጠን ከተጠናቀቁ የመድረክ ክፍያዎች ጋር የተገናኙ የሻጭ ትዕዛዞችን ይመሠረታል።",
+        "fulfillment": "አፈጻጸም የትዕዛዝ ሁኔታን እና የክፍያ ውጤቶችን እንደ የስራ ምልክቶች ይጠቀማል።",
+        "buyerDiversity": "የገዢ ልዩነት በተገናኙ የገዢ ንግድ መዝገቦች ላይ የተመሠረተ ስለሆነ ያልተሟላ መረጃ ሽፋንን ይቀንሳል።"
+      }
+    }
   },
   "inventory": {
     "title": "እቃ አስተዳደር",

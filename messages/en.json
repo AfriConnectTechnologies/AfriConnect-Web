@@ -41,6 +41,7 @@
     "settings": "Settings",
     "billing": "Billing",
     "myBusiness": "My Business",
+    "creditProfile": "Credit Profile",
     "registerBusiness": "Register Business",
     "manageUsers": "Manage Users",
     "manageBusinesses": "Manage Businesses",
@@ -882,6 +883,49 @@
     "countryDescription": "Select the country to search tariff schedules for",
     "registerToSaveProducts": "Register your business to save products to your list."
   },
+  "afcfta": {
+    "title": "Ask AI about AfCFTA compliance",
+    "description": "Ask grounded questions against uploaded AfCFTA documents. The assistant is scaffolded for Qdrant retrieval and citation-first answers.",
+    "badge": "Scaffold",
+    "helper": "Answers should rely on uploaded sources only. If evidence is missing or conflicting, the assistant should say so instead of guessing.",
+    "placeholder": "Ask a compliance question, for example: What documents are needed to support an AfCFTA certificate of origin claim?",
+    "sampleQuestions": [
+      "Does AfCFTA automatically make this product duty free today?",
+      "What evidence do I need to support a certificate of origin claim?",
+      "Can simple repackaging confer AfCFTA origin under the uploaded rules?"
+    ],
+    "cta": {
+      "ask": "Ask AI",
+      "asking": "Asking..."
+    },
+    "form": {
+      "questionLabel": "Compliance question"
+    },
+    "validation": {
+      "questionTooShort": "Please enter a more specific compliance question.",
+      "invalidQuestion": "Please provide a valid compliance question."
+    },
+    "error": {
+      "generic": "Failed to ask the compliance assistant."
+    },
+    "empty": {
+      "citations": "No citations returned yet."
+    },
+    "sections": {
+      "answer": "Answer",
+      "citations": "Citations",
+      "source": "Source"
+    },
+    "mode": {
+      "fullRag": "Full RAG",
+      "retrievalOnly": "Retrieval only"
+    },
+    "status": {
+      "ready": "Ready",
+      "not_configured": "Not configured",
+      "no_evidence": "No evidence"
+    }
+  },
   "originEligibility": {
     "title": "Certificate of Origin Eligibility",
     "description": "Calculate if your product meets the 60% rule for preferential origin under AfCFTA",
@@ -941,6 +985,181 @@
     "totalCalculations": "Total Calculations",
     "previousCalculations": "Previous Calculations",
     "previousCalculationsDescription": "Your saved eligibility calculations"
+  },
+  "creditProfile": {
+    "loading": "Loading digital credit profile...",
+    "title": "Digital Credit Profile",
+    "titleReport": "Digital Credit Profile Report",
+    "subtitle": "Built from marketplace transactions, fulfillment history, and buyer diversity.",
+    "actions": {
+      "backToProfile": "Back to credit profile",
+      "openBusinessProfile": "Open business profile",
+      "businessSetup": "Business setup",
+      "back": "Back",
+      "printOrSavePdf": "Print / Save PDF",
+      "downloadableReport": "Downloadable report"
+    },
+    "badges": {
+      "verifiedSeller": "Verified seller",
+      "platformActivity": "Platform activity profile"
+    },
+    "access": {
+      "no_business": {
+        "title": "Register your business",
+        "message": "A digital credit profile becomes available after you register and verify a business."
+      },
+      "business_missing": {
+        "title": "Business record not found",
+        "message": "Your account is linked to a business record that is no longer available."
+      },
+      "pending_verification": {
+        "title": "Verification in progress",
+        "message": "Your digital credit profile will unlock once the business is verified."
+      },
+      "rejected_verification": {
+        "title": "Verification required",
+        "message": "Resolve your business verification first to unlock the digital credit profile."
+      },
+      "not_seller": {
+        "title": "Seller access required",
+        "message": "Only verified seller accounts can access the digital credit profile."
+      },
+      "ready": {
+        "title": "Ready",
+        "message": "Your digital credit profile is available."
+      }
+    },
+    "common": {
+      "notAvailableYet": "Not available yet"
+    },
+    "summary": {
+      "headline": "{paidOrdersCount} paid orders across {uniqueBuyers} buyers",
+      "description": "This profile reflects activity captured on AfriConnect and is intended as a platform scorecard, not an external bureau credit score.",
+      "generated": "Generated",
+      "reportPeriodStart": "Report period start",
+      "latestProfileActivity": "Latest profile activity"
+    },
+    "cards": {
+      "paidTransactionVolume": {
+        "title": "Paid transaction volume",
+        "description": "Settled marketplace order value"
+      },
+      "paidOrders": {
+        "title": "Paid orders",
+        "description": "{totalOrders} total seller orders tracked"
+      },
+      "uniqueBuyers": {
+        "title": "Unique buyers",
+        "description": "{repeatBuyers} repeat buyers"
+      },
+      "buyerCountries": {
+        "title": "Buyer countries",
+        "description": "{buyersWithBusinessMetadata} buyers with linked business metadata"
+      },
+      "totalSellerOrders": {
+        "title": "Total seller orders",
+        "description": "All orders attributed to this seller"
+      },
+      "successfulPaymentRate": {
+        "title": "Successful payment rate",
+        "description": "Settled payments among orders with payment records"
+      },
+      "averageOrderValue": {
+        "title": "Average order value",
+        "description": "Based on settled marketplace orders"
+      },
+      "recentPaidActivity": {
+        "title": "Recent paid activity",
+        "description": "Most recent settled order activity"
+      },
+      "uniqueBuyersDetailed": {
+        "title": "Unique buyers",
+        "description": "Distinct buyers who placed seller orders"
+      },
+      "repeatBuyers": {
+        "title": "Repeat buyers",
+        "description": "Buyers with more than one order"
+      },
+      "metadataCoverage": {
+        "title": "Metadata coverage",
+        "description": "{buyersWithBusinessMetadata} buyers linked to business records"
+      },
+      "topBuyerConcentration": {
+        "title": "Top-buyer concentration",
+        "description": "Share of transaction volume from the largest buyer"
+      }
+    },
+    "empty": {
+      "title": "Not enough activity yet",
+      "description": "Once your business starts receiving orders, this profile will automatically expand with transaction, fulfillment, and buyer diversity signals."
+    },
+    "sections": {
+      "transactionHistory": {
+        "title": "Transaction History",
+        "description": "Recent order and payment performance across the marketplace."
+      },
+      "fulfillment": {
+        "title": "Fulfillment Performance",
+        "description": "Operational performance derived from order lifecycle and payout outcomes."
+      },
+      "buyerDiversity": {
+        "title": "Buyer Diversity"
+      }
+    },
+    "trend": {
+      "window": "{days} days",
+      "rollingPerformanceWindow": "Rolling performance window",
+      "orders": "Orders",
+      "paidOrders": "Paid orders",
+      "paidVolume": "Paid volume"
+    },
+    "fulfillment": {
+      "completionRate": "Completion rate",
+      "cancellationRate": "Cancellation rate",
+      "payoutSuccessRate": "Payout success rate",
+      "ordersCurrentlyProcessing": "Orders currently processing",
+      "averageFulfillmentCycle": "Average fulfillment cycle",
+      "averageFulfillmentCycleValue": "{days} days",
+      "payoutOutcomeCounts": "Payout outcome counts",
+      "payoutStatuses": {
+        "queued": "Queued",
+        "pending": "Pending",
+        "success": "Successful",
+        "failed": "Failed",
+        "reverted": "Reverted"
+      }
+    },
+    "buyerDiversity": {
+      "coverage": {
+        "complete": "Buyer diversity is based on linked buyer business records.",
+        "partial": "Buyer diversity is based only on buyers with linked business records, so some buyers are excluded from the diversity mix."
+      }
+    },
+    "breakdowns": {
+      "countLabel": "{count} buyers",
+      "buyerCountries": {
+        "title": "Buyer countries",
+        "empty": "Country distribution appears after buyers link business metadata."
+      },
+      "buyerCategories": {
+        "title": "Buyer categories",
+        "empty": "Category distribution appears after buyers link business metadata."
+      },
+      "topBuyers": {
+        "title": "Top buyers",
+        "empty": "Top buyers will appear once orders are placed.",
+        "orders": "{count} orders"
+      }
+    },
+    "methodology": {
+      "title": "Methodology Note",
+      "description": "This report is generated from first-party AfriConnect marketplace activity.",
+      "points": {
+        "transactionVolume": "Transaction volume is based on seller orders linked to settled platform payments.",
+        "fulfillment": "Fulfillment uses order status and payout outcomes as operational performance signals.",
+        "buyerDiversity": "Buyer diversity is based on linked buyer business records, so incomplete buyer metadata lowers coverage."
+      }
+    }
   },
   "inventory": {
     "title": "Inventory",
