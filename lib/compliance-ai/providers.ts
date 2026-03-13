@@ -85,7 +85,7 @@ function coerceGeneratedAnswer(
     | null
     | undefined
 ): GeneratedAnswerPayload | null {
-  if (!parsed?.answer || !Array.isArray(parsed.citationIds)) {
+  if (typeof parsed?.answer !== "string" || !Array.isArray(parsed.citationIds)) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 export type ComplianceAiGenerationProvider = "openai" | "gemini" | "anthropic";
-export type ComplianceTranslationLanguage = "en" | "am" | "om";
+export type ComplianceTranslationLanguage = "en" | "am" | "om" | "sw";
 
 export interface ComplianceAssistantFilters {
   country?: string;

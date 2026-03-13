@@ -16,10 +16,10 @@ import { ComingSoonPage } from "@/components/ui/coming-soon";
 export default function AiAssistantPage() {
   const t = useTranslations("aiAssistantPage");
   const router = useRouter();
-  const { user } = useUser();
-  const isComplianceEnabled = isComplianceEnabledForEmail(
-    user?.primaryEmailAddress?.emailAddress
-  );
+  const { user, isLoaded } = useUser();
+  const isComplianceEnabled =
+    isLoaded &&
+    isComplianceEnabledForEmail(user?.primaryEmailAddress?.emailAddress);
 
   const currentUser = useQuery(
     api.users.getCurrentUser,
@@ -44,7 +44,7 @@ export default function AiAssistantPage() {
     }
   }, [isLoading, hasBusiness, canAccess, router]);
 
-  if (!isComplianceEnabled) {
+  if (isLoaded && !isComplianceEnabled) {
     return (
       <ComingSoonPage
         title={t("title")}

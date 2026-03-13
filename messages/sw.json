@@ -900,6 +900,7 @@
       "asking": "Inauliza..."
     },
     "form": {
+      "languageLabel": "Lugha",
       "questionLabel": "Swali la uzingatiaji"
     },
     "validation": {
@@ -951,6 +952,7 @@
         "asking": "Inauliza..."
       },
       "form": {
+        "languageLabel": "Lugha",
         "questionLabel": "Swali lako"
       },
       "validation": {

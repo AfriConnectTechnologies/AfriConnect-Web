@@ -900,6 +900,7 @@
       "asking": "በመጠየቅ ላይ..."
     },
     "form": {
+      "languageLabel": "ቋንቋ",
       "questionLabel": "የተገዢነት ጥያቄ"
     },
     "validation": {
@@ -951,6 +952,7 @@
         "asking": "በመጠየቅ ላይ..."
       },
       "form": {
+        "languageLabel": "ቋንቋ",
         "questionLabel": "ጥያቄዎ"
       },
       "validation": {

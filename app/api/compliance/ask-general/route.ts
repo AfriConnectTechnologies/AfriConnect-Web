@@ -257,11 +257,24 @@ export async function POST(request: NextRequest) {
 
         if (!payload || payload === "[DONE]") return;
 
-        const parsed = JSON.parse(payload) as {
+        let parsed: {
           choices?: Array<{
             delta?: { content?: string; refusal?: string };
           }>;
         };
+        try {
+          parsed = JSON.parse(payload) as {
+            choices?: Array<{
+              delta?: { content?: string; refusal?: string };
+            }>;
+          };
+        } catch (error) {
+          console.error("Failed to parse compliance SSE chunk", {
+            error,
+            payload,
+          });
+          return;
+        }
 
         const delta = parsed.choices?.[0]?.delta;
         if (delta?.refusal) {

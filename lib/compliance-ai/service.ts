@@ -92,10 +92,12 @@ type PreparedComplianceAssistantResult =
   | {
       type: "answer";
       answer: ComplianceAssistantAnswer;
+      targetLanguage: ComplianceTranslationLanguage;
     }
   | {
       type: "context";
       context: PreparedComplianceAssistantContext;
+      targetLanguage: ComplianceTranslationLanguage;
     };
 
 type GeneratedAnswer = NonNullable<Awaited<ReturnType<typeof generateComplianceAnswer>>>;
@@ -110,6 +112,9 @@ function normalizeRequestedLanguage(
   const normalized = value.trim().toLowerCase();
   if (normalized === "am" || normalized === "amharic") {
     return "am";
+  }
+  if (normalized === "sw" || normalized === "swahili") {
+    return "sw";
   }
   if (
     normalized === "om" ||
@@ -139,7 +144,7 @@ export function detectComplianceQuestionLanguage(
     return "am";
   }
 
-  const normalizedQuestion = question.toLowerCase();
+  const normalizedQuestion = ` ${question.toLowerCase()} `;
   const oromoSignals = [
     " maal ",
     " keessa ",
@@ -155,7 +160,7 @@ export function detectComplianceQuestionLanguage(
     " afaan oromoo",
   ];
 
-  if (oromoSignals.some((signal) => normalizedQuestion.includes(signal.trim()))) {
+  if (oromoSignals.some((signal) => normalizedQuestion.includes(signal))) {
     return "om";
   }
 
@@ -251,15 +256,16 @@ export async function prepareComplianceAssistant(
   filters?: ComplianceAssistantFilters
 ): Promise<PreparedComplianceAssistantResult> {
   const status = getComplianceAiRuntimeStatus();
+  const targetLanguage = detectComplianceQuestionLanguage(question, filters);
   if (!status.enabled || !status.retrievalReady) {
     return {
       type: "answer",
       answer: buildNotConfiguredAnswer(),
+      targetLanguage,
     };
   }
 
   getComplianceAiConfig();
-  const targetLanguage = detectComplianceQuestionLanguage(question, filters);
   const retrievalFilters = filters
     ? {
         ...filters,
@@ -309,6 +315,7 @@ export async function prepareComplianceAssistant(
         warning,
         providerSummary: status.providerSummary,
       },
+      targetLanguage,
     };
   }
 
@@ -323,12 +330,14 @@ export async function prepareComplianceAssistant(
         citations: [],
         providerSummary: status.providerSummary,
       },
+      targetLanguage,
     };
   }
 
   const rerankedChunks = await rerankComplianceChunks(normalizedQuestion, retrievedChunks);
   return {
     type: "context",
+    targetLanguage,
     context: {
       question: normalizedQuestion,
       rerankedChunks,
@@ -345,10 +354,7 @@ export async function askComplianceAssistant(
 ): Promise<ComplianceAssistantAnswer> {
   const prepared = await prepareComplianceAssistant(question, filters);
   if (prepared.type === "answer") {
-    return localizeComplianceAssistantAnswer(
-      prepared.answer,
-      detectComplianceQuestionLanguage(question, filters)
-    );
+    return localizeComplianceAssistantAnswer(prepared.answer, prepared.targetLanguage);
   }
 
   const { context } = prepared;
@@ -365,11 +371,15 @@ export async function askComplianceAssistant(
   }
 
   if (!generated) {
+    const generationWarningOrFallback =
+      generationWarning ??
+      "The model returned unusable or malformed output, so this response is based on retrieved evidence only.";
+
     return localizeComplianceAssistantAnswer(
       buildRetrievalOnlyResponse(
         context.rerankedChunks,
         context.providerSummary,
-        mergeWarnings(context.warning, generationWarning)
+        mergeWarnings(context.warning, generationWarningOrFallback)
       ),
       context.targetLanguage
     );

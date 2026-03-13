@@ -900,6 +900,7 @@
       "asking": "Asking..."
     },
     "form": {
+      "languageLabel": "Language",
       "questionLabel": "Compliance question"
     },
     "validation": {
@@ -951,6 +952,7 @@
         "asking": "Asking..."
       },
       "form": {
+        "languageLabel": "Language",
         "questionLabel": "Your question"
       },
       "validation": {

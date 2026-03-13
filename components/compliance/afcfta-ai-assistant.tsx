@@ -212,7 +212,9 @@ export function AfcftaAiAssistant() {
 
         <div className="space-y-3">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Language</label>
+            <label className="text-sm font-medium text-foreground">
+              {t("form.languageLabel")}
+            </label>
             <Select
               value={language}
               onValueChange={(value) => setLanguage(value as ComplianceTranslationLanguage)}

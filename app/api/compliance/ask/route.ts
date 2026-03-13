@@ -10,7 +10,6 @@ import {
 import {
   buildGeneratedComplianceResponse,
   buildRetrievalOnlyResponse,
-  detectComplianceQuestionLanguage,
   localizeComplianceAssistantAnswer,
   prepareComplianceAssistant,
 } from "@/lib/compliance-ai/service";
@@ -99,11 +98,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetLanguage = detectComplianceQuestionLanguage(
-      parsed.data.question,
-      parsed.data.filters
-    );
-
     const prepared = await prepareComplianceAssistant(
       parsed.data.question,
       parsed.data.filters
@@ -113,7 +107,10 @@ export async function POST(request: NextRequest) {
       return createSseResponse(async (send) => {
         send({
           type: "complete",
-          answer: await localizeComplianceAssistantAnswer(prepared.answer, targetLanguage),
+          answer: await localizeComplianceAssistantAnswer(
+            prepared.answer,
+            prepared.targetLanguage
+          ),
         });
       });
     }
