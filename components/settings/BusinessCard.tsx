@@ -17,20 +17,20 @@ export function BusinessCard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "verified":
-        return <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400">Verified</Badge>;
+        return <Badge className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-xs">Verified</Badge>;
       case "rejected":
-        return <Badge variant="destructive">Rejected</Badge>;
+        return <Badge variant="destructive" className="rounded-lg text-xs">Rejected</Badge>;
       default:
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400">Pending</Badge>;
+        return <Badge className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg text-xs">Pending</Badge>;
     }
   };
 
   return (
     <Link href="/business/profile">
-      <Card className="bg-primary hover:bg-primary/90 transition-colors cursor-pointer group">
+      <Card className="sidebar-active-item border-transparent cursor-pointer group overflow-hidden rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-xl bg-primary-foreground/20 flex items-center justify-center shrink-0">
+            <div className="h-14 w-14 rounded-xl bg-primary-foreground/20 flex items-center justify-center shrink-0 overflow-hidden">
               {myBusiness.logoUrl ? (
                 <img 
                   src={myBusiness.logoUrl} 
@@ -54,11 +54,9 @@ export function BusinessCard() {
                   {myBusiness.city ? `${myBusiness.city}, ` : ""}{myBusiness.country}
                 </span>
               </div>
-              <p className="text-primary-foreground/70 text-sm mt-0.5">
-                {myBusiness.category}
-              </p>
+              <p className="text-primary-foreground/70 text-xs mt-0.5">{myBusiness.category}</p>
             </div>
-            <ChevronRight className="h-5 w-5 text-primary-foreground shrink-0 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="h-5 w-5 text-primary-foreground/70 shrink-0 group-hover:translate-x-1 transition-transform" />
           </div>
         </CardContent>
       </Card>

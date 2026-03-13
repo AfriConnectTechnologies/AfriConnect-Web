@@ -34,16 +34,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, History, Plus, Minus, PackageSearch } from "lucide-react";
+import { Pencil, History, Plus, Minus, PackageSearch, Boxes, AlertTriangle, XCircle, Package, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type StockStatus = "in_stock" | "low_stock" | "out_of_stock";
 
-const statusBadge: Record<StockStatus, "default" | "secondary" | "destructive"> = {
-  in_stock: "default",
-  low_stock: "secondary",
-  out_of_stock: "destructive",
+const statusConfig: Record<StockStatus, { badge: "default" | "secondary" | "destructive"; className: string }> = {
+  in_stock: { badge: "default", className: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/30 dark:text-green-400 dark:border-green-900/50" },
+  low_stock: { badge: "secondary", className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50" },
+  out_of_stock: { badge: "destructive", className: "" },
 };
+
+const summaryCards = [
+  { key: "totalProducts", icon: Boxes, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-100 dark:border-blue-900/50" },
+  { key: "totalUnits", icon: Package, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-100 dark:border-emerald-900/50" },
+  { key: "lowStock", icon: AlertTriangle, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-100 dark:border-amber-900/50" },
+  { key: "outOfStock", icon: XCircle, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-100 dark:border-red-900/50" },
+] as const;
 
 export default function InventoryPage() {
   const t = useTranslations("inventory");
@@ -79,23 +86,11 @@ export default function InventoryPage() {
     if (!inventory) return [];
     const query = searchQuery.trim().toLowerCase();
     if (!query) return inventory;
-    return inventory.filter((item) => {
-      return (
-        item.name.toLowerCase().includes(query) ||
-        item.sku?.toLowerCase().includes(query)
-      );
-    });
+    return inventory.filter((item) => item.name.toLowerCase().includes(query) || item.sku?.toLowerCase().includes(query));
   }, [inventory, searchQuery]);
 
   const summary = useMemo(() => {
-    if (!inventory) {
-      return {
-        totalProducts: 0,
-        totalUnits: 0,
-        lowStock: 0,
-        outOfStock: 0,
-      };
-    }
+    if (!inventory) return { totalProducts: 0, totalUnits: 0, lowStock: 0, outOfStock: 0 };
     return inventory.reduce(
       (acc, item) => {
         acc.totalProducts += 1;
@@ -107,6 +102,16 @@ export default function InventoryPage() {
       { totalProducts: 0, totalUnits: 0, lowStock: 0, outOfStock: 0 }
     );
   }, [inventory]);
+
+  const getSummaryValue = (key: string) => {
+    switch (key) {
+      case "totalProducts": return summary.totalProducts;
+      case "totalUnits": return summary.totalUnits;
+      case "lowStock": return summary.lowStock;
+      case "outOfStock": return summary.outOfStock;
+      default: return 0;
+    }
+  };
 
   const resetAdjustDialog = () => {
     setAdjustDelta("");
@@ -137,11 +142,7 @@ export default function InventoryPage() {
     }
   };
 
-  const handleOpenThresholds = (
-    productId: Id<"products">,
-    currentThreshold?: number,
-    currentReorder?: number
-  ) => {
+  const handleOpenThresholds = (productId: Id<"products">, currentThreshold?: number, currentReorder?: number) => {
     setThresholdProductId(productId);
     setLowStockThreshold(currentThreshold?.toString() ?? "");
     setReorderQuantity(currentReorder?.toString() ?? "");
@@ -151,20 +152,10 @@ export default function InventoryPage() {
     if (!thresholdProductId) return;
     const thresholdValue = lowStockThreshold === "" ? undefined : Number(lowStockThreshold);
     const reorderValue = reorderQuantity === "" ? undefined : Number(reorderQuantity);
-    if (thresholdValue !== undefined && thresholdValue < 0) {
-      toast.error(t("invalidThreshold"));
-      return;
-    }
-    if (reorderValue !== undefined && reorderValue < 0) {
-      toast.error(t("invalidReorder"));
-      return;
-    }
+    if (thresholdValue !== undefined && thresholdValue < 0) { toast.error(t("invalidThreshold")); return; }
+    if (reorderValue !== undefined && reorderValue < 0) { toast.error(t("invalidReorder")); return; }
     try {
-      await updateThresholds({
-        productId: thresholdProductId,
-        lowStockThreshold: thresholdValue,
-        reorderQuantity: reorderValue,
-      });
+      await updateThresholds({ productId: thresholdProductId, lowStockThreshold: thresholdValue, reorderQuantity: reorderValue });
       toast.success(t("thresholdsSaved"));
       setThresholdProductId(null);
     } catch (error) {
@@ -175,124 +166,111 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{t("summary.totalProducts")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{summary.totalProducts}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{t("summary.totalUnits")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{summary.totalUnits}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{t("summary.lowStock")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{summary.lowStock}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{t("summary.outOfStock")}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{summary.outOfStock}</CardContent>
-        </Card>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.key} className={`border ${card.border} overflow-hidden transition-all hover:shadow-md`}>
+              <CardContent className="p-4 md:p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {t(`summary.${card.key}`)}
+                    </p>
+                    <p className="text-2xl md:text-3xl font-bold animate-count-up">
+                      {getSummaryValue(card.key)}
+                    </p>
+                  </div>
+                  <div className={`${card.bg} p-2.5 rounded-xl`}>
+                    <Icon className={`h-5 w-5 ${card.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <Tabs defaultValue="inventory" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="inventory">{t("tabs.inventory")}</TabsTrigger>
-          <TabsTrigger value="activity">{t("tabs.activity")}</TabsTrigger>
+        <TabsList className="bg-muted/30 p-1 rounded-xl">
+          <TabsTrigger value="inventory" className="rounded-lg">{t("tabs.inventory")}</TabsTrigger>
+          <TabsTrigger value="activity" className="rounded-lg">{t("tabs.activity")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <PackageSearch className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
               <Input
                 placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full md:w-72"
+                className="pl-10 h-10 rounded-xl bg-muted/30 border-border/60 md:w-72"
               />
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StockStatus | "all")}>
-                <SelectTrigger className="w-[170px]">
-                  <SelectValue placeholder={t("filterStatus")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{tCommon("all")}</SelectItem>
-                  <SelectItem value="in_stock">{t("status.inStock")}</SelectItem>
-                  <SelectItem value="low_stock">{t("status.lowStock")}</SelectItem>
-                  <SelectItem value="out_of_stock">{t("status.outOfStock")}</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StockStatus | "all")}>
+              <SelectTrigger className="w-full md:w-[180px] h-10 rounded-xl">
+                <SelectValue placeholder={t("filterStatus")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{tCommon("all")}</SelectItem>
+                <SelectItem value="in_stock">{t("status.inStock")}</SelectItem>
+                <SelectItem value="low_stock">{t("status.lowStock")}</SelectItem>
+                <SelectItem value="out_of_stock">{t("status.outOfStock")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <Card>
+          <Card className="border-border/60 rounded-2xl overflow-hidden">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("table.product")}</TableHead>
-                    <TableHead>{t("table.sku")}</TableHead>
-                    <TableHead className="text-right">{t("table.onHand")}</TableHead>
-                    <TableHead className="text-right">{t("table.threshold")}</TableHead>
-                    <TableHead>{t("table.status")}</TableHead>
-                    <TableHead className="text-right">{t("table.actions")}</TableHead>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="font-semibold">{t("table.product")}</TableHead>
+                    <TableHead className="font-semibold">{t("table.sku")}</TableHead>
+                    <TableHead className="text-right font-semibold">{t("table.onHand")}</TableHead>
+                    <TableHead className="text-right font-semibold">{t("table.threshold")}</TableHead>
+                    <TableHead className="font-semibold">{t("table.status")}</TableHead>
+                    <TableHead className="text-right font-semibold">{t("table.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isInventoryLoading && (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                        {tCommon("loading")}
+                      <TableCell colSpan={6} className="py-16 text-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
+                        <span className="text-sm text-muted-foreground">{tCommon("loading")}</span>
                       </TableCell>
                     </TableRow>
                   )}
                   {!isInventoryLoading && filteredInventory.map((item) => (
-                    <TableRow key={item._id}>
+                    <TableRow key={item._id} className="hover:bg-muted/20">
                       <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.sku ? item.sku : t("noSku")}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{item.lowStockThreshold ?? 0}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{item.sku ? item.sku : t("noSku")}</TableCell>
+                      <TableCell className="text-right font-semibold">{item.quantity}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{item.lowStockThreshold ?? 0}</TableCell>
                       <TableCell>
-                      <Badge variant={statusBadge[item.stockStatus]}>
-                        {t(`status.${item.stockStatus}`)}
-                      </Badge>
+                        <Badge variant="outline" className={`rounded-lg text-xs font-medium ${statusConfig[item.stockStatus]?.className || ""}`}>
+                          {t(`status.${item.stockStatus}`)}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setAdjustProductId(item._id)}
-                          >
-                            <Pencil className="mr-1 h-4 w-4" />
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="outline" size="sm" className="rounded-lg h-8" onClick={() => setAdjustProductId(item._id)}>
+                            <Pencil className="mr-1 h-3.5 w-3.5" />
                             {t("actions.adjust")}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenThresholds(item._id, item.lowStockThreshold, item.reorderQuantity)}
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleOpenThresholds(item._id, item.lowStockThreshold, item.reorderQuantity)}>
                             <PackageSearch className="h-4 w-4" />
-                            <span className="sr-only">{t("actions.thresholds")}</span>
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setHistoryProductId(item._id)}
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setHistoryProductId(item._id)}>
                             <History className="h-4 w-4" />
-                            <span className="sr-only">{t("actions.history")}</span>
                           </Button>
                         </div>
                       </TableCell>
@@ -300,7 +278,7 @@ export default function InventoryPage() {
                   ))}
                   {!isInventoryLoading && filteredInventory.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
                         {t("noResults")}
                       </TableCell>
                     </TableRow>
@@ -312,49 +290,50 @@ export default function InventoryPage() {
         </TabsContent>
 
         <TabsContent value="activity">
-          <Card>
+          <Card className="border-border/60 rounded-2xl overflow-hidden">
             <CardHeader>
               <CardTitle>{t("activityTitle")}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("activity.date")}</TableHead>
-                    <TableHead>{t("activity.product")}</TableHead>
-                    <TableHead>{t("activity.type")}</TableHead>
-                    <TableHead className="text-right">{t("activity.quantity")}</TableHead>
-                    <TableHead className="text-right">{t("activity.newQuantity")}</TableHead>
-                    <TableHead>{t("activity.reason")}</TableHead>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="font-semibold">{t("activity.date")}</TableHead>
+                    <TableHead className="font-semibold">{t("activity.product")}</TableHead>
+                    <TableHead className="font-semibold">{t("activity.type")}</TableHead>
+                    <TableHead className="text-right font-semibold">{t("activity.quantity")}</TableHead>
+                    <TableHead className="text-right font-semibold">{t("activity.newQuantity")}</TableHead>
+                    <TableHead className="font-semibold">{t("activity.reason")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isActivityLoading && (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                        {tCommon("loading")}
+                      <TableCell colSpan={6} className="py-16 text-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
+                        <span className="text-sm text-muted-foreground">{tCommon("loading")}</span>
                       </TableCell>
                     </TableRow>
                   )}
                   {!isActivityLoading && (activityTransactions ?? []).map((tx) => (
-                    <TableRow key={tx._id}>
-                      <TableCell>
-                        {new Date(tx.createdAt).toLocaleString()}
+                    <TableRow key={tx._id} className="hover:bg-muted/20">
+                      <TableCell className="text-sm">{new Date(tx.createdAt).toLocaleString()}</TableCell>
+                      <TableCell className="font-medium text-sm">
+                        {tx.productName ? `${tx.productName}${tx.productSku ? ` (${tx.productSku})` : ""}` : tx.productId}
                       </TableCell>
                       <TableCell>
-                        {tx.productName
-                          ? `${tx.productName}${tx.productSku ? ` (${tx.productSku})` : ""}`
-                          : tx.productId}
+                        <Badge variant="outline" className="rounded-lg text-xs">{t(`types.${tx.type}`)}</Badge>
                       </TableCell>
-                      <TableCell>{t(`types.${tx.type}`)}</TableCell>
-                      <TableCell className="text-right">{tx.direction === "out" ? "-" : "+"}{tx.quantity}</TableCell>
-                      <TableCell className="text-right">{tx.newQuantity}</TableCell>
-                      <TableCell>{tx.reason ?? t("activity.none")}</TableCell>
+                      <TableCell className={`text-right font-medium ${tx.direction === "out" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                        {tx.direction === "out" ? "-" : "+"}{tx.quantity}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">{tx.newQuantity}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{tx.reason ?? t("activity.none")}</TableCell>
                     </TableRow>
                   ))}
                   {!isActivityLoading && (activityTransactions ?? []).length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
                         {t("activity.empty")}
                       </TableCell>
                     </TableRow>
@@ -366,8 +345,9 @@ export default function InventoryPage() {
         </TabsContent>
       </Tabs>
 
+      {/* Adjust Stock Dialog */}
       <Dialog open={adjustProductId !== null} onOpenChange={(open) => !open && resetAdjustDialog()}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>{t("adjustDialog.title")}</DialogTitle>
             <DialogDescription>{t("adjustDialog.description")}</DialogDescription>
@@ -376,7 +356,7 @@ export default function InventoryPage() {
             <div className="grid gap-2">
               <Label htmlFor="adjustType">{t("adjustDialog.type")}</Label>
               <Select value={adjustType} onValueChange={(value) => setAdjustType(value as typeof adjustType)}>
-                <SelectTrigger id="adjustType">
+                <SelectTrigger id="adjustType" className="rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -389,83 +369,72 @@ export default function InventoryPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="adjustDelta">{t("adjustDialog.delta")}</Label>
-              <Input
-                id="adjustDelta"
-                type="number"
-                value={adjustDelta}
-                onChange={(e) => setAdjustDelta(e.target.value)}
-                placeholder={t("adjustDialog.deltaPlaceholder")}
-              />
+              <Input id="adjustDelta" type="number" value={adjustDelta} onChange={(e) => setAdjustDelta(e.target.value)} placeholder={t("adjustDialog.deltaPlaceholder")} className="rounded-xl" />
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setAdjustDelta("1")}>
-                  <Plus className="mr-1 h-4 w-4" />
-                  {t("adjustDialog.quickAdd")}
+                <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAdjustDelta("1")}>
+                  <Plus className="mr-1 h-3.5 w-3.5" />{t("adjustDialog.quickAdd")}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setAdjustDelta("-1")}>
-                  <Minus className="mr-1 h-4 w-4" />
-                  {t("adjustDialog.quickRemove")}
+                <Button variant="outline" size="sm" className="rounded-lg" onClick={() => setAdjustDelta("-1")}>
+                  <Minus className="mr-1 h-3.5 w-3.5" />{t("adjustDialog.quickRemove")}
                 </Button>
               </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="adjustReason">{t("adjustDialog.reason")}</Label>
-              <Input
-                id="adjustReason"
-                value={adjustReason}
-                onChange={(e) => setAdjustReason(e.target.value)}
-                placeholder={t("adjustDialog.reasonPlaceholder")}
-              />
+              <Input id="adjustReason" value={adjustReason} onChange={(e) => setAdjustReason(e.target.value)} placeholder={t("adjustDialog.reasonPlaceholder")} className="rounded-xl" />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={resetAdjustDialog}>
-              {tCommon("cancel")}
-            </Button>
-            <Button onClick={handleAdjust}>{t("adjustDialog.save")}</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={resetAdjustDialog} className="rounded-xl">{tCommon("cancel")}</Button>
+            <Button onClick={handleAdjust} className="rounded-xl">{t("adjustDialog.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* History Dialog */}
       <Dialog open={historyProductId !== null} onOpenChange={(open) => !open && setHistoryProductId(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>{t("historyDialog.title")}</DialogTitle>
             <DialogDescription>{t("historyDialog.description")}</DialogDescription>
           </DialogHeader>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("activity.date")}</TableHead>
-                <TableHead>{t("activity.type")}</TableHead>
-                <TableHead className="text-right">{t("activity.quantity")}</TableHead>
-                <TableHead className="text-right">{t("activity.newQuantity")}</TableHead>
-                <TableHead>{t("activity.reason")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(productTransactions ?? []).map((tx) => (
-                <TableRow key={tx._id}>
-                  <TableCell>{new Date(tx.createdAt).toLocaleString()}</TableCell>
-                  <TableCell>{t(`types.${tx.type}`)}</TableCell>
-                  <TableCell className="text-right">{tx.direction === "out" ? "-" : "+"}{tx.quantity}</TableCell>
-                  <TableCell className="text-right">{tx.newQuantity}</TableCell>
-                  <TableCell>{tx.reason ?? t("activity.none")}</TableCell>
+          <div className="rounded-xl border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="font-semibold">{t("activity.date")}</TableHead>
+                  <TableHead className="font-semibold">{t("activity.type")}</TableHead>
+                  <TableHead className="text-right font-semibold">{t("activity.quantity")}</TableHead>
+                  <TableHead className="text-right font-semibold">{t("activity.newQuantity")}</TableHead>
+                  <TableHead className="font-semibold">{t("activity.reason")}</TableHead>
                 </TableRow>
-              ))}
-              {(productTransactions ?? []).length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
-                    {t("activity.empty")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {(productTransactions ?? []).map((tx) => (
+                  <TableRow key={tx._id}>
+                    <TableCell className="text-sm">{new Date(tx.createdAt).toLocaleString()}</TableCell>
+                    <TableCell><Badge variant="outline" className="rounded-lg text-xs">{t(`types.${tx.type}`)}</Badge></TableCell>
+                    <TableCell className={`text-right font-medium ${tx.direction === "out" ? "text-red-600" : "text-green-600"}`}>
+                      {tx.direction === "out" ? "-" : "+"}{tx.quantity}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">{tx.newQuantity}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{tx.reason ?? t("activity.none")}</TableCell>
+                  </TableRow>
+                ))}
+                {(productTransactions ?? []).length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">{t("activity.empty")}</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </DialogContent>
       </Dialog>
 
+      {/* Thresholds Dialog */}
       <Dialog open={thresholdProductId !== null} onOpenChange={(open) => !open && setThresholdProductId(null)}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>{t("thresholdDialog.title")}</DialogTitle>
             <DialogDescription>{t("thresholdDialog.description")}</DialogDescription>
@@ -473,30 +442,16 @@ export default function InventoryPage() {
           <div className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="lowStockThreshold">{t("thresholdDialog.lowStock")}</Label>
-              <Input
-                id="lowStockThreshold"
-                type="number"
-                value={lowStockThreshold}
-                onChange={(e) => setLowStockThreshold(e.target.value)}
-                placeholder={t("thresholdDialog.lowStockPlaceholder")}
-              />
+              <Input id="lowStockThreshold" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} placeholder={t("thresholdDialog.lowStockPlaceholder")} className="rounded-xl" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="reorderQuantity">{t("thresholdDialog.reorder")}</Label>
-              <Input
-                id="reorderQuantity"
-                type="number"
-                value={reorderQuantity}
-                onChange={(e) => setReorderQuantity(e.target.value)}
-                placeholder={t("thresholdDialog.reorderPlaceholder")}
-              />
+              <Input id="reorderQuantity" type="number" value={reorderQuantity} onChange={(e) => setReorderQuantity(e.target.value)} placeholder={t("thresholdDialog.reorderPlaceholder")} className="rounded-xl" />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setThresholdProductId(null)}>
-              {tCommon("cancel")}
-            </Button>
-            <Button onClick={handleSaveThresholds}>{t("thresholdDialog.save")}</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setThresholdProductId(null)} className="rounded-xl">{tCommon("cancel")}</Button>
+            <Button onClick={handleSaveThresholds} className="rounded-xl">{t("thresholdDialog.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

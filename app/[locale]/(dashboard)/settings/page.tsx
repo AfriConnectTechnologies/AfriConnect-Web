@@ -19,6 +19,9 @@ import {
   FileText,
   Shield,
   LogOut,
+  Loader2,
+  Sun,
+  Monitor,
 } from "lucide-react";
 import {
   Dialog,
@@ -57,7 +60,6 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Ensure user exists when component mounts
   useEffect(() => {
     ensureUser().catch(() => {});
   }, [ensureUser]);
@@ -94,19 +96,17 @@ export default function SettingsPage() {
 
   const getThemeLabel = () => {
     switch (theme) {
-      case "light":
-        return "Light";
-      case "dark":
-        return "Dark";
-      default:
-        return "System";
+      case "light": return "Light";
+      case "dark": return "Dark";
+      default: return "System";
     }
   };
 
   if (currentUser === undefined) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground">{tCommon("loading")}</div>
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
       </div>
     );
   }
@@ -116,18 +116,15 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
 
-      {/* Profile Header */}
       <ProfileHeader />
 
-      {/* Business Card (if seller) */}
       {hasBusiness && <BusinessCard />}
 
-      {/* Account Settings */}
       <MenuSection title="Account Settings">
         <MenuItem
           icon={User}
@@ -143,7 +140,6 @@ export default function SettingsPage() {
         />
       </MenuSection>
 
-      {/* Business Section */}
       <MenuSection title="Business">
         {hasBusiness ? (
           <MenuItem
@@ -170,7 +166,6 @@ export default function SettingsPage() {
         )}
       </MenuSection>
 
-      {/* Preferences */}
       <MenuSection title="Preferences">
         <MenuItem
           icon={Moon}
@@ -187,7 +182,6 @@ export default function SettingsPage() {
         />
       </MenuSection>
 
-      {/* Support */}
       <MenuSection title="Support">
         <MenuItem
           icon={HelpCircle}
@@ -207,7 +201,6 @@ export default function SettingsPage() {
         />
       </MenuSection>
 
-      {/* Sign Out */}
       <div className="pt-2">
         <MenuItem
           icon={LogOut}
@@ -217,21 +210,18 @@ export default function SettingsPage() {
         />
       </div>
 
-      {/* App Version */}
-      <p className="text-center text-sm text-muted-foreground py-4">
+      <p className="text-center text-xs text-muted-foreground/60 py-4">
         AfriConnect v1.0.0
       </p>
 
       {/* Edit Profile Dialog */}
       <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
-            <DialogDescription>
-              Update your profile information below.
-            </DialogDescription>
+            <DialogDescription>Update your profile information below.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="name">{t("displayName")}</Label>
               <Input
@@ -239,18 +229,15 @@ export default function SettingsPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t("enterName")}
+                className="rounded-xl"
               />
-              <p className="text-sm text-muted-foreground">
-                {t("displayNameHelp")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("displayNameHelp")}</p>
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowEditProfile(false)}>
-              {tCommon("cancel")}
-            </Button>
-            <Button onClick={handleSaveProfile} disabled={saving}>
-              {saving ? "Saving..." : tCommon("save")}
+            <Button variant="outline" onClick={() => setShowEditProfile(false)} className="rounded-xl">{tCommon("cancel")}</Button>
+            <Button onClick={handleSaveProfile} disabled={saving} className="rounded-xl">
+              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : tCommon("save")}
             </Button>
           </div>
         </DialogContent>
@@ -258,44 +245,30 @@ export default function SettingsPage() {
 
       {/* Theme Selector Dialog */}
       <Dialog open={showThemeSelector} onOpenChange={setShowThemeSelector}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Choose Theme</DialogTitle>
-            <DialogDescription>
-              Select your preferred theme for the application.
-            </DialogDescription>
+            <DialogDescription>Select your preferred theme for the application.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-4">
-            <Button
-              variant={theme === "light" ? "default" : "outline"}
-              className="justify-start"
-              onClick={() => {
-                setTheme("light");
-                setShowThemeSelector(false);
-              }}
-            >
-              Light
-            </Button>
-            <Button
-              variant={theme === "dark" ? "default" : "outline"}
-              className="justify-start"
-              onClick={() => {
-                setTheme("dark");
-                setShowThemeSelector(false);
-              }}
-            >
-              Dark
-            </Button>
-            <Button
-              variant={theme === "system" ? "default" : "outline"}
-              className="justify-start"
-              onClick={() => {
-                setTheme("system");
-                setShowThemeSelector(false);
-              }}
-            >
-              System
-            </Button>
+          <div className="grid gap-2 py-2">
+            {[
+              { value: "light", label: "Light", icon: Sun },
+              { value: "dark", label: "Dark", icon: Moon },
+              { value: "system", label: "System", icon: Monitor },
+            ].map(({ value, label, icon: Icon }) => (
+              <Button
+                key={value}
+                variant={theme === value ? "default" : "outline"}
+                className="justify-start gap-3 h-12 rounded-xl"
+                onClick={() => {
+                  setTheme(value);
+                  setShowThemeSelector(false);
+                }}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
