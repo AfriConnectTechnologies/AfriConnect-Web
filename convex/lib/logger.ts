@@ -128,7 +128,7 @@ function sanitizeMetadata(metadata?: Record<string, unknown>): Record<string, un
     
     // Handle arrays
     if (Array.isArray(value)) {
-      return value.map((item, index) => sanitizeValue(item, undefined, seen));
+      return value.map((item) => sanitizeValue(item, undefined, seen));
     }
     
     // Handle objects - recurse

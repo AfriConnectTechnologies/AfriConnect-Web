@@ -345,7 +345,7 @@ export default function LandingPage() {
 
             {/* Benefits list */}
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 opacity-0 animate-fade-in animation-delay-600">
-              {benefits.map((benefit, index) => (
+              {benefits.map((benefit) => (
                 <div key={benefit.key} className="flex items-center gap-2 text-sm text-muted-foreground">
                   <benefit.icon className="h-4 w-4 text-primary" />
                   <span>{t(benefit.key)}</span>

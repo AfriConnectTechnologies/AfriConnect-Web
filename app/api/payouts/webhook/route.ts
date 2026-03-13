@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
       (payload?.reference as string) ||
       (payloadData?.reference as string) ||
       (payload?.transfer_reference as string);
-    const status = (payload?.status as string) || (payloadData?.status as string);
 
     if (!reference) {
       return NextResponse.json(

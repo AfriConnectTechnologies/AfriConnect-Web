@@ -46,16 +46,6 @@ const createMockCartSnapshot = (items: Array<{
   return JSON.stringify({ items, subtotal, buyerFee });
 };
 
-const createMockProduct = (overrides = {}) => ({
-  _id: "product_123",
-  sellerId: "clerk_seller_456",
-  name: "Test Product",
-  price: 100,
-  quantity: 10,
-  status: "active",
-  ...overrides,
-});
-
 describe("Payments Business Logic", () => {
   describe("Transaction Reference Generation", () => {
     it("should generate unique transaction references", () => {
@@ -506,7 +496,6 @@ describe("Payments Business Logic", () => {
 
     it("should allow updating processor fee on existing payment", () => {
       const payment = createMockPayment({ status: "success" });
-      const newFee = 29.5;
 
       // Fee update should be allowed even on success status
       const canUpdateFee = payment.status === "success";

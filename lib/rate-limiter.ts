@@ -18,27 +18,73 @@ interface RateLimitEntry {
 interface RateLimiterConfig {
   windowMs: number; // Time window in milliseconds
   maxRequests: number; // Maximum requests per window
+  allowInMemoryFallback?: boolean;
 }
 
-// Check if Upstash Redis is configured
-const isRedisConfigured = !!(
-  process.env.UPSTASH_REDIS_REST_URL && 
-  process.env.UPSTASH_REDIS_REST_TOKEN
-);
-
-// Fail in production if Redis is not configured (in-memory won't work across instances)
-const isProduction = process.env.NODE_ENV === "production";
-if (isProduction && !isRedisConfigured) {
-  throw new Error(
-    "[RateLimiter] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production. " +
-    "In-memory rate limiting does not work across multiple server instances."
+function isRedisConfigured(): boolean {
+  return !!(
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
   );
+}
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+let hasWarnedAboutProductionFallback = false;
+let hasLoggedProductionFailClosed = false;
+
+function warnIfUsingInMemoryRateLimitingInProduction() {
+  if (!isProduction() || isRedisConfigured() || hasWarnedAboutProductionFallback) {
+    return;
+  }
+
+  hasWarnedAboutProductionFallback = true;
+  console.warn(
+    "[RateLimiter] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not set. " +
+      "Falling back to in-memory rate limiting, which is not shared across server instances."
+  );
+}
+
+function isInMemoryFallbackAllowed(config: RateLimiterConfig): boolean {
+  if (!isProduction()) {
+    return true;
+  }
+
+  return (
+    config.allowInMemoryFallback === true ||
+    process.env.ALLOW_IN_MEMORY_RATE_LIMIT_FALLBACK === "true"
+  );
+}
+
+function logProductionFailClosed(reason: string, error?: unknown) {
+  if (hasLoggedProductionFailClosed) {
+    return;
+  }
+
+  hasLoggedProductionFailClosed = true;
+  console.error(
+    `[RateLimiter] ${reason}. Denying requests because distributed rate limiting is unavailable.`,
+    error
+  );
+}
+
+function createFailClosedRateLimitResult(config: RateLimiterConfig): RateLimitResult {
+  const now = Date.now();
+  return {
+    success: false,
+    remaining: 0,
+    limit: config.maxRequests,
+    resetAt: now + config.windowMs,
+    retryAfter: Math.ceil(config.windowMs / 1000),
+  };
 }
 
 // Lazy-init Redis client
 let redis: Redis | null = null;
 function getRedis(): Redis {
-  if (!redis && isRedisConfigured) {
+  if (!redis && isRedisConfigured()) {
     redis = new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL!,
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
@@ -132,9 +178,19 @@ export async function checkRateLimit(
   identifier: string,
   config: RateLimiterConfig
 ): Promise<RateLimitResult> {
-  // Use in-memory for development or if Redis not configured
-  if (!isRedisConfigured) {
-    return checkRateLimitInMemory(identifier, config);
+  const allowInMemoryFallback = isInMemoryFallbackAllowed(config);
+
+  // Use in-memory for development or only when production fallback is explicitly enabled.
+  if (!isRedisConfigured()) {
+    if (allowInMemoryFallback) {
+      warnIfUsingInMemoryRateLimitingInProduction();
+      return checkRateLimitInMemory(identifier, config);
+    }
+
+    logProductionFailClosed(
+      "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not set and in-memory fallback is disabled"
+    );
+    return createFailClosedRateLimitResult(config);
   }
 
   try {
@@ -150,9 +206,16 @@ export async function checkRateLimit(
       retryAfter: result.success ? undefined : Math.ceil((result.reset - now) / 1000),
     };
   } catch (error) {
-    // Fallback to in-memory if Redis fails
-    console.warn("[RateLimiter] Redis error, falling back to in-memory:", error);
-    return checkRateLimitInMemory(identifier, config);
+    if (allowInMemoryFallback) {
+      console.warn("[RateLimiter] Redis error, falling back to in-memory:", error);
+      return checkRateLimitInMemory(identifier, config);
+    }
+
+    logProductionFailClosed(
+      "Redis rate limiter failed and in-memory fallback is disabled",
+      error
+    );
+    return createFailClosedRateLimitResult(config);
   }
 }
 

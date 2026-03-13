@@ -48,6 +48,7 @@
     "manageProducts": "Simamia Bidhaa",
     "manageRefunds": "Simamia Marejesho",
     "compliance": "Uzingatiaji wa AfCFTA",
+    "aiAssistant": "Msaidizi wa AI",
     "toggleMenu": "Badilisha menyu",
     "toggleSidebar": "Badilisha upau wa pembeni"
   },
@@ -899,6 +900,7 @@
       "asking": "Inauliza..."
     },
     "form": {
+      "languageLabel": "Lugha",
       "questionLabel": "Swali la uzingatiaji"
     },
     "validation": {
@@ -924,6 +926,45 @@
       "ready": "Tayari",
       "not_configured": "Haijasanidiwa",
       "no_evidence": "Hakuna ushahidi"
+    }
+  },
+  "aiAssistantPage": {
+    "title": "Msaidizi wa AI",
+    "description": "Uliza maswali kuhusu uzingatiaji wa AfCFTA, alama za mikopo, sheria za asili na zaidi.",
+    "unavailable": "Zana za Msaidizi wa AI hazipatikani kwa sasa.",
+    "tabs": {
+      "compliance": "Uzingatiaji wa AfCFTA",
+      "general": "Msaidizi wa Jumla"
+    },
+    "general": {
+      "title": "Uliza kuhusu mada za AfCFTA",
+      "description": "Uliza maswali ya jumla kuhusu sheria za asili za AfCFTA, ratiba za ushuru, uwezeshaji wa biashara na mada zinazohusiana na biashara. Kwa mwongozo tu - thibitisha kwa vyanzo rasmi vya AfCFTA.",
+      "badge": "Imeendeshwa na AI",
+      "helper": "Uliza maswali kuhusu Eneo la Biashara Huru la Bara la Afrika ili kupata mwongozo wa haraka kuhusu mada za kawaida za AfCFTA. Daima thibitisha maelezo muhimu kwa machapisho rasmi ya AfCFTA au mamlaka yako ya biashara ya eneo husika.",
+      "placeholder": "Uliza swali la AfCFTA, mfano: Sheria za asili zinafanyaje kazi chini ya AfCFTA?",
+      "sampleQuestions": [
+        "Sheria za asili zinafanyaje kazi chini ya AfCFTA?",
+        "Kitengo A kinamaanisha nini katika ratiba za ushuru za AfCFTA?",
+        "Ni nyaraka zipi za uwezeshaji wa biashara zinazohitajika mara nyingi kwa usafirishaji chini ya AfCFTA?"
+      ],
+      "cta": {
+        "ask": "Uliza AI",
+        "asking": "Inauliza..."
+      },
+      "form": {
+        "languageLabel": "Lugha",
+        "questionLabel": "Swali lako"
+      },
+      "validation": {
+        "questionTooShort": "Tafadhali weka swali la kina zaidi.",
+        "invalidQuestion": "Tafadhali toa swali halali."
+      },
+      "error": {
+        "generic": "Imeshindwa kupata jibu kutoka kwa msaidizi wa AI."
+      },
+      "sections": {
+        "answer": "Jibu"
+      }
     }
   },
   "originEligibility": {

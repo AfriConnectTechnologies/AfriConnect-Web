@@ -48,6 +48,7 @@
     "manageProducts": "Manage Products",
     "manageRefunds": "Manage Refunds",
     "compliance": "AfCFTA Compliance",
+    "aiAssistant": "AI Assistant",
     "toggleMenu": "Toggle menu",
     "toggleSidebar": "Toggle sidebar"
   },
@@ -899,6 +900,7 @@
       "asking": "Asking..."
     },
     "form": {
+      "languageLabel": "Language",
       "questionLabel": "Compliance question"
     },
     "validation": {
@@ -924,6 +926,45 @@
       "ready": "Ready",
       "not_configured": "Not configured",
       "no_evidence": "No evidence"
+    }
+  },
+  "aiAssistantPage": {
+    "title": "AI Assistant",
+    "description": "Ask questions about AfCFTA compliance, credit scoring, rules of origin and more.",
+    "unavailable": "AI Assistant tools are temporarily unavailable.",
+    "tabs": {
+      "compliance": "AfCFTA Compliance",
+      "general": "General Assistant"
+    },
+    "general": {
+      "title": "Ask about AfCFTA topics",
+      "description": "Ask general questions about AfCFTA rules of origin, tariff schedules, trade facilitation, and related trade topics. For guidance only - verify with official AfCFTA sources.",
+      "badge": "AI Powered",
+      "helper": "Ask questions about the African Continental Free Trade Area for quick guidance on common AfCFTA topics. Always confirm important details with official AfCFTA publications or your local trade authority.",
+      "placeholder": "Ask an AfCFTA question, e.g. How do rules of origin apply under AfCFTA?",
+      "sampleQuestions": [
+        "How do rules of origin work under AfCFTA?",
+        "What does Category A mean in AfCFTA tariff schedules?",
+        "What trade facilitation documents are commonly needed for AfCFTA shipments?"
+      ],
+      "cta": {
+        "ask": "Ask AI",
+        "asking": "Asking..."
+      },
+      "form": {
+        "languageLabel": "Language",
+        "questionLabel": "Your question"
+      },
+      "validation": {
+        "questionTooShort": "Please enter a more specific question.",
+        "invalidQuestion": "Please provide a valid question."
+      },
+      "error": {
+        "generic": "Failed to get a response from the AI assistant."
+      },
+      "sections": {
+        "answer": "Answer"
+      }
     }
   },
   "originEligibility": {
