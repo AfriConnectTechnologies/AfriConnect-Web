@@ -8,16 +8,16 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 import { useWelcomeEmail } from "@/lib/hooks/useWelcomeEmail";
 import { ChatProvider } from "@/components/chat";
+import { Loader2 } from "lucide-react";
 
 function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   
-  // Initialize user and send welcome email for new users
   useWelcomeEmail(locale);
 
   return (
     <ChatProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen overflow-hidden bg-background">
         <div className="print:hidden">
           <Sidebar />
         </div>
@@ -26,8 +26,10 @@ function AuthenticatedDashboard({ children }: { children: React.ReactNode }) {
             <EmailVerificationBanner />
             <DashboardHeader />
           </div>
-          <main className="flex-1 overflow-y-auto p-4 print:overflow-visible print:p-0 md:p-6">
-            {children}
+          <main className="flex-1 overflow-y-auto dashboard-gradient-bg print:overflow-visible print:p-0 scrollbar-thin">
+            <div className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
+              {children}
+            </div>
           </main>
         </div>
       </div>
@@ -49,8 +51,11 @@ export default function DashboardLayout({
           <AuthenticatedDashboard>{children}</AuthenticatedDashboard>
         </Authenticated>
         <Unauthenticated>
-          <div className="flex min-h-screen items-center justify-center">
-            <div className="text-muted-foreground">{t("settingUp")}</div>
+          <div className="flex min-h-screen items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground text-sm">{t("settingUp")}</p>
+            </div>
           </div>
         </Unauthenticated>
       </SignedIn>
@@ -60,4 +65,3 @@ export default function DashboardLayout({
     </>
   );
 }
-

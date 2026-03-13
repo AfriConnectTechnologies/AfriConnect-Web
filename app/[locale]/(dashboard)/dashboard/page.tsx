@@ -6,13 +6,44 @@ import { useTranslations } from "next-intl";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ShoppingCart, DollarSign, Clock, CheckCircle2, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingCart, DollarSign, Clock, CheckCircle2, Search, TrendingUp, ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { CategoryChips } from "@/components/dashboard/CategoryChips";
 import { ProductGrid } from "@/components/dashboard/ProductGrid";
+
+const statConfig = [
+  {
+    key: "totalOrders",
+    icon: ShoppingCart,
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-50 dark:bg-blue-950/30",
+    border: "border-blue-100 dark:border-blue-900/50",
+  },
+  {
+    key: "totalRevenue",
+    icon: DollarSign,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-50 dark:bg-emerald-950/30",
+    border: "border-emerald-100 dark:border-emerald-900/50",
+    format: (v: number) => `$${v.toLocaleString()}`,
+  },
+  {
+    key: "pendingOrders",
+    icon: Clock,
+    color: "text-amber-600 dark:text-amber-400",
+    bg: "bg-amber-50 dark:bg-amber-950/30",
+    border: "border-amber-100 dark:border-amber-900/50",
+  },
+  {
+    key: "completedOrders",
+    icon: CheckCircle2,
+    color: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-50 dark:bg-violet-950/30",
+    border: "border-violet-100 dark:border-violet-900/50",
+  },
+] as const;
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -22,13 +53,10 @@ export default function DashboardPage() {
   const ensureUser = useMutation(api.users.ensureUser);
   const stats = useQuery(api.stats.getDashboardStats);
   
-  // Product browsing state
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statsExpanded, setStatsExpanded] = useState(false);
 
-  // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -36,40 +64,88 @@ export default function DashboardPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch products with filters
   const products = useQuery(api.products.marketplace, {
     search: debouncedSearch || undefined,
     category: selectedCategory === "all" ? undefined : selectedCategory,
   });
 
-  // Ensure user exists when component mounts
   useEffect(() => {
-    ensureUser().catch(() => {
-      // Silently fail if user creation fails (user might already exist)
-    });
+    ensureUser().catch(() => {});
   }, [ensureUser]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
   };
 
+  const getStatValue = (key: string) => {
+    if (!stats) return null;
+    switch (key) {
+      case "totalOrders": return stats.totalOrders;
+      case "totalRevenue": return stats.totalRevenue;
+      case "pendingOrders": return stats.pendingOrders;
+      case "completedOrders": return stats.completedOrders;
+      default: return 0;
+    }
+  };
+
+  const getStatLabel = (key: string) => {
+    switch (key) {
+      case "totalOrders": return t("totalOrders");
+      case "totalRevenue": return t("totalRevenue");
+      case "pendingOrders": return t("pendingOrders");
+      case "completedOrders": return tOrders("completed");
+      default: return key;
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
+    <div className="space-y-8">
       <WelcomeHeader />
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statConfig.map((stat) => {
+          const Icon = stat.icon;
+          const value = getStatValue(stat.key);
+          const displayValue = stat.format && value !== null ? stat.format(value) : value;
+
+          return (
+            <Card key={stat.key} className={`border ${stat.border} overflow-hidden transition-all hover:shadow-md`}>
+              <CardContent className="p-4 md:p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      {getStatLabel(stat.key)}
+                    </p>
+                    {stats === undefined ? (
+                      <div className="h-8 w-16 bg-muted rounded-lg animate-pulse" />
+                    ) : (
+                      <p className="text-2xl md:text-3xl font-bold animate-count-up">
+                        {displayValue}
+                      </p>
+                    )}
+                  </div>
+                  <div className={`${stat.bg} p-2.5 rounded-xl`}>
+                    <Icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground/60" />
         <Input
-          placeholder="Search products..."
+          placeholder="Search products, categories..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-12 pl-12 pr-4 rounded-xl bg-card border text-base"
+          className="h-12 pl-12 pr-4 rounded-2xl bg-card border-border/60 text-base shadow-sm focus:shadow-md transition-shadow"
         />
       </div>
 
-      {/* Category Chips */}
       <CategoryChips
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
@@ -82,14 +158,14 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold">
               {selectedCategory === "all" ? t("discoverProducts") : selectedCategory}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {products?.length ?? 0} products available
             </p>
           </div>
           <Link href="/marketplace">
-            <Button variant="ghost" size="sm">
+            <Button variant="outline" size="sm" className="rounded-xl gap-2 hover:bg-primary hover:text-primary-foreground transition-colors">
               View All
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -97,91 +173,23 @@ export default function DashboardPage() {
         <ProductGrid products={products} isLoading={products === undefined} />
       </div>
 
-      {/* Collapsible Stats Section */}
-      <Card>
-        <CardHeader 
-          className="cursor-pointer hover:bg-accent/50 transition-colors"
-          onClick={() => setStatsExpanded(!statsExpanded)}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {t("quickStats")}
-              </CardTitle>
-              <CardDescription>{t("overview")}</CardDescription>
-            </div>
-            {statsExpanded ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
-          </div>
-        </CardHeader>
-        {statsExpanded && (
-          <CardContent className="pt-0">
-            {stats === undefined ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-24 bg-muted rounded-lg animate-pulse" />
-                ))}
+      {/* Quick Actions */}
+      <div className="flex items-center gap-3">
+        <Link href="/orders" className="flex-1">
+          <Card className="group hover:border-primary/30 hover:shadow-md transition-all cursor-pointer">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="bg-primary/10 p-2.5 rounded-xl group-hover:bg-primary/20 transition-colors">
+                <TrendingUp className="h-5 w-5 text-primary" />
               </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t("totalOrders")}</CardTitle>
-                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalOrders}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t("totalRevenue")}</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      ${stats.totalRevenue.toLocaleString()}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t("pendingOrders")}</CardTitle>
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.pendingOrders}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{tOrders("completed")}</CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.completedOrders}</div>
-                  </CardContent>
-                </Card>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm">{tOrders("title")}</p>
+                <p className="text-xs text-muted-foreground truncate">Track & manage orders</p>
               </div>
-            )}
-
-            <div className="mt-4">
-              <Link href="/orders">
-                <Button>
-                  {tOrders("title")}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
     </div>
   );
 }

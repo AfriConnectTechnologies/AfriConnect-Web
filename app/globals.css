@@ -420,3 +420,96 @@
     oklch(0.7 0.18 45 / 0.05) 16px
   );
 }
+
+/* Dashboard-specific styles */
+.dashboard-gradient-bg {
+  background:
+    radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.55 0.18 35 / 0.04), transparent),
+    radial-gradient(ellipse 40% 50% at 0% 100%, oklch(0.75 0.15 85 / 0.03), transparent);
+}
+
+.dark .dashboard-gradient-bg {
+  background:
+    radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.7 0.18 45 / 0.06), transparent),
+    radial-gradient(ellipse 40% 50% at 0% 100%, oklch(0.6 0.12 85 / 0.04), transparent);
+}
+
+.stat-card-gradient {
+  background: linear-gradient(135deg, oklch(0.55 0.18 35 / 0.06) 0%, oklch(0.75 0.15 85 / 0.04) 100%);
+}
+
+.dark .stat-card-gradient {
+  background: linear-gradient(135deg, oklch(0.7 0.18 45 / 0.1) 0%, oklch(0.6 0.12 85 / 0.06) 100%);
+}
+
+.sidebar-gradient {
+  background: linear-gradient(180deg, oklch(0.98 0.005 75) 0%, oklch(0.96 0.01 75) 100%);
+}
+
+.dark .sidebar-gradient {
+  background: linear-gradient(180deg, oklch(0.18 0.025 42) 0%, oklch(0.16 0.02 40) 100%);
+}
+
+.sidebar-active-item {
+  background: linear-gradient(135deg, oklch(0.55 0.18 35) 0%, oklch(0.6 0.16 45) 100%);
+  box-shadow: 0 2px 8px oklch(0.55 0.18 35 / 0.3);
+}
+
+.dark .sidebar-active-item {
+  background: linear-gradient(135deg, oklch(0.7 0.18 45) 0%, oklch(0.65 0.16 50) 100%);
+  box-shadow: 0 2px 8px oklch(0.7 0.18 45 / 0.3);
+}
+
+.welcome-card-gradient {
+  background: linear-gradient(135deg, oklch(0.55 0.18 35 / 0.08) 0%, oklch(0.75 0.15 85 / 0.06) 50%, oklch(0.6 0.15 145 / 0.04) 100%);
+}
+
+.dark .welcome-card-gradient {
+  background: linear-gradient(135deg, oklch(0.7 0.18 45 / 0.12) 0%, oklch(0.6 0.12 85 / 0.08) 50%, oklch(0.65 0.15 155 / 0.06) 100%);
+}
+
+.header-glass {
+  background: oklch(0.98 0.005 75 / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .header-glass {
+  background: oklch(0.14 0.02 45 / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.card-hover-glow:hover {
+  box-shadow: 0 8px 30px oklch(0.55 0.18 35 / 0.12);
+}
+
+.dark .card-hover-glow:hover {
+  box-shadow: 0 8px 30px oklch(0.7 0.18 45 / 0.15);
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count-up {
+  animation: count-up 0.5s ease-out forwards;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0.02 50 / 0.3);
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0.02 50 / 0.5);
+}

@@ -42,20 +42,18 @@ export function CategoryChips({ selectedCategory, onCategoryChange }: CategoryCh
 
   return (
     <div className="relative group">
-      {/* Left scroll button */}
       <Button
         variant="outline"
         size="icon"
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity bg-background"
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all bg-background border-primary/20"
         onClick={() => scroll("left")}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
-      {/* Categories container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-2 scroll-smooth"
+        className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1 scroll-smooth"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {CATEGORIES.map((category) => {
@@ -69,8 +67,8 @@ export function CategoryChips({ selectedCategory, onCategoryChange }: CategoryCh
               className={cn(
                 "flex items-center gap-2 px-4 py-2.5 rounded-xl border whitespace-nowrap transition-all duration-200 shrink-0",
                 isSelected
-                  ? "bg-primary text-primary-foreground border-primary shadow-md"
-                  : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                  ? "sidebar-active-item text-primary-foreground border-transparent"
+                  : "bg-card text-muted-foreground border-border/60 hover:bg-accent hover:text-accent-foreground hover:border-accent"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -80,11 +78,10 @@ export function CategoryChips({ selectedCategory, onCategoryChange }: CategoryCh
         })}
       </div>
 
-      {/* Right scroll button */}
       <Button
         variant="outline"
         size="icon"
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity bg-background"
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all bg-background border-primary/20"
         onClick={() => scroll("right")}
       >
         <ChevronRight className="h-4 w-4" />
