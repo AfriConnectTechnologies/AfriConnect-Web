@@ -214,6 +214,7 @@ export async function POST(request: NextRequest) {
 
       const response = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
         method: "POST",
+        signal: request.signal,
         timeout: STREAMING_PROVIDER_TIMEOUT_MS,
         requestName: "OpenAI generation request",
         headers: {
@@ -245,6 +246,7 @@ export async function POST(request: NextRequest) {
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let aborted = request.signal.aborted;
       let buffer = "";
       let fullAnswer = "";
 
@@ -271,7 +273,7 @@ export async function POST(request: NextRequest) {
         } catch (error) {
           console.error("Failed to parse compliance SSE chunk", {
             error,
-            payload,
+            payloadLength: payload.length,
           });
           return;
         }
@@ -304,23 +306,43 @@ export async function POST(request: NextRequest) {
         return { index: crlfIndex, length: 4 };
       };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+      const handleAbort = () => {
+        aborted = true;
+        void reader.cancel().catch(() => {
+          // Ignore cancellation errors while shutting down a disconnected stream.
+        });
+      };
 
-        let separator = getNextSeparator(buffer);
-        while (separator) {
-          const rawEvent = buffer.slice(0, separator.index).trim();
-          buffer = buffer.slice(separator.index + separator.length);
-          if (rawEvent) handleSseEvent(rawEvent);
-          separator = getNextSeparator(buffer);
-        }
+      request.signal.addEventListener("abort", handleAbort);
+      try {
+        while (true) {
+          if (aborted || request.signal.aborted) {
+            return;
+          }
 
-        if (done) {
-          const trailingEvent = buffer.trim();
-          if (trailingEvent) handleSseEvent(trailingEvent);
-          break;
+          const { done, value } = await reader.read();
+          if (aborted || request.signal.aborted) {
+            return;
+          }
+
+          buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+
+          let separator = getNextSeparator(buffer);
+          while (separator) {
+            const rawEvent = buffer.slice(0, separator.index).trim();
+            buffer = buffer.slice(separator.index + separator.length);
+            if (rawEvent) handleSseEvent(rawEvent);
+            separator = getNextSeparator(buffer);
+          }
+
+          if (done) {
+            const trailingEvent = buffer.trim();
+            if (trailingEvent) handleSseEvent(trailingEvent);
+            break;
+          }
         }
+      } finally {
+        request.signal.removeEventListener("abort", handleAbort);
       }
 
       const cleanedAnswer = fullAnswer.trim();
