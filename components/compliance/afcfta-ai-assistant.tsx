@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Bot, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
@@ -52,6 +52,7 @@ const markdownClassNames = {
 export function AfcftaAiAssistant() {
   const t = useTranslations("afcfta");
   const sampleQuestions = t.raw("sampleQuestions");
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [question, setQuestion] = useState("");
   const [language, setLanguage] = useState<ComplianceTranslationLanguage>("en");
   const [answer, setAnswer] = useState<ComplianceAssistantAnswer | null>(null);
@@ -59,6 +60,13 @@ export function AfcftaAiAssistant() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = question.trim().length >= 5 && !isSubmitting;
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    };
+  }, []);
 
   const applyStreamEvent = (event: ComplianceAssistantStreamEvent) => {
     switch (event.type) {
@@ -98,6 +106,10 @@ export function AfcftaAiAssistant() {
       return;
     }
 
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsSubmitting(true);
     setError(null);
     setAnswer(null);
@@ -105,6 +117,7 @@ export function AfcftaAiAssistant() {
     try {
       const response = await fetch("/api/compliance/ask", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: value,
@@ -180,11 +193,18 @@ export function AfcftaAiAssistant() {
         }
       }
     } catch (requestError) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
       console.error("AfCFTA assistant request failed:", requestError);
       setAnswer(null);
       setError(t("error.generic"));
     } finally {
-      setIsSubmitting(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -213,7 +233,10 @@ export function AfcftaAiAssistant() {
 
         <div className="space-y-3">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="language-select-trigger"
+              className="text-sm font-medium text-foreground"
+            >
               {t("form.languageLabel")}
             </label>
             <Select
@@ -221,7 +244,7 @@ export function AfcftaAiAssistant() {
               onValueChange={(value) => setLanguage(value as ComplianceTranslationLanguage)}
               disabled={isSubmitting}
             >
-              <SelectTrigger className="w-full sm:w-[220px]">
+              <SelectTrigger id="language-select-trigger" className="w-full sm:w-[220px]">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
               <SelectContent>

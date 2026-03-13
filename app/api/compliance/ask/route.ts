@@ -30,7 +30,15 @@ const requestSchema = z.object({
     .optional(),
 });
 
+function isAbortError(error: unknown) {
+  return (
+    error instanceof Error &&
+    (error.name === "AbortError" || error.message.includes("aborted"))
+  );
+}
+
 function createSseResponse(
+  signal: AbortSignal,
   streamHandler: (
     send: (event: ComplianceAssistantStreamEvent) => void
   ) => Promise<void>
@@ -41,19 +49,31 @@ function createSseResponse(
     new ReadableStream({
       async start(controller) {
         const send = (event: ComplianceAssistantStreamEvent) => {
+          if (signal.aborted) {
+            return;
+          }
+
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
         };
 
         try {
           await streamHandler(send);
         } catch (error) {
+          if (signal.aborted || isAbortError(error)) {
+            return;
+          }
+
           console.error("Compliance AI ask route failed:", error);
           send({
             type: "error",
             error: "Failed to answer compliance question",
           });
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch {
+            // The client may have disconnected before the stream closed.
+          }
         }
       },
     }),
@@ -104,7 +124,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (prepared.type === "answer") {
-      return createSseResponse(async (send) => {
+      return createSseResponse(request.signal, async (send) => {
         send({
           type: "complete",
           answer: await localizeComplianceAssistantAnswer(
@@ -118,7 +138,7 @@ export async function POST(request: NextRequest) {
     const { context } = prepared;
     const config = getComplianceAiConfig();
 
-    return createSseResponse(async (send) => {
+    return createSseResponse(request.signal, async (send) => {
       if (
         config.generationProvider === "openai" &&
         config.generationApiKey &&
@@ -146,7 +166,8 @@ export async function POST(request: NextRequest) {
                   delta,
                 });
               }
-            }
+            },
+            request.signal
           );
 
           if (!generated) {
@@ -177,6 +198,10 @@ export async function POST(request: NextRequest) {
           });
           return;
         } catch (error) {
+          if (request.signal.aborted || isAbortError(error)) {
+            return;
+          }
+
           send({
             type: "complete",
             answer: await localizeComplianceAssistantAnswer(
