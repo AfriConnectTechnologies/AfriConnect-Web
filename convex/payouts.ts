@@ -415,10 +415,15 @@ async function performTransfer(
     });
 
     const chapaReference =
-      transferResponse?.data?.chapa_reference ||
-      transferResponse?.data?.reference ||
-      undefined;
-    const bankReference = transferResponse?.data?.bank_reference || undefined;
+      typeof transferResponse.data?.chapa_reference === "string"
+        ? transferResponse.data.chapa_reference
+        : typeof transferResponse.data?.reference === "string"
+          ? transferResponse.data.reference
+          : undefined;
+    const bankReference =
+      typeof transferResponse.data?.bank_reference === "string"
+        ? transferResponse.data.bank_reference
+        : undefined;
 
     const updated = await ctx.runMutation(
       internal.payouts.updatePayoutStatus,

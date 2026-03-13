@@ -20,25 +20,35 @@ interface RateLimiterConfig {
   maxRequests: number; // Maximum requests per window
 }
 
-// Check if Upstash Redis is configured
-const isRedisConfigured = !!(
-  process.env.UPSTASH_REDIS_REST_URL && 
-  process.env.UPSTASH_REDIS_REST_TOKEN
-);
+function isRedisConfigured(): boolean {
+  return !!(
+    process.env.UPSTASH_REDIS_REST_URL &&
+    process.env.UPSTASH_REDIS_REST_TOKEN
+  );
+}
 
-// Fail in production if Redis is not configured (in-memory won't work across instances)
-const isProduction = process.env.NODE_ENV === "production";
-if (isProduction && !isRedisConfigured) {
-  throw new Error(
-    "[RateLimiter] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production. " +
-    "In-memory rate limiting does not work across multiple server instances."
+function isProduction(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+let hasWarnedAboutProductionFallback = false;
+
+function warnIfUsingInMemoryRateLimitingInProduction() {
+  if (!isProduction() || isRedisConfigured() || hasWarnedAboutProductionFallback) {
+    return;
+  }
+
+  hasWarnedAboutProductionFallback = true;
+  console.warn(
+    "[RateLimiter] UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are not set. " +
+      "Falling back to in-memory rate limiting, which is not shared across server instances."
   );
 }
 
 // Lazy-init Redis client
 let redis: Redis | null = null;
 function getRedis(): Redis {
-  if (!redis && isRedisConfigured) {
+  if (!redis && isRedisConfigured()) {
     redis = new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL!,
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
@@ -133,7 +143,8 @@ export async function checkRateLimit(
   config: RateLimiterConfig
 ): Promise<RateLimitResult> {
   // Use in-memory for development or if Redis not configured
-  if (!isRedisConfigured) {
+  if (!isRedisConfigured()) {
+    warnIfUsingInMemoryRateLimitingInProduction();
     return checkRateLimitInMemory(identifier, config);
   }
 
