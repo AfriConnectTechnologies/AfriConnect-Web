@@ -339,7 +339,7 @@ export async function streamOpenAiComplianceAnswer(
       return;
     }
 
-    const parsed = JSON.parse(payload) as {
+    let parsed: {
       choices?: Array<{
         delta?: {
           content?: string;
@@ -347,6 +347,28 @@ export async function streamOpenAiComplianceAnswer(
         };
       }>;
     };
+    try {
+      const candidate = JSON.parse(payload);
+      if (typeof candidate !== "object" || candidate === null) {
+        console.error("Malformed OpenAI SSE payload", { payload });
+        return;
+      }
+
+      parsed = candidate as {
+        choices?: Array<{
+          delta?: {
+            content?: string;
+            refusal?: string;
+          };
+        }>;
+      };
+    } catch (error) {
+      console.error("Failed to parse OpenAI SSE payload", {
+        error,
+        payload,
+      });
+      return;
+    }
 
     const delta = parsed.choices?.[0]?.delta;
     if (delta?.refusal) {

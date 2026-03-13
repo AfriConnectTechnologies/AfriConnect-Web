@@ -937,15 +937,15 @@
       "general": "General Assistant"
     },
     "general": {
-      "title": "Ask about AfCFTA",
-      "description": "Ask general questions about AfCFTA, credit scoring, rules of origin, tariff schedules and more. Answers are generated directly by AI.",
+      "title": "Ask about AfCFTA topics",
+      "description": "Ask general questions about AfCFTA rules of origin, tariff schedules, trade facilitation, and related trade topics. For guidance only - verify with official AfCFTA sources.",
       "badge": "AI Powered",
-      "helper": "Ask any question related to the African Continental Free Trade Area. The AI will answer based on its knowledge of AfCFTA agreements, rules of origin, credit scoring and trade facilitation.",
-      "placeholder": "Ask a question, e.g. What are the rules of origin under AfCFTA?",
+      "helper": "Ask questions about the African Continental Free Trade Area for quick guidance on common AfCFTA topics. Always confirm important details with official AfCFTA publications or your local trade authority.",
+      "placeholder": "Ask an AfCFTA question, e.g. How do rules of origin apply under AfCFTA?",
       "sampleQuestions": [
-        "What is the AfCFTA credit scoring framework?",
         "How do rules of origin work under AfCFTA?",
-        "What are the tariff reduction schedules for Category A products?"
+        "What does Category A mean in AfCFTA tariff schedules?",
+        "What trade facilitation documents are commonly needed for AfCFTA shipments?"
       ],
       "cta": {
         "ask": "Ask AI",
