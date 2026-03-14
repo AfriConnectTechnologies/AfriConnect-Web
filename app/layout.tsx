@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/logo2.webp?v=20260314a',
     shortcut: '/logo2.webp?v=20260314a',
-    apple: '/apple-icon.png',
+    apple: '/logo2.webp?v=20260314a',
   },
   manifest: '/manifest.json',
   openGraph: {
