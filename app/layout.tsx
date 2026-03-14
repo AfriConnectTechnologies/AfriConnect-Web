@@ -1,10 +1,21 @@
 import type { Metadata, Viewport } from 'next'
+import { getLocale } from 'next-intl/server'
+import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+})
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+})
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://africonnect.africa.com'
 
 export const metadata: Metadata = {
-  // Basic metadata
   title: {
     default: 'AfriConnect - Africa\'s Premier B2B Marketplace | Cross-Border Trade & Shipping',
     template: '%s | AfriConnect',
@@ -28,18 +39,12 @@ export const metadata: Metadata = {
   authors: [{ name: 'AfriConnect', url: siteUrl }],
   creator: 'AfriConnect',
   publisher: 'AfriConnect',
-  
-  // Favicon and icons are handled by icon.tsx and apple-icon.tsx
   icons: {
     icon: '/logo2.webp?v=20260314a',
     shortcut: '/logo2.webp?v=20260314a',
     apple: '/apple-icon.png',
   },
-  
-  // Manifest for PWA
   manifest: '/manifest.json',
-  
-  // Open Graph metadata for social sharing
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -57,8 +62,6 @@ export const metadata: Metadata = {
       },
     ],
   },
-  
-  // Twitter Card metadata
   twitter: {
     card: 'summary_large_image',
     title: 'AfriConnect - Africa\'s Premier B2B Marketplace',
@@ -67,8 +70,6 @@ export const metadata: Metadata = {
     creator: '@africonnect',
     site: '@africonnect',
   },
-  
-  // Robots configuration
   robots: {
     index: true,
     follow: true,
@@ -80,19 +81,13 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  
-  // Verification for search engines (add your actual verification codes)
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
     yandex: process.env.YANDEX_VERIFICATION,
   },
-  
-  // App-specific metadata
   applicationName: 'AfriConnect',
   referrer: 'origin-when-cross-origin',
   category: 'business',
-  
-  // Additional metadata
   other: {
     'msapplication-TileColor': '#1B2559',
     'apple-mobile-web-app-title': 'AfriConnect',
@@ -114,12 +109,18 @@ export const viewport: Viewport = {
   colorScheme: 'light dark',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // This root layout passes through to the [locale] layout
-  // which handles the html/body tags with locale-specific lang attribute
-  return children
+  const locale = await getLocale()
+
+  return (
+    <html lang={locale} suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  )
 }
