@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Globe2 } from "lucide-react";
+import { BrandIcon } from "@/components/brand-icon";
 
 export function PublicFooter() {
   const t = useTranslations("landing");
@@ -13,7 +14,7 @@ export function PublicFooter() {
         <div className="grid md:grid-cols-4 gap-8">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Globe2 className="h-4 w-4 text-primary" />
+              <BrandIcon className="h-4 w-4" size={16} />
               <span className="font-display text-base font-medium">AfriConnect</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">{t("footer.tagline")}</p>

@@ -12,8 +12,8 @@ export const contentType = 'image/png'
 // Image generation
 export default async function AppleIcon() {
   // Read the logo image
-  const logoData = await readFile(join(process.cwd(), 'public', 'logo.png'))
-  const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`
+  const logoData = await readFile(join(process.cwd(), 'public', 'logo2.webp'))
+  const logoBase64 = `data:image/webp;base64,${logoData.toString('base64')}`
 
   return new ImageResponse(
     (
@@ -24,8 +24,6 @@ export default async function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#ffffff',
-          borderRadius: '36px',
         }}
       >
         <img

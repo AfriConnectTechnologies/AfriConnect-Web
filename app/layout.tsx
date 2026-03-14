@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   
   // Favicon and icons are handled by icon.tsx and apple-icon.tsx
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
+    icon: '/logo2.webp?v=20260314a',
+    shortcut: '/logo2.webp?v=20260314a',
     apple: '/apple-icon.png',
   },
   

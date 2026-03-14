@@ -4,7 +4,7 @@ import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Globe2, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { BrandIcon } from "@/components/brand-icon";
 
 export function PublicHeader() {
   const t = useTranslations("landing");
@@ -20,9 +21,9 @@ export function PublicHeader() {
   return (
     <header className="fixed top-2 left-4 right-4 z-50">
       <nav className="mx-auto max-w-6xl bg-background/80 backdrop-blur-md border border-border rounded-2xl flex h-14 items-center justify-between px-5">
-        <Link href="/" className="flex items-center gap-2">
-          <Globe2 className="h-5 w-5 text-primary" />
-          <span className="font-display text-base font-medium">AfriConnect</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <BrandIcon className="h-7 w-7" size={28} priority />
+          <span className="font-display text-lg leading-none font-medium">AfriConnect</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-7">
