@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useChatContext } from "@/components/chat";
 import { BrandIcon } from "@/components/brand-icon";
+import { useTranslations } from "next-intl";
 
 function MessageNotification() {
   const { unreadCount, isConnected } = useChatContext();
+  const tNavigation = useTranslations("navigation");
 
   if (!isConnected) return null;
 
@@ -27,7 +29,7 @@ function MessageNotification() {
             {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
-        <span className="sr-only">Messages</span>
+        <span className="sr-only">{tNavigation("messages")}</span>
       </Button>
     </Link>
   );

@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -171,6 +172,8 @@ export function ChatWindow({
   backUrl = "/messages",
   onBack,
 }: ChatWindowProps) {
+  const tChat = useTranslations("chat");
+  const tCommon = useTranslations("common");
   const { client, isConnected, isConnecting, error } = useChatContext();
   const [channel, setChannel] = useState<StreamChannel | null>(null);
   const [channelError, setChannelError] = useState<string | null>(null);
@@ -301,7 +304,7 @@ export function ChatWindow({
       <Card className="h-full flex items-center justify-center">
         <CardContent className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">Loading conversation...</p>
+          <p className="mt-4 text-muted-foreground">{tChat("loadingConversations")}</p>
         </CardContent>
       </Card>
     );
@@ -317,7 +320,7 @@ export function ChatWindow({
             <Link href={backUrl}>
               <Button variant="outline" className="mt-4">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Messages
+                {tCommon("back")} {tChat("messages")}
               </Button>
             </Link>
           )}
@@ -330,7 +333,7 @@ export function ChatWindow({
     return (
       <Card className="h-full flex items-center justify-center">
         <CardContent className="text-center py-12">
-          <p className="text-muted-foreground">No conversation selected</p>
+          <p className="text-muted-foreground">{tChat("selectConversation")}</p>
         </CardContent>
       </Card>
     );
@@ -343,13 +346,13 @@ export function ChatWindow({
           {onBack ? (
             <Button variant="ghost" size="sm" onClick={onBack}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {tCommon("back")}
             </Button>
           ) : (
             <Link href={backUrl}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                {tCommon("back")}
               </Button>
             </Link>
           )}
