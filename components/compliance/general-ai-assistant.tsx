@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AlertCircle, Bot, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
@@ -38,8 +38,7 @@ const markdownClassNames = {
   strong: "font-semibold text-foreground",
   a: "text-primary underline underline-offset-2",
   blockquote: "mb-3 border-l-2 border-border pl-4 italic text-muted-foreground last:mb-0",
-  code:
-    "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground",
+  code: "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground",
   pre: "mb-3 overflow-x-auto rounded-lg border bg-muted/50 p-3 last:mb-0",
   h1: "mb-3 text-lg font-semibold text-foreground last:mb-0",
   h2: "mb-3 text-base font-semibold text-foreground last:mb-0",
@@ -49,10 +48,8 @@ const markdownClassNames = {
   td: "border border-border px-2 py-1 align-top",
 } as const;
 
-export function AfcftaAiAssistant() {
-  const t = useTranslations("afcfta");
-  const sampleQuestions = t.raw("sampleQuestions");
-  const abortControllerRef = useRef<AbortController | null>(null);
+export function GeneralAiAssistant() {
+  const t = useTranslations("aiAssistantPage.general");
   const [question, setQuestion] = useState("");
   const [language, setLanguage] = useState<ComplianceTranslationLanguage>("en");
   const [answer, setAnswer] = useState<ComplianceAssistantAnswer | null>(null);
@@ -60,13 +57,6 @@ export function AfcftaAiAssistant() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canSubmit = question.trim().length >= 5 && !isSubmitting;
-
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-    };
-  }, []);
 
   const applyStreamEvent = (event: ComplianceAssistantStreamEvent) => {
     switch (event.type) {
@@ -106,18 +96,13 @@ export function AfcftaAiAssistant() {
       return;
     }
 
-    abortControllerRef.current?.abort();
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
     setIsSubmitting(true);
     setError(null);
     setAnswer(null);
 
     try {
-      const response = await fetch("/api/compliance/ask", {
+      const response = await fetch("/api/compliance/ask-general", {
         method: "POST",
-        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: value,
@@ -158,15 +143,13 @@ export function AfcftaAiAssistant() {
           .map((line) => line.slice(5).trimStart())
           .join("\n");
 
-        if (!payload) {
-          return;
-        }
+        if (!payload) return;
 
         try {
           const event = JSON.parse(payload) as ComplianceAssistantStreamEvent;
           applyStreamEvent(event);
         } catch (parseError) {
-          console.warn("Malformed SSE event in compliance assistant:", parseError);
+          console.warn("Malformed SSE event in general assistant:", parseError);
         }
       };
 
@@ -179,37 +162,26 @@ export function AfcftaAiAssistant() {
 
         for (const segment of segments) {
           const trimmedSegment = segment.trim();
-          if (trimmedSegment) {
-            processEvent(trimmedSegment);
-          }
+          if (trimmedSegment) processEvent(trimmedSegment);
         }
 
         if (done) {
           const trailingSegment = buffer.trim();
-          if (trailingSegment) {
-            processEvent(trailingSegment);
-          }
+          if (trailingSegment) processEvent(trailingSegment);
           break;
         }
       }
     } catch (requestError) {
-      if (controller.signal.aborted) {
-        return;
-      }
-
-      console.error("AfCFTA assistant request failed:", requestError);
+      console.error("General AI assistant request failed:", requestError);
       setAnswer(null);
       setError(t("error.generic"));
     } finally {
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
+    <Card className="border-emerald-500/20 bg-emerald-500/5">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -233,10 +205,7 @@ export function AfcftaAiAssistant() {
 
         <div className="space-y-3">
           <div className="space-y-2">
-            <label
-              htmlFor="language-select-trigger"
-              className="text-sm font-medium text-foreground"
-            >
+            <label className="text-sm font-medium text-foreground">
               {t("form.languageLabel")}
             </label>
             <Select
@@ -244,7 +213,7 @@ export function AfcftaAiAssistant() {
               onValueChange={(value) => setLanguage(value as ComplianceTranslationLanguage)}
               disabled={isSubmitting}
             >
-              <SelectTrigger id="language-select-trigger" className="w-full sm:w-[220px]">
+              <SelectTrigger className="w-full sm:w-[220px]">
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
               <SelectContent>
@@ -261,23 +230,6 @@ export function AfcftaAiAssistant() {
             placeholder={t("placeholder")}
             className="min-h-28"
           />
-          {Array.isArray(sampleQuestions) && sampleQuestions.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {sampleQuestions.map((sampleQuestion) => (
-                <Button
-                  key={sampleQuestion}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-auto whitespace-normal text-left"
-                  onClick={() => setQuestion(sampleQuestion)}
-                  disabled={isSubmitting}
-                >
-                  {sampleQuestion}
-                </Button>
-              ))}
-            </div>
-          )}
           <div className="flex items-center gap-3">
             <Button onClick={() => void submitQuestion()} disabled={!canSubmit}>
               {isSubmitting ? (
@@ -304,15 +256,6 @@ export function AfcftaAiAssistant() {
 
         {answer && (
           <div className="space-y-4 rounded-xl border bg-background p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={answer.mode === "full-rag" ? "default" : "secondary"}>
-                {answer.mode === "full-rag"
-                  ? t("mode.fullRag")
-                  : t("mode.retrievalOnly")}
-              </Badge>
-              <Badge variant="outline">{t(`status.${answer.status}`)}</Badge>
-            </div>
-
             <div className="space-y-2">
               <h3 className="font-medium">{t("sections.answer")}</h3>
               <div className="rounded-lg border bg-muted/20 p-4">
@@ -411,7 +354,6 @@ export function AfcftaAiAssistant() {
                 </div>
               )}
             </div>
-
           </div>
         )}
       </CardContent>

@@ -16,7 +16,6 @@ import { ProductGrid } from "@/components/dashboard/ProductGrid";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
-  const tCommon = useTranslations("common");
   const tOrders = useTranslations("orders");
   
   const ensureUser = useMutation(api.users.ensureUser);

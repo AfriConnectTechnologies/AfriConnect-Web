@@ -101,7 +101,6 @@ describe("Orders Business Logic", () => {
 
     it("should not allow completed -> pending transition", () => {
       const order = createMockOrder({ status: "completed" });
-      const newStatus = "pending";
 
       // Completed orders shouldn't go back to pending
       const isTerminalState = order.status === "completed";
@@ -190,7 +189,6 @@ describe("Orders Business Logic", () => {
 
     it("should not allow deletion of completed order", () => {
       const order = createMockOrder({ status: "completed", userId: "user_123" });
-      const user = createMockUser({ _id: "user_123" });
 
       const canDelete = order.status === "pending";
 
@@ -228,7 +226,6 @@ describe("Orders Business Logic", () => {
         status: "cancelled",
         sellerId: "clerk_seller_456",
       });
-      const seller = createMockSeller({ clerkId: "clerk_seller_456" });
 
       const canComplete = order.status !== "cancelled";
 

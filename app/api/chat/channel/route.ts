@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { StreamChat } from "stream-chat";
 
 const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;

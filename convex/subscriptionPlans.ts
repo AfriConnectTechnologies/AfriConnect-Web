@@ -277,7 +277,7 @@ export const updatePricesToUsd = mutation({
  */
 export const deleteAll = mutation({
   args: { force: v.optional(v.boolean()) },
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Always require admin for plan deletion - security first
     await requireAdmin(ctx);
     

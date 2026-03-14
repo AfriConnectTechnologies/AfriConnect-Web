@@ -75,7 +75,7 @@ export function ImageUploader({
     return null;
   };
 
-  const uploadFile = async (file: File, uploadId: string) => {
+  const uploadFile = useCallback(async (file: File, uploadId: string) => {
     try {
       // Update status to uploading
       setUploadingImages((prev) =>
@@ -162,7 +162,7 @@ export function ImageUploader({
       );
       toast.error(error instanceof Error ? error.message : "Failed to upload image");
     }
-  };
+  }, [onImagesChange, productId, saveImage]);
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
@@ -204,7 +204,7 @@ export function ImageUploader({
         });
       }
     },
-    [maxImages, totalImages, productId]
+    [maxImages, totalImages, uploadFile]
   );
 
   const handleDrop = useCallback(

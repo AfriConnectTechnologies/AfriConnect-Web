@@ -48,6 +48,7 @@
     "manageProducts": "ምርቶችን አስተዳድር",
     "manageRefunds": "ተመላሾችን አስተዳድር",
     "compliance": "የAfCFTA ተገዢነት",
+    "aiAssistant": "AI ረዳት",
     "toggleMenu": "ምናሌ ቀያይር",
     "toggleSidebar": "ጎን አሞሌ ቀያይር"
   },
@@ -899,6 +900,7 @@
       "asking": "በመጠየቅ ላይ..."
     },
     "form": {
+      "languageLabel": "ቋንቋ",
       "questionLabel": "የተገዢነት ጥያቄ"
     },
     "validation": {
@@ -924,6 +926,45 @@
       "ready": "ዝግጁ",
       "not_configured": "አልተዋቀረም",
       "no_evidence": "ምንም ማስረጃ የለም"
+    }
+  },
+  "aiAssistantPage": {
+    "title": "AI ረዳት",
+    "description": "ስለ AfCFTA ተገዢነት፣ የብድር ደረጃ መስጠት፣ የመነሻ ደንቦች እና ሌሎች ጥያቄዎችን ይጠይቁ።",
+    "unavailable": "የAI ረዳት መሳሪያዎች ለጊዜው አይገኙም።",
+    "tabs": {
+      "compliance": "የAfCFTA ተገዢነት",
+      "general": "አጠቃላይ ረዳት"
+    },
+    "general": {
+      "title": "ስለ AfCFTA ርዕሶች ይጠይቁ",
+      "description": "ስለ AfCFTA የመነሻ ደንቦች፣ የታሪፍ መርሃ ግብሮች፣ የንግድ ማስታገሻ እና ተዛማጅ የንግድ ርዕሶች አጠቃላይ ጥያቄዎችን ይጠይቁ። ለመመሪያ ብቻ ነው - በኦፊሴላዊ የAfCFTA ምንጮች ያረጋግጡ።",
+      "badge": "AI ያለው",
+      "helper": "ስለ አፍሪካ አህጉራዊ ነጻ ንግድ ቀጠና የተለመዱ የAfCFTA ርዕሶች ፈጣን መመሪያ ለማግኘት ጥያቄዎችን ይጠይቁ። አስፈላጊ ዝርዝሮችን ሁልጊዜ በኦፊሴላዊ የAfCFTA ህትመቶች ወይም በአካባቢያዊ የንግድ ባለስልጣን ያረጋግጡ።",
+      "placeholder": "የAfCFTA ጥያቄ ይጠይቁ፣ ለምሳሌ፡ በAfCFTA ስር የመነሻ ደንቦች እንዴት ይሰራሉ?",
+      "sampleQuestions": [
+        "በAfCFTA ስር የመነሻ ደንቦች እንዴት ይሰራሉ?",
+        "በAfCFTA የታሪፍ መርሃ ግብሮች ውስጥ ምድብ A ምን ማለት ነው?",
+        "ለAfCFTA ጭነቶች በተለምዶ የሚያስፈልጉ የንግድ ማስታገሻ ሰነዶች ምንድን ናቸው?"
+      ],
+      "cta": {
+        "ask": "AI ጠይቅ",
+        "asking": "በመጠየቅ ላይ..."
+      },
+      "form": {
+        "languageLabel": "ቋንቋ",
+        "questionLabel": "ጥያቄዎ"
+      },
+      "validation": {
+        "questionTooShort": "እባክዎ የበለጠ ዝርዝር ጥያቄ ያስገቡ።",
+        "invalidQuestion": "እባክዎ ትክክለኛ ጥያቄ ያቅርቡ።"
+      },
+      "error": {
+        "generic": "ከAI ረዳት ምላሽ ማግኘት አልተቻለም።"
+      },
+      "sections": {
+        "answer": "መልስ"
+      }
     }
   },
   "originEligibility": {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,9 +33,12 @@ export function BusinessCard() {
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-xl bg-primary-foreground/20 flex items-center justify-center shrink-0">
               {myBusiness.logoUrl ? (
-                <img 
-                  src={myBusiness.logoUrl} 
-                  alt={myBusiness.name} 
+                <Image
+                  src={myBusiness.logoUrl}
+                  alt={myBusiness.name}
+                  width={56}
+                  height={56}
+                  unoptimized
                   className="h-14 w-14 rounded-xl object-cover"
                 />
               ) : (
