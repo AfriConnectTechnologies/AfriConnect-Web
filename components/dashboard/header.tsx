@@ -4,13 +4,16 @@ import { Link } from "@/i18n/navigation";
 import { MobileSidebarTrigger } from "./sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { Globe2, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useChatContext } from "@/components/chat";
+import { BrandIcon } from "@/components/brand-icon";
+import { useTranslations } from "next-intl";
 
 function MessageNotification() {
   const { unreadCount, isConnected } = useChatContext();
+  const tNavigation = useTranslations("navigation");
 
   if (!isConnected) return null;
 
@@ -26,7 +29,7 @@ function MessageNotification() {
             {unreadCount > 99 ? "99+" : unreadCount}
           </Badge>
         )}
-        <span className="sr-only">Messages</span>
+        <span className="sr-only">{tNavigation("messages")}</span>
       </Button>
     </Link>
   );
@@ -37,9 +40,7 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <MobileSidebarTrigger />
       <Link href="/" className="flex items-center gap-2 md:hidden cursor-pointer">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <Globe2 className="h-4 w-4 text-primary-foreground" />
-        </div>
+        <BrandIcon className="h-8 w-8" />
         <span className="font-semibold">AfriConnect</span>
       </Link>
       <div className="flex-1" />

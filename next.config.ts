@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
+    localPatterns: [
+      {
+        pathname: "/logo2.webp",
+        search: "?v=20260314a",
+      },
+    ],
     remotePatterns: [
       // Cloudflare R2 public buckets (wildcard patterns)
       {

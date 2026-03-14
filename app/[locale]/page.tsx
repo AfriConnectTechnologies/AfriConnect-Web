@@ -1,605 +1,466 @@
 "use client";
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  ArrowRight, 
-  Globe2, 
-  Shield, 
-  Package, 
-  Users,
-  ShoppingCart,
-  Building2,
-  Boxes,
-  Leaf,
-  Gem,
-  Cpu,
-  Shirt,
-  Utensils,
-  Hammer,
-  CheckCircle2,
-  Sparkles,
-  Store,
-  Languages,
-  BadgeCheck,
-  Menu,
-  LogIn,
-  LayoutDashboard,
-  Compass
-} from "lucide-react";
 import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageSwitcher } from "@/components/language-switcher";
+  ArrowRight,
+  Shield,
+  Store,
+  Building2,
+  BadgeCheck,
+  Languages,
+  Users,
+  Package,
+  ShoppingCart,
+  ArrowDown,
+} from "lucide-react";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
+import { PublicHeader } from "@/components/public-header";
+import { PublicFooter } from "@/components/public-footer";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 
-export default function LandingPage() {
-  const t = useTranslations("landing");
-
-  const features = [
-    {
-      icon: Store,
-      titleKey: "features.marketplace",
-      descKey: "features.marketplaceDesc",
-    },
-    {
-      icon: Building2,
-      titleKey: "features.directory",
-      descKey: "features.directoryDesc",
-    },
-    {
-      icon: BadgeCheck,
-      titleKey: "features.verification",
-      descKey: "features.verificationDesc",
-    },
-    {
-      icon: Shield,
-      titleKey: "features.securePayments",
-      descKey: "features.securePaymentsDesc",
-    },
-    {
-      icon: Languages,
-      titleKey: "features.multiLanguage",
-      descKey: "features.multiLanguageDesc",
-    },
-    {
-      icon: Users,
-      titleKey: "features.community",
-      descKey: "features.communityDesc",
-    },
-  ];
-
-  const categories = [
-    { icon: Boxes, nameKey: "categories.rawMaterials" },
-    { icon: Leaf, nameKey: "categories.agriculture" },
-    { icon: Gem, nameKey: "categories.miningMinerals" },
-    { icon: Cpu, nameKey: "categories.electronics" },
-    { icon: Shirt, nameKey: "categories.textilesFashion" },
-    { icon: Utensils, nameKey: "categories.foodBeverages" },
-    { icon: Hammer, nameKey: "categories.construction" },
-    { icon: Building2, nameKey: "categories.industrialEquipment" },
-  ];
-
-  const steps = [
-    {
-      step: "01",
-      titleKey: "howItWorks.step1Title",
-      descKey: "howItWorks.step1Desc",
-      icon: Users,
-    },
-    {
-      step: "02",
-      titleKey: "howItWorks.step2Title",
-      descKey: "howItWorks.step2Desc",
-      icon: Building2,
-    },
-    {
-      step: "03",
-      titleKey: "howItWorks.step3Title",
-      descKey: "howItWorks.step3Desc",
-      icon: Package,
-    },
-    {
-      step: "04",
-      titleKey: "howItWorks.step4Title",
-      descKey: "howItWorks.step4Desc",
-      icon: ShoppingCart,
-    },
-  ];
-
-  const benefits = [
-    { key: "benefits.item1", icon: CheckCircle2 },
-    { key: "benefits.item2", icon: CheckCircle2 },
-    { key: "benefits.item3", icon: CheckCircle2 },
-    { key: "benefits.item4", icon: CheckCircle2 },
-  ];
-
+function FadeUp({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
   return (
-    <>
-      {/* Structured Data for SEO */}
-      <OrganizationJsonLd 
-        sameAs={[
-          'https://twitter.com/africonnect',
-          'https://linkedin.com/company/africonnect',
-          'https://facebook.com/africonnect',
-        ]}
-      />
-      <WebsiteJsonLd />
-      
-      <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-md">
-        <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 cursor-pointer shrink-0">
-            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary">
-              <Globe2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg sm:text-xl font-bold tracking-tight">AfriConnect</span>
-          </Link>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/explore" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.marketplace")}
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.pricing")}
-            </Link>
-            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.features")}
-            </Link>
-            <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {t("nav.howItWorks")}
-            </Link>
-          </div>
-          
-          {/* Desktop Controls */}
-          <div className="hidden sm:flex items-center gap-2 md:gap-3">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button variant="ghost" size="sm">{t("nav.signIn")}</Button>
-              </SignInButton>
-              <SignInButton mode="modal">
-                <Button size="sm">{t("nav.getStarted")}</Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">{t("nav.dashboard")}</Button>
-              </Link>
-              <UserButton />
-            </SignedIn>
-          </div>
-          
-          {/* Mobile Controls */}
-          <div className="flex sm:hidden items-center gap-1">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-64 p-0">
-                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                <div className="flex flex-col h-full">
-                  {/* Header */}
-                  <div className="p-4 border-b">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                        <Globe2 className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <span className="text-lg font-bold">AfriConnect</span>
-                    </div>
-                  </div>
-                  
-                  {/* Navigation Links */}
-                  <nav className="flex-1 p-3">
-                    <div className="flex flex-col gap-1">
-                      <Link 
-                        href="/explore" 
-                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
-                      >
-                        <Compass className="h-4 w-4 text-muted-foreground" />
-                        {t("nav.marketplace")}
-                      </Link>
-                      <Link 
-                        href="/pricing" 
-                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
-                      >
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                        {t("nav.pricing")}
-                      </Link>
-                      <Link 
-                        href="#features" 
-                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
-                      >
-                        <Sparkles className="h-4 w-4 text-muted-foreground" />
-                        {t("nav.features")}
-                      </Link>
-                      <Link 
-                        href="#how-it-works" 
-                        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
-                      >
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        {t("nav.howItWorks")}
-                      </Link>
-                    </div>
-                  </nav>
-                  
-                  {/* Auth Section - Fixed at bottom */}
-                  <div className="p-4 border-t bg-muted/30">
-                    <SignedOut>
-                      <div className="flex flex-col gap-2">
-                        <SignInButton mode="modal">
-                          <Button variant="outline" className="w-full gap-2">
-                            <LogIn className="h-4 w-4" />
-                            Log In
-                          </Button>
-                        </SignInButton>
-                        <SignInButton mode="modal">
-                          <Button className="w-full gap-2">
-                            <Users className="h-4 w-4" />
-                            Sign Up
-                          </Button>
-                        </SignInButton>
-                      </div>
-                    </SignedOut>
-                    <SignedIn>
-                      <div className="flex items-center gap-3 mb-3 pb-3 border-b">
-                        <UserButton 
-                          appearance={{
-                            elements: {
-                              avatarBox: "h-10 w-10"
-                            }
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">My Account</p>
-                          <p className="text-xs text-muted-foreground">Manage profile</p>
-                        </div>
-                      </div>
-                      <Link href="/dashboard">
-                        <Button className="w-full gap-2">
-                          <LayoutDashboard className="h-4 w-4" />
-                          Go to Dashboard
-                        </Button>
-                      </Link>
-                    </SignedIn>
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </nav>
-      </header>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-      {/* Hero Section */}
-      <section className="relative pt-16 min-h-[90vh] flex items-center hero-gradient pattern-overlay overflow-hidden">
-        {/* Floating decorative elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="floating-shape floating-shape-1 top-20 left-[10%] w-64 h-64 rounded-full bg-primary/5 blur-3xl" />
-          <div className="floating-shape floating-shape-2 top-40 right-[15%] w-48 h-48 rounded-full bg-accent/10 blur-2xl" />
-          <div className="floating-shape floating-shape-3 bottom-32 left-[20%] w-32 h-32 rounded-full bg-primary/10 blur-2xl" />
-          
-          {/* Geometric shapes */}
-          <div className="absolute top-32 right-[10%] w-20 h-20 border-2 border-primary/10 rounded-xl rotate-12 animate-float-slow" />
-          <div className="absolute bottom-48 right-[25%] w-12 h-12 bg-accent/10 rounded-lg rotate-45 animate-float-reverse" />
-          <div className="absolute top-1/2 left-[5%] w-8 h-8 border-2 border-accent/20 rounded-full animate-float" />
+function AmbientBlob({ className = "", delay = 0 }: { className?: string; delay?: number }) {
+  return (
+    <motion.div
+      className={`absolute rounded-full pointer-events-none animate-morph ${className}`}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 1.5, delay, ease: [0.25, 1, 0.5, 1] }}
+    />
+  );
+}
+
+function FeatureIllustration({ type }: { type: "marketplace" | "directory" | "verification" | "payments" | "language" | "community" }) {
+  const illustrations: Record<typeof type, React.ReactNode> = {
+    marketplace: (
+      <div className="relative w-full h-full flex items-center justify-center p-8">
+        <div className="absolute top-6 left-8 w-20 h-14 rounded-lg bg-primary/[0.07] dark:bg-primary/[0.12] border border-primary/10" />
+        <div className="absolute top-8 right-10 w-16 h-16 rounded-full bg-accent/10 dark:bg-accent/15" />
+        <div className="relative bg-background dark:bg-muted/30 rounded-xl shadow-sm border border-border/60 p-5 w-[85%] max-w-[280px]">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 dark:bg-primary/15 flex items-center justify-center">
+              <Store className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="h-2.5 w-24 bg-foreground/10 rounded-full" />
+              <div className="h-2 w-16 bg-muted-foreground/10 rounded-full mt-1.5" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[...Array(6)].map((_, j) => (
+              <div key={j} className="aspect-square rounded-lg bg-muted/50 dark:bg-muted/30 flex items-center justify-center">
+                <Package className="h-3.5 w-3.5 text-muted-foreground/30" />
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="h-2 w-20 bg-muted-foreground/10 rounded-full" />
+            <div className="h-6 w-14 rounded-md bg-primary/10 dark:bg-primary/15" />
+          </div>
         </div>
-
-        <div className="container mx-auto px-4 py-16 lg:py-24 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 px-4 py-2 rounded-full mb-8 opacity-0 animate-fade-in animation-delay-100">
-              <Sparkles className="h-4 w-4" />
-              {t("hero.badge")}
+      </div>
+    ),
+    directory: (
+      <div className="relative w-full h-full flex items-center justify-center p-8">
+        <div className="absolute bottom-8 right-8 w-24 h-24 rounded-full bg-primary/[0.05] dark:bg-primary/[0.1]" />
+        <div className="relative space-y-2.5 w-[85%] max-w-[280px]">
+          {[0, 1, 2].map((j) => (
+            <div key={j} className={`bg-background dark:bg-muted/30 rounded-xl shadow-sm border border-border/60 p-4 flex items-center gap-3 ${j === 1 ? "ml-4 border-primary/20 ring-1 ring-primary/10" : ""}`}>
+              <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${j === 1 ? "bg-primary/15" : "bg-muted/60 dark:bg-muted/40"}`}>
+                <Building2 className={`h-4 w-4 ${j === 1 ? "text-primary" : "text-muted-foreground/40"}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`h-2.5 rounded-full ${j === 1 ? "w-28 bg-foreground/15" : "w-20 bg-foreground/8"}`} />
+                <div className={`h-2 rounded-full mt-1.5 ${j === 1 ? "w-36 bg-muted-foreground/15" : "w-24 bg-muted-foreground/8"}`} />
+              </div>
+              <BadgeCheck className={`h-4 w-4 shrink-0 ${j === 1 ? "text-primary/40" : "text-muted-foreground/15"}`} />
             </div>
-            
-            {/* Main Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1] mb-6 opacity-0 animate-slide-up animation-delay-200">
-              {t("hero.title")}{" "}
-              <span className="gradient-text">{t("hero.titleHighlight")}</span>
-            </h1>
-            
-            {/* Subheadline */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 opacity-0 animate-slide-up animation-delay-300">
-              {t("hero.description")}
-            </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 opacity-0 animate-slide-up animation-delay-400">
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <Button size="lg" className="gap-2 text-base px-8">
-                    {t("hero.getStarted")}
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <Link href="/marketplace">
-                  <Button size="lg" className="gap-2 text-base px-8">
-                    {t("hero.browseMarketplace")}
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </SignedIn>
-              <Link href="/explore">
-                <Button size="lg" variant="outline" className="text-base px-8">
-                  {t("hero.exploreProducts")}
-                </Button>
-              </Link>
+          ))}
+        </div>
+      </div>
+    ),
+    verification: (
+      <div className="relative w-full h-full flex items-center justify-center p-8">
+        <div className="absolute top-10 left-10 w-16 h-16 rounded-full bg-green-500/[0.06] dark:bg-green-500/[0.1]" />
+        <div className="absolute bottom-10 right-12 w-12 h-12 rounded-full bg-primary/[0.06] dark:bg-primary/[0.1]" />
+        <div className="relative bg-background dark:bg-muted/30 rounded-xl shadow-sm border border-border/60 p-6 w-[85%] max-w-[260px]">
+          <div className="flex justify-center mb-5">
+            <div className="h-16 w-16 rounded-full bg-green-500/10 dark:bg-green-500/15 flex items-center justify-center ring-4 ring-green-500/5">
+              <BadgeCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-
-            {/* Benefits list */}
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 opacity-0 animate-fade-in animation-delay-600">
-              {benefits.map((benefit) => (
-                <div key={benefit.key} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <benefit.icon className="h-4 w-4 text-primary" />
-                  <span>{t(benefit.key)}</span>
+          </div>
+          <div className="space-y-3">
+            {["w-full", "w-4/5", "w-3/5"].map((w, j) => (
+              <div key={j} className="flex items-center gap-2.5">
+                <div className="h-5 w-5 rounded-full bg-green-500/10 dark:bg-green-500/15 flex items-center justify-center shrink-0">
+                  <svg className="h-3 w-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <div className={`h-2 ${w} bg-foreground/8 rounded-full`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+    payments: (
+      <div className="relative w-full h-full flex items-center justify-center p-8">
+        <div className="absolute top-8 right-8 w-20 h-20 rounded-full bg-primary/[0.05] dark:bg-primary/[0.1]" />
+        <div className="relative w-[85%] max-w-[280px] space-y-3">
+          <div className="bg-gradient-to-br from-primary/80 to-primary rounded-xl p-5 text-primary-foreground shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-7 w-10 rounded bg-primary-foreground/20" />
+              <Shield className="h-5 w-5 text-primary-foreground/60" />
+            </div>
+            <div className="h-2 w-32 bg-primary-foreground/25 rounded-full mb-1.5" />
+            <div className="h-2 w-20 bg-primary-foreground/15 rounded-full" />
+          </div>
+          <div className="bg-background dark:bg-muted/30 rounded-xl shadow-sm border border-border/60 p-4 flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-green-500/10 dark:bg-green-500/15 flex items-center justify-center shrink-0">
+              <svg className="h-4 w-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <div className="flex-1">
+              <div className="h-2.5 w-24 bg-foreground/10 rounded-full" />
+              <div className="h-2 w-16 bg-green-600/15 rounded-full mt-1" />
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    language: (
+      <div className="relative w-full h-full flex items-center justify-center p-8">
+        <div className="absolute top-6 left-6 w-14 h-14 rounded-full bg-accent/10 dark:bg-accent/15" />
+        <div className="absolute bottom-8 right-10 w-18 h-18 rounded-full bg-primary/[0.05] dark:bg-primary/[0.1]" />
+        <div className="relative w-[85%] max-w-[260px] space-y-2.5">
+          {[
+            { label: "EN", active: false },
+            { label: "FR", active: true },
+            { label: "SW", active: false },
+            { label: "AR", active: false },
+          ].map((lang, j) => (
+            <div key={j} className={`bg-background dark:bg-muted/30 rounded-xl shadow-sm border p-3.5 flex items-center gap-3 transition-all ${lang.active ? "border-primary/30 ring-1 ring-primary/10" : "border-border/60"}`}>
+              <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${lang.active ? "bg-primary text-primary-foreground" : "bg-muted/60 dark:bg-muted/40 text-muted-foreground/60"}`}>
+                {lang.label}
+              </div>
+              <div className="flex-1">
+                <div className={`h-2 rounded-full ${lang.active ? "w-28 bg-foreground/12" : "w-20 bg-foreground/6"}`} />
+                <div className={`h-1.5 rounded-full mt-1.5 ${lang.active ? "w-20 bg-muted-foreground/12" : "w-14 bg-muted-foreground/6"}`} />
+              </div>
+              {lang.active && <Languages className="h-4 w-4 text-primary/40 shrink-0" />}
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    community: (
+      <div className="relative w-full h-full flex items-center justify-center p-8">
+        <div className="absolute top-8 left-10 w-20 h-20 rounded-full bg-primary/[0.05] dark:bg-primary/[0.1]" />
+        <div className="absolute bottom-6 right-8 w-14 h-14 rounded-full bg-accent/8 dark:bg-accent/12" />
+        <div className="relative bg-background dark:bg-muted/30 rounded-xl shadow-sm border border-border/60 p-6 w-[85%] max-w-[260px]">
+          <div className="flex justify-center mb-4">
+            <div className="flex -space-x-2.5">
+              {[
+                "bg-primary/20 dark:bg-primary/30",
+                "bg-orange-400/20 dark:bg-orange-400/30",
+                "bg-emerald-400/20 dark:bg-emerald-400/30",
+                "bg-violet-400/20 dark:bg-violet-400/30",
+                "bg-rose-400/20 dark:bg-rose-400/30",
+              ].map((color, j) => (
+                <div key={j} className={`h-10 w-10 rounded-full ${color} border-2 border-background dark:border-muted/30 flex items-center justify-center`}>
+                  <Users className="h-4 w-4 text-muted-foreground/30" />
                 </div>
               ))}
             </div>
           </div>
-        </div>
-        
-        {/* Wave divider */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto">
-            <path 
-              d="M0 120L60 105C120 90 240 60 360 45C480 30 600 30 720 37.5C840 45 960 60 1080 67.5C1200 75 1320 75 1380 75L1440 75V120H1380C1320 120 1200 120 1080 120C960 120 840 120 720 120C600 120 480 120 360 120C240 120 120 120 60 120H0Z" 
-              className="fill-background"
-            />
-          </svg>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              {t("features.title")}
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t("features.description")}
-            </p>
+          <div className="text-center mb-4">
+            <div className="h-2.5 w-24 bg-foreground/10 rounded-full mx-auto" />
+            <div className="h-2 w-16 bg-muted-foreground/10 rounded-full mx-auto mt-1.5" />
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => (
-              <Card 
-                key={feature.titleKey} 
-                className="group transition-all duration-300 hover:shadow-md hover:border-primary/20"
-              >
-                <CardHeader>
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary/15">
-                    <feature.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-xl">{t(feature.titleKey)}</CardTitle>
-                  <CardDescription className="text-base leading-relaxed">
-                    {t(feature.descKey)}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section id="categories" className="py-24 bg-muted/30 pattern-lines">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              {t("categories.title")}
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t("categories.description")}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-            {categories.map((category) => (
-              <Link 
-                key={category.nameKey} 
-                href="/explore"
-                className="group"
-              >
-                <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/20 cursor-pointer">
-                  <CardContent className="p-6 flex flex-col items-center text-center">
-                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary/15">
-                      <category.icon className="h-7 w-7 text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-base">{t(category.nameKey)}</h3>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-          <div className="text-center mt-12">
-            <Link href="/explore">
-              <Button variant="outline" size="lg" className="gap-2">
-                {t("categories.viewAll")}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              {t("howItWorks.title")}
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t("howItWorks.description")}
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((item, index) => (
-              <div 
-                key={item.step} 
-                className="relative"
-              >
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-12 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/40 to-transparent" />
-                )}
-                <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-6">
-                    <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center group hover:bg-primary/20 transition-colors">
-                      <item.icon className="h-10 w-10 text-primary" />
-                    </div>
-                    <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold shadow-lg">
-                      {item.step}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-3">{t(item.titleKey)}</h3>
-                  <p className="text-muted-foreground">{t(item.descKey)}</p>
-                </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[...Array(3)].map((_, j) => (
+              <div key={j} className="text-center">
+                <div className="h-3 w-8 bg-primary/10 rounded-full mx-auto" />
+                <div className="h-1.5 w-10 bg-muted-foreground/8 rounded-full mx-auto mt-1" />
               </div>
             ))}
           </div>
         </div>
-      </section>
+      </div>
+    ),
+  };
 
-      {/* CTA Section */}
-      <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">
-        <div className="absolute inset-0 pattern-overlay opacity-20" />
-        
-        {/* Animated background shapes */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-white/5 animate-float-slow" />
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-white/5 animate-float-reverse" />
-        </div>
-        
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
-              {t("cta.title")}
-            </h2>
-            <p className="text-lg opacity-90 max-w-xl mx-auto mb-10">
-              {t("cta.description")}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+  return (
+    <div className="aspect-[4/3] bg-muted/30 dark:bg-muted/15 rounded-xl border border-border/40 overflow-hidden">
+      {illustrations[type]}
+    </div>
+  );
+}
+
+export default function LandingPage() {
+  const t = useTranslations("landing");
+  const scrollRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: scrollRef, offset: ["start start", "end end"] });
+  const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  const features = [
+    { icon: Store, titleKey: "features.marketplace", descKey: "features.marketplaceDesc", illustration: "marketplace" as const },
+    { icon: Building2, titleKey: "features.directory", descKey: "features.directoryDesc", illustration: "directory" as const },
+    { icon: BadgeCheck, titleKey: "features.verification", descKey: "features.verificationDesc", illustration: "verification" as const },
+    { icon: Shield, titleKey: "features.securePayments", descKey: "features.securePaymentsDesc", illustration: "payments" as const },
+    { icon: Languages, titleKey: "features.multiLanguage", descKey: "features.multiLanguageDesc", illustration: "language" as const },
+    { icon: Users, titleKey: "features.community", descKey: "features.communityDesc", illustration: "community" as const },
+  ];
+
+  const steps = [
+    { num: "01", titleKey: "howItWorks.step1Title", descKey: "howItWorks.step1Desc", icon: Users },
+    { num: "02", titleKey: "howItWorks.step2Title", descKey: "howItWorks.step2Desc", icon: Building2 },
+    { num: "03", titleKey: "howItWorks.step3Title", descKey: "howItWorks.step3Desc", icon: Package },
+    { num: "04", titleKey: "howItWorks.step4Title", descKey: "howItWorks.step4Desc", icon: ShoppingCart },
+  ];
+
+  return (
+    <>
+      <OrganizationJsonLd
+        sameAs={[
+          "https://twitter.com/africonnect",
+          "https://linkedin.com/company/africonnect",
+          "https://facebook.com/africonnect",
+        ]}
+      />
+      <WebsiteJsonLd />
+
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&family=Figtree:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+      <style>{`
+        .font-display { font-family: 'Newsreader', Georgia, serif; }
+        .font-body { font-family: 'Figtree', system-ui, sans-serif; }
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
+
+      {/* Scroll progress bar */}
+      <motion.div className="fixed top-0 left-0 right-0 h-0.5 bg-primary z-[60] origin-left" style={{ width: progressWidth }} />
+
+      <div ref={scrollRef} className="font-body flex min-h-screen flex-col bg-background text-foreground">
+        <PublicHeader />
+
+        {/* Hero */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-6">
+          <AmbientBlob className="w-[500px] h-[500px] bg-primary/[0.06] dark:bg-primary/[0.1] -top-20 -left-40 blur-3xl" delay={0.2} />
+          <AmbientBlob className="w-[400px] h-[400px] bg-accent/[0.08] dark:bg-accent/[0.12] -bottom-20 -right-20 blur-3xl" delay={0.5} />
+          <AmbientBlob className="w-[250px] h-[250px] bg-primary/[0.05] dark:bg-primary/[0.08] top-1/3 right-1/4 blur-2xl" delay={0.8} />
+
+          <div className="text-center max-w-4xl relative z-10">
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
+              className="text-sm font-medium tracking-widest uppercase text-primary mb-6"
+            >
+              {t("hero.badge")}
+            </motion.p>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="font-display text-[clamp(2.25rem,5vw,4.25rem)] font-normal leading-[1.1] tracking-tight mb-6"
+            >
+              {t("hero.title")}{" "}
+              <span className="italic text-primary">{t("hero.titleHighlight")}</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
+              className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed mb-8"
+            >
+              {t("hero.description")}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.65, ease: [0.25, 1, 0.5, 1] }}
+              className="flex flex-wrap items-center justify-center gap-4 mb-10"
+            >
               <SignedOut>
                 <SignInButton mode="modal">
-                  <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
-                    {t("cta.createAccount")}
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
+                  <Button size="lg" className="gap-2 font-medium rounded-xl px-8">{t("hero.getStarted")} <ArrowRight className="h-4 w-4" /></Button>
                 </SignInButton>
               </SignedOut>
               <SignedIn>
-                <Link href="/dashboard">
-                  <Button size="lg" variant="secondary" className="gap-2 text-base px-8">
-                    {t("cta.goToDashboard")}
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
+                <Link href="/marketplace">
+                  <Button size="lg" className="gap-2 font-medium rounded-xl px-8">{t("hero.browseMarketplace")} <ArrowRight className="h-4 w-4" /></Button>
                 </Link>
               </SignedIn>
               <Link href="/explore">
-                <Button size="lg" variant="secondary" className="text-base px-8">
-                  {t("cta.explore")}
-                </Button>
+                <Button size="lg" variant="outline" className="font-medium rounded-xl px-8">{t("hero.exploreProducts")}</Button>
               </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.2 }}
+              className="flex justify-center"
+            >
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <ArrowDown className="h-5 w-5 text-muted-foreground/50" />
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Features - Alternating Left/Right */}
+        <section id="features" className="py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl px-6">
+            <FadeUp>
+              <div className="text-center mb-14">
+                <p className="text-xs font-medium tracking-widest uppercase text-primary mb-3">{t("nav.features")}</p>
+                <h2 className="font-display text-[clamp(1.5rem,3vw,2.5rem)] font-normal leading-tight">
+                  {t("features.title")}
+                </h2>
+              </div>
+            </FadeUp>
+
+            <div className="space-y-16 lg:space-y-20">
+              {features.map((feature, i) => {
+                const isEven = i % 2 === 0;
+                return (
+                  <FadeUp key={feature.titleKey} delay={0.1}>
+                    <div className={`grid lg:grid-cols-2 gap-8 lg:gap-14 items-center ${isEven ? "" : "lg:direction-rtl"}`}>
+                      <div className={isEven ? "" : "lg:order-2 lg:text-right"}>
+                        <div className={`flex items-center gap-2.5 mb-3 ${isEven ? "" : "lg:justify-end"}`}>
+                          <div className="h-8 w-8 rounded-lg bg-primary/8 dark:bg-primary/12 flex items-center justify-center">
+                            <feature.icon className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-xs font-medium tracking-wider uppercase text-muted-foreground">0{i + 1}</span>
+                        </div>
+                        <h3 className="font-display text-xl lg:text-2xl font-normal mb-3">{t(feature.titleKey)}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed max-w-md">{t(feature.descKey)}</p>
+                      </div>
+                      <div className={isEven ? "lg:order-2" : ""}>
+                        <FeatureIllustration type={feature.illustration} />
+                      </div>
+                    </div>
+                  </FadeUp>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Simple Trust Section */}
-      <section className="py-16 bg-muted/30 border-y">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-primary" />
-              <div>
-                <div className="font-semibold">{t("trust.securePayments")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.securePaymentsDesc")}</div>
+        {/* How It Works - Vertical Timeline */}
+        <section className="py-16 lg:py-24 bg-primary/[0.03] dark:bg-primary/[0.05] relative overflow-hidden">
+          <AmbientBlob className="w-[350px] h-[350px] bg-primary/[0.04] dark:bg-primary/[0.08] top-20 -right-40 blur-3xl" delay={0} />
+          <div className="mx-auto max-w-5xl px-6 relative z-10">
+            <FadeUp>
+              <div className="text-center mb-14">
+                <p className="text-xs font-medium tracking-widest uppercase text-primary mb-3">{t("nav.howItWorks")}</p>
+                <h2 className="font-display text-[clamp(1.5rem,3vw,2.5rem)] font-normal leading-tight">
+                  {t("howItWorks.title")}
+                </h2>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <BadgeCheck className="h-8 w-8 text-primary" />
-              <div>
-                <div className="font-semibold">{t("trust.verifiedBusinesses")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.verifiedBusinessesDesc")}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Languages className="h-8 w-8 text-primary" />
-              <div>
-                <div className="font-semibold">{t("trust.multiLanguage")}</div>
-                <div className="text-sm text-muted-foreground">{t("trust.multiLanguageDesc")}</div>
+            </FadeUp>
+
+            <div className="relative">
+              <div className="hidden md:block absolute left-1/2 -translate-x-px top-0 bottom-0 w-px bg-border" />
+
+              <div className="space-y-16 md:space-y-0">
+                {steps.map((step, i) => {
+                  const isLeft = i % 2 === 0;
+                  return (
+                    <FadeUp key={step.num} delay={i * 0.1}>
+                      <div className="md:grid md:grid-cols-2 md:gap-16 relative md:py-12">
+                        <div className="hidden md:block absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-sm">
+                            {step.num}
+                          </div>
+                        </div>
+
+                        <div className={isLeft ? "md:text-right md:pr-12" : "md:col-start-2 md:pl-12"}>
+                          {!isLeft && <div className="hidden md:block" />}
+                          <div className="md:hidden flex items-center gap-3 mb-3">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                              {step.num}
+                            </div>
+                          </div>
+                          <h3 className="font-display text-xl lg:text-2xl font-normal mb-3">{t(step.titleKey)}</h3>
+                          <p className="text-muted-foreground leading-relaxed">{t(step.descKey)}</p>
+                        </div>
+                        {isLeft && <div className="hidden md:block" />}
+                      </div>
+                    </FadeUp>
+                  );
+                })}
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="bg-card border-t py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
-            <div>
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                  <Globe2 className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold">AfriConnect</span>
-              </Link>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {t("footer.tagline")}
+        {/* CTA */}
+        <section className="relative py-20 lg:py-28 overflow-hidden">
+          <AmbientBlob className="w-[600px] h-[600px] bg-primary/[0.06] dark:bg-primary/[0.1] -top-40 left-1/2 -translate-x-1/2 blur-3xl" delay={0} />
+          <div className="mx-auto max-w-3xl px-6 text-center relative z-10">
+            <FadeUp>
+              <h2 className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] font-normal leading-tight tracking-tight mb-5">
+                {t("cta.title")}
+              </h2>
+              <p className="text-base text-muted-foreground max-w-md mx-auto leading-relaxed mb-8">
+                {t("cta.description")}
               </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{t("footer.marketplace")}</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="/explore" className="hover:text-foreground transition-colors">{t("footer.browseProducts")}</Link></li>
-                <li><Link href="#categories" className="hover:text-foreground transition-colors">{t("footer.categories")}</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{t("footer.forBusinesses")}</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="/business/register" className="hover:text-foreground transition-colors">{t("footer.registerBusiness")}</Link></li>
-                <li><Link href="/products" className="hover:text-foreground transition-colors">{t("footer.listProducts")}</Link></li>
-                <li><Link href="/dashboard" className="hover:text-foreground transition-colors">{t("footer.dashboard")}</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">{t("footer.legal")}</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li><Link href="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacyPolicy")}</Link></li>
-                <li><Link href="/terms" className="hover:text-foreground transition-colors">{t("footer.termsOfService")}</Link></li>
-              </ul>
-            </div>
+              <div className="flex flex-wrap justify-center gap-4">
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <Button size="lg" className="gap-2 font-medium rounded-xl px-8">{t("cta.createAccount")} <ArrowRight className="h-4 w-4" /></Button>
+                  </SignInButton>
+                </SignedOut>
+                <SignedIn>
+                  <Link href="/dashboard">
+                    <Button size="lg" className="gap-2 font-medium rounded-xl px-8">{t("cta.goToDashboard")} <ArrowRight className="h-4 w-4" /></Button>
+                  </Link>
+                </SignedIn>
+                <Link href="/explore">
+                  <Button size="lg" variant="outline" className="font-medium rounded-xl px-8">{t("cta.explore")}</Button>
+                </Link>
+              </div>
+            </FadeUp>
           </div>
-          <div className="mt-12 pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} AfriConnect. {t("footer.allRightsReserved")}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Globe2 className="h-4 w-4" />
-              {t("footer.madeForAfrica")}
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+        </section>
+
+        <PublicFooter />
+      </div>
     </>
   );
 }

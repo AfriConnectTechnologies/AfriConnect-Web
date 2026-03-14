@@ -12,9 +12,9 @@
   "categories": ["business", "shopping", "productivity"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo2.webp?v=20260314a",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any"
     },
     {
@@ -36,21 +36,21 @@
       "short_name": "Marketplace",
       "description": "Browse products from African suppliers",
       "url": "/marketplace",
-      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/logo2.webp?v=20260314a", "sizes": "96x96", "type": "image/webp" }]
     },
     {
       "name": "Business Directory",
       "short_name": "Directory",
       "description": "Find verified African businesses",
       "url": "/directory",
-      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/logo2.webp?v=20260314a", "sizes": "96x96", "type": "image/webp" }]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "Access your business dashboard",
       "url": "/dashboard",
-      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/logo2.webp?v=20260314a", "sizes": "96x96", "type": "image/webp" }]
     }
   ],
   "related_applications": [],

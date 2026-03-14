@@ -1,9 +1,9 @@
 import { MetadataRoute } from 'next'
+import { locales } from '@/i18n/config'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://africonnect.africa.com'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const locales = ['en', 'am', 'sw']
   const currentDate = new Date()
   
   // Static pages that exist in all locales

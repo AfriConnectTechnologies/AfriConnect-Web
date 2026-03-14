@@ -2,7 +2,7 @@
 
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { locales, localeLabels, localeFlags, type Locale } from "@/i18n/config";
+import { locales, localeLabels, type Locale } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,7 +36,6 @@ export function LanguageSwitcher() {
             onClick={() => handleLocaleChange(loc)}
             className={locale === loc ? "bg-accent" : ""}
           >
-            <span className="mr-2">{localeFlags[loc]}</span>
             <span>{localeLabels[loc]}</span>
           </DropdownMenuItem>
         ))}

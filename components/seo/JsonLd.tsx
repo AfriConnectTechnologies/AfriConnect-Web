@@ -11,7 +11,7 @@ interface OrganizationJsonLdProps {
 export function OrganizationJsonLd({
   name = 'AfriConnect',
   url = 'https://africonnect.com',
-  logo = 'https://africonnect.com/logo.png',
+  logo = 'https://africonnect.com/logo2.webp?v=20260314a',
   description = 'Africa\'s Premier B2B Marketplace - Your Bridge to African Markets',
   sameAs = [],
 }: OrganizationJsonLdProps) {
